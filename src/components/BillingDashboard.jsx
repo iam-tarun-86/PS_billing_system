@@ -604,62 +604,7 @@ export default function BillingDashboard({
   return (
     <div className="billing-dashboard-screen screen-fade" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       
-      {/* Top Classical File Menu Bar */}
-      <nav style={{ 
-        display: 'flex', 
-        background: '#e4e4e7', 
-        borderBottom: '1px solid var(--border-color)', 
-        padding: '2px 10px',
-        fontSize: '13px',
-        gap: '15px',
-        zIndex: 100,
-        position: 'relative'
-      }}>
-        <div style={{ position: 'relative' }}>
-          <span 
-            style={{ padding: '2px 8px', color: 'var(--text-primary)', cursor: 'pointer', display: 'inline-block' }}
-            onClick={(e) => handleMenuClick(e, 'file')}
-          >
-            File
-          </span>
-          {activeMenu === 'file' && (
-            <div className="pos-card" style={{ position: 'absolute', top: '100%', left: 0, minWidth: '150px', padding: '4px', zIndex: 101, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ padding: '6px 10px', borderRadius: '4px', cursor: 'pointer' }} className="btn-ghost" onClick={handleClearBill}>Reset Bill</span>
-              <span style={{ padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', color: 'var(--error)' }} className="btn-ghost" onClick={onLogOut}>Exit App</span>
-            </div>
-          )}
-        </div>
-        
-        <div>
-          <span style={{ padding: '2px 8px', color: 'var(--text-muted)', cursor: 'default' }}>Edit</span>
-        </div>
-        <div>
-          <span style={{ padding: '2px 8px', color: 'var(--text-muted)', cursor: 'default' }}>View</span>
-        </div>
 
-        <div style={{ position: 'relative' }}>
-          <span 
-            style={{ padding: '2px 8px', color: 'var(--text-primary)', cursor: 'pointer', display: 'inline-block' }}
-            onClick={(e) => handleMenuClick(e, 'program')}
-          >
-            Program
-          </span>
-          {activeMenu === 'program' && (
-            <div className="pos-card" style={{ position: 'absolute', top: '100%', left: 0, minWidth: '240px', padding: '4px', zIndex: 101, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ padding: '6px 10px', borderRadius: '4px', cursor: 'pointer' }} className="btn-ghost" onClick={onNavigateToInventory}>
-                பொருட்கள் மேலாண்மை / Product Master
-              </span>
-              <span style={{ padding: '6px 10px', borderRadius: '4px', cursor: 'pointer' }} className="btn-ghost" onClick={onNavigateToHistory}>
-                விற்பனை சரித்திரம் / Sales History
-              </span>
-            </div>
-          )}
-        </div>
-
-        <div>
-          <span style={{ padding: '2px 8px', color: 'var(--text-muted)', cursor: 'default' }}>Help</span>
-        </div>
-      </nav>
 
       {/* Title & Time Header Row */}
       <header style={{ 
