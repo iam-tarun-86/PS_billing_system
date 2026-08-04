@@ -717,6 +717,27 @@ export default function BillingDashboard({
     setActiveMenu(activeMenu === menuName ? null : menuName);
   };
 
+  const handleBillingAreaClick = (e) => {
+    // Only refocus if they didn't click inside another input, select, button, or search modal
+    const tagName = e.target.tagName.toLowerCase();
+    if (tagName === 'input' || tagName === 'button' || tagName === 'select' || tagName === 'textarea' || e.target.closest('button')) {
+      return;
+    }
+
+    if (activeRowIndex >= 0 && activeRowIndex < billItems.length) {
+      if (activeColumn === 'code' && codeRefs.current[activeRowIndex]) {
+        codeRefs.current[activeRowIndex].focus();
+        codeRefs.current[activeRowIndex].select();
+      } else if (activeColumn === 'qty' && qtyRefs.current[activeRowIndex]) {
+        qtyRefs.current[activeRowIndex].focus();
+        qtyRefs.current[activeRowIndex].select();
+      } else if (activeColumn === 'rate' && rateRefs.current[activeRowIndex]) {
+        rateRefs.current[activeRowIndex].focus();
+        rateRefs.current[activeRowIndex].select();
+      }
+    }
+  };
+
   const results = getFilteredSearchResults();
 
   return (
@@ -893,7 +914,7 @@ export default function BillingDashboard({
           </div>
 
           {/* Main Billing Grid with BLUE headers */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }} onClick={handleBillingAreaClick}>
             
             <div className="table-container" style={{ flex: 1 }}>
               <table className="pos-table">
