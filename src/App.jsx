@@ -11,6 +11,7 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentPage, setCurrentPage] = useState('billing'); // 'billing' | 'inventory' | 'history'
   const [activePrintInvoice, setActivePrintInvoice] = useState(null);
+  const [printLanguage, setPrintLanguage] = useState('tamil'); // 'tamil' | 'english'
   const [loading, setLoading] = useState(true);
 
   // Load database from local/file storage on mount
@@ -102,7 +103,10 @@ function App() {
           onLogOut={handleLogOut}
           onNavigateToInventory={() => setCurrentPage('inventory')}
           onNavigateToHistory={() => setCurrentPage('history')}
-          onPrintReceipt={(invoice) => setActivePrintInvoice(invoice)}
+          onPrintReceipt={(invoice, lang) => {
+            setPrintLanguage(lang);
+            setActivePrintInvoice(invoice);
+          }}
         />
       )}
 
@@ -118,7 +122,10 @@ function App() {
         <SalesHistory 
           database={database}
           onBack={() => setCurrentPage('billing')}
-          onPrintReceipt={(invoice) => setActivePrintInvoice(invoice)}
+          onPrintReceipt={(invoice, lang = 'tamil') => {
+            setPrintLanguage(lang);
+            setActivePrintInvoice(invoice);
+          }}
         />
       )}
 
@@ -127,6 +134,7 @@ function App() {
         <PrintReceiptModal 
           invoice={activePrintInvoice}
           settings={database.settings}
+          printLanguage={printLanguage}
           onClose={() => setActivePrintInvoice(null)}
         />
       )}

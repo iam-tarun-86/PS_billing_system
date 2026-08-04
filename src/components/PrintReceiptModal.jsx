@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Printer, X } from 'lucide-react';
 
-export default function PrintReceiptModal({ invoice, settings = {}, onClose }) {
+export default function PrintReceiptModal({ invoice, settings = {}, printLanguage = 'tamil', onClose }) {
   const printAreaRef = useRef();
 
   const shopName = settings.shopName || 'SRI PERUMAL STORES';
@@ -18,6 +18,19 @@ export default function PrintReceiptModal({ invoice, settings = {}, onClose }) {
   const charges = (invoice.rent || 0) + (invoice.coolie || 0);
   const paid = invoice.advance || 0;
   const balance = Math.max(0, net - paid);
+
+  // Localization settings
+  const isTamil = printLanguage === 'tamil';
+  const colProduct = isTamil ? 'பொருள்' : 'Product';
+  const colQty = isTamil ? 'அளவு' : 'Qty';
+  const colTotal = isTamil ? 'மதிப்பு' : 'Amount';
+
+  const labelGross = isTamil ? 'மொத்தம் / Gross :' : 'Gross Total :';
+  const labelDiscount = isTamil ? 'வாபஸ் / Discount :' : 'Discount :';
+  const labelCharges = isTamil ? 'கூடுதல் கட்டணம் / Charges :' : 'Charges :';
+  const labelNet = isTamil ? 'பில் தொகை / Net :' : 'Net Amount :';
+  const labelReceived = isTamil ? 'கொடுத்தது / Received :' : 'Received :';
+  const labelCredit = isTamil ? 'மீதி கடன் / Credit Bal :' : 'Credit Bal :';
 
   return (
     <div className="modal-overlay" style={{ overflowY: 'auto', padding: '20px 0' }}>
@@ -76,9 +89,9 @@ export default function PrintReceiptModal({ invoice, settings = {}, onClose }) {
 
             {/* Table headers */}
             <div style={{ display: 'flex', fontWeight: 'bold', fontSize: '11px', paddingBottom: '3px' }}>
-              <span style={{ flex: '2', textAlign: 'left' }}>பொருள்</span>
-              <span style={{ flex: '1', textAlign: 'center' }}>அளவு</span>
-              <span style={{ flex: '1.2', textAlign: 'right' }}>மதிப்பு</span>
+              <span style={{ flex: '2', textAlign: 'left' }}>{colProduct}</span>
+              <span style={{ flex: '1', textAlign: 'center' }}>{colQty}</span>
+              <span style={{ flex: '1.2', textAlign: 'right' }}>{colTotal}</span>
             </div>
 
             <div style={{ borderTop: '1px dashed #000000', margin: '4px 0' }}></div>
@@ -88,9 +101,9 @@ export default function PrintReceiptModal({ invoice, settings = {}, onClose }) {
               {invoice.items.map((item, index) => (
                 <div key={index} style={{ display: 'flex', fontSize: '11px', alignItems: 'flex-start' }}>
                   
-                  {/* Name column: Prefer Tamil name, fallback to English */}
+                  {/* Name column: Prefer Tamil/English based on printLanguage */}
                   <span style={{ flex: '2', textAlign: 'left', wordBreak: 'break-word', paddingRight: '4px' }}>
-                    {item.tamilName || item.name}
+                    {isTamil ? (item.tamilName || item.name) : item.name}
                   </span>
                   
                   {/* Qty Column */}
@@ -113,39 +126,39 @@ export default function PrintReceiptModal({ invoice, settings = {}, onClose }) {
             {/* Calculations block */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '11px', paddingLeft: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>மொத்தம் / Gross :</span>
+                <span>{labelGross}</span>
                 <span>{gross.toFixed(2)}</span>
               </div>
               
               {discount > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#000000' }}>
-                  <span>வாபஸ் / Discount :</span>
+                  <span>{labelDiscount}</span>
                   <span>-{discount.toFixed(2)}</span>
                 </div>
               )}
               
               {charges > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>கூடுதல் கட்டணம் / Charges :</span>
+                  <span>{labelCharges}</span>
                   <span>+{charges.toFixed(2)}</span>
                 </div>
               )}
 
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '12px', marginTop: '2px', borderTop: '1px solid #000000', paddingTop: '2px' }}>
-                <span>பில் தொகை / Net :</span>
+                <span>{labelNet}</span>
                 <span>₹{net.toFixed(2)}</span>
               </div>
 
               {paid > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>கொடுத்தது / Received :</span>
+                  <span>{labelReceived}</span>
                   <span>{paid.toFixed(2)}</span>
                 </div>
               )}
 
               {balance > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', color: '#000000' }}>
-                  <span>மீதி கடன் / Credit Bal :</span>
+                  <span>{labelCredit}</span>
                   <span>₹{balance.toFixed(2)}</span>
                 </div>
               )}

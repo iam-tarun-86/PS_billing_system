@@ -60,6 +60,10 @@ export default function BillingDashboard({
   // Billing Hold Bins
   const [heldBills, setHeldBills] = useState([]);
 
+  // Viewing past bills
+  const [viewingTxIndex, setViewingTxIndex] = useState(null);
+  const [draftBill, setDraftBill] = useState(null);
+
   // Menu bar dropdown visibility
   const [activeMenu, setActiveMenu] = useState(null);
 
@@ -114,48 +118,58 @@ export default function BillingDashboard({
         return;
       }
 
-      // F1 or Ctrl+S: Settle / Save Bill
-      if (e.key === 'F1' || (e.ctrlKey && e.key.toLowerCase() === 's')) {
+      // F10: Save Bill (without printing)
+      if (e.key === 'F10') {
         e.preventDefault();
-        handleSettleBill();
-      }
-      
-      // F2: Open search overlay on active row
-      if (e.key === 'F2') {
-        e.preventDefault();
-        openSearch('');
+        handleSettleBill('save');
       }
 
-      // F5: Clear bill
-      if (e.key === 'F5') {
+      // F11: Settle & Print in Tamil
+      if (e.key === 'F11') {
+        e.preventDefault();
+        handleSettleBill('tamil');
+      }
+
+      // F12: Settle & Print in English
+      if (e.key === 'F12') {
+        e.preventDefault();
+        handleSettleBill('english');
+      }
+
+      // F9: Clear current bill contents
+      if (e.key === 'F9') {
         e.preventDefault();
         if (confirm('நிச்சயமாக இந்த பில்லை அழிக்க வேண்டுமா? / Clear current bill?')) {
+          setViewingTxIndex(null);
+          setDraftBill(null);
           handleClearBill();
         }
       }
 
-      // F10: Hold Bill
-      if (e.key === 'F10') {
+      // PageUp: View previous settled bill
+      if (e.key === 'PageUp') {
         e.preventDefault();
-        handleHoldBill();
+        viewPreviousBill();
       }
 
-      // F7: Navigate to inventory manager
-      if (e.key === 'F7') {
+      // PageDown: View next settled bill
+      if (e.key === 'PageDown') {
         e.preventDefault();
-        onNavigateToInventory();
+        viewNextBill();
       }
-
-      // F12: Navigate to sales history
-      if (e.key === 'F12') {
+      
+      // F2: Open search overlay on active row (only if not viewing history)
+      if (e.key === 'F2') {
         e.preventDefault();
-        onNavigateToHistory();
+        if (viewingTxIndex === null) {
+          openSearch('');
+        }
       }
     };
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [billItems, activeRowIndex, activeColumn, showSearchOverlay, customerName, customerMobile, discount, rent, coolie, advance]);
+  }, [billItems, activeRowIndex, activeColumn, showSearchOverlay, customerName, customerMobile, discount, rent, coolie, advance, viewingTxIndex, draftBill]);
 
   // Close menus on click outside
   useEffect(() => {
@@ -524,6 +538,97 @@ export default function BillingDashboard({
     setActiveColumn('code');
   };
 
+  const loadTransactionToView = (tx) => {
+    const rows = tx.items.map(item => ({
+      code: item.code || '',
+      name: item.name || '',
+      tamilName: item.tamilName || '',
+      unit: item.unit || 'kg',
+      qty: item.qty || '',
+      sellingRate: item.sellingRate || item.overridePrice || '0.00',
+      overridePrice: item.overridePrice || '0.00',
+      totalPrice: item.totalPrice || 0,
+      priceType: item.priceType || 'Quantity'
+    }));
+    
+    setBillItems(rows);
+    setCustomerSlNo(tx.invoiceNo.toString());
+    setCustomerType('CASH');
+    setCustomerName(tx.customerName || 'CASH');
+    setAddressLine1(tx.customerAddress || '');
+    setAddressLine2('');
+    setAddressLine3('');
+    setCustomerMobile(tx.customerMobile || '');
+    setDiscount(tx.discount ? tx.discount.toString() : '');
+    setRent(tx.rent ? tx.rent.toString() : '');
+    setCoolie(tx.coolie ? tx.coolie.toString() : '');
+    setAdvance(tx.advance ? tx.advance.toString() : '');
+    setRwMode('R');
+    setPricingMode('R');
+  };
+
+  const viewPreviousBill = () => {
+    if (!database.transactions || database.transactions.length === 0) return;
+    
+    let nextIndex;
+    if (viewingTxIndex === null) {
+      // Backup current active screen draft
+      setDraftBill({
+        billItems,
+        customerType,
+        customerName,
+        addressLine1,
+        addressLine2,
+        addressLine3,
+        customerMobile,
+        discount,
+        rent,
+        coolie,
+        advance,
+        rwMode,
+        pricingMode
+      });
+      nextIndex = database.transactions.length - 1;
+    } else {
+      if (viewingTxIndex === 0) return; // limit at oldest
+      nextIndex = viewingTxIndex - 1;
+    }
+    
+    setViewingTxIndex(nextIndex);
+    loadTransactionToView(database.transactions[nextIndex]);
+  };
+
+  const viewNextBill = () => {
+    if (viewingTxIndex === null) return;
+    
+    if (viewingTxIndex === database.transactions.length - 1) {
+      // Return to active draft
+      setViewingTxIndex(null);
+      if (draftBill) {
+        setBillItems(draftBill.billItems);
+        setCustomerType(draftBill.customerType);
+        setCustomerName(draftBill.customerName);
+        setAddressLine1(draftBill.addressLine1 || '');
+        setAddressLine2(draftBill.addressLine2 || '');
+        setAddressLine3(draftBill.addressLine3 || '');
+        setCustomerMobile(draftBill.customerMobile);
+        setDiscount(draftBill.discount);
+        setRent(draftBill.rent);
+        setCoolie(draftBill.coolie);
+        setAdvance(draftBill.advance);
+        setRwMode(draftBill.rwMode);
+        setPricingMode(draftBill.pricingMode);
+        setDraftBill(null);
+      } else {
+        handleClearBill();
+      }
+    } else {
+      const nextIndex = viewingTxIndex + 1;
+      setViewingTxIndex(nextIndex);
+      loadTransactionToView(database.transactions[nextIndex]);
+    }
+  };
+
   const handleClearBill = () => {
     setBillItems([createEmptyRow()]);
     setCustomerSlNo(getNextBillNumber().toString());
@@ -543,7 +648,15 @@ export default function BillingDashboard({
     setActiveColumn('code');
   };
 
-  const handleSettleBill = () => {
+  const handleSettleBill = (action = 'save') => {
+    // If viewing a past bill, only allow re-printing, not re-saving
+    if (viewingTxIndex !== null) {
+      if (action !== 'save') {
+        onPrintReceipt(database.transactions[viewingTxIndex], action);
+      }
+      return;
+    }
+
     const itemsToSave = billItems.filter(item => item.code !== '');
     if (itemsToSave.length === 0) {
       alert('பில்லில் பொருட்கள் இல்லை! / No items in the bill!');
@@ -585,7 +698,12 @@ export default function BillingDashboard({
       transactions: updatedTransactions
     });
 
-    onPrintReceipt(invoice);
+    if (action === 'save') {
+      alert('பில் வெற்றிகரமாக சேமிக்கப்பட்டது! / Bill saved successfully!');
+    } else {
+      onPrintReceipt(invoice, action); // action is 'tamil' or 'english'
+    }
+
     handleClearBill();
   };
 
@@ -678,6 +796,7 @@ export default function BillingDashboard({
                   style={{ width: '80px', height: '28px', padding: '2px 8px' }} 
                   value={customerType}
                   onChange={(e) => setCustomerType(e.target.value)}
+                  readOnly={viewingTxIndex !== null}
                 />
               </div>
             </div>
@@ -694,6 +813,7 @@ export default function BillingDashboard({
                     style={{ height: '28px', padding: '2px 8px' }}
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
+                    readOnly={viewingTxIndex !== null}
                   />
                 </div>
                 <div className="input-group">
@@ -705,6 +825,7 @@ export default function BillingDashboard({
                     placeholder="994214XXXX"
                     value={customerMobile}
                     onChange={(e) => setCustomerMobile(e.target.value)}
+                    readOnly={viewingTxIndex !== null}
                   />
                 </div>
               </div>
@@ -719,6 +840,7 @@ export default function BillingDashboard({
                   placeholder="Street / Line 1"
                   value={addressLine1}
                   onChange={(e) => setAddressLine1(e.target.value)}
+                  readOnly={viewingTxIndex !== null}
                 />
                 <input 
                   type="text" 
@@ -727,6 +849,7 @@ export default function BillingDashboard({
                   placeholder="Village / Town"
                   value={addressLine2}
                   onChange={(e) => setAddressLine2(e.target.value)}
+                  readOnly={viewingTxIndex !== null}
                 />
                 <input 
                   type="text" 
@@ -735,6 +858,7 @@ export default function BillingDashboard({
                   placeholder="District"
                   value={addressLine3}
                   onChange={(e) => setAddressLine3(e.target.value)}
+                  readOnly={viewingTxIndex !== null}
                 />
               </div>
 
@@ -750,6 +874,7 @@ export default function BillingDashboard({
                   style={{ width: '40px', height: '28px', padding: '2px 4px', textAlign: 'center', fontWeight: 'bold' }} 
                   value={rwMode}
                   onChange={(e) => setRwMode(e.target.value)}
+                  readOnly={viewingTxIndex !== null}
                 />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -760,6 +885,7 @@ export default function BillingDashboard({
                   style={{ width: '40px', height: '28px', padding: '2px 4px', textAlign: 'center', fontWeight: 'bold', color: 'var(--error) !important' }} 
                   value={pricingMode}
                   onChange={(e) => setPricingMode(e.target.value)}
+                  readOnly={viewingTxIndex !== null}
                 />
               </div>
             </div>
@@ -798,6 +924,7 @@ export default function BillingDashboard({
                           onChange={(e) => handleCellChange(index, 'code', e.target.value)}
                           onKeyDown={(e) => handleCellKeyDown(e, index, 'code')}
                           onFocus={() => { setActiveRowIndex(index); setActiveColumn('code'); }}
+                          readOnly={viewingTxIndex !== null}
                         />
                       </td>
                       <td>
@@ -829,6 +956,7 @@ export default function BillingDashboard({
                           onChange={(e) => handleCellChange(index, 'qty', e.target.value)}
                           onKeyDown={(e) => handleCellKeyDown(e, index, 'qty')}
                           onFocus={() => { setActiveRowIndex(index); setActiveColumn('qty'); }}
+                          readOnly={viewingTxIndex !== null}
                           onBlur={() => {
                             const updated = [...billItems];
                             const row = updated[index];
@@ -862,6 +990,7 @@ export default function BillingDashboard({
                           onChange={(e) => handleCellChange(index, 'rate', e.target.value)}
                           onKeyDown={(e) => handleCellKeyDown(e, index, 'rate')}
                           onFocus={() => { setActiveRowIndex(index); setActiveColumn('rate'); }}
+                          readOnly={viewingTxIndex !== null}
                           onBlur={() => {
                             const updated = [...billItems];
                             const row = updated[index];
@@ -878,7 +1007,7 @@ export default function BillingDashboard({
                         ₹{item.totalPrice.toFixed(2)}
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        <button className="btn-ghost" style={{ padding: '2px', color: 'var(--error)' }} onClick={() => removeRow(index)}>
+                        <button className="btn-ghost" style={{ padding: '2px', color: 'var(--error)' }} onClick={() => removeRow(index)} disabled={viewingTxIndex !== null}>
                           <Trash2 size={13} />
                         </button>
                       </td>
@@ -1005,6 +1134,7 @@ export default function BillingDashboard({
                 style={{ width: '100px', height: '28px', border: 'none', background: 'transparent', padding: '2px 8px', textAlign: 'right', fontWeight: 'bold' }}
                 value={discount}
                 onChange={(e) => setDiscount(e.target.value)}
+                readOnly={viewingTxIndex !== null}
               />
             </div>
 
@@ -1017,6 +1147,7 @@ export default function BillingDashboard({
                 style={{ width: '100px', height: '28px', border: 'none', background: 'transparent', padding: '2px 8px', textAlign: 'right', fontWeight: 'bold' }}
                 value={rent}
                 onChange={(e) => setRent(e.target.value)}
+                readOnly={viewingTxIndex !== null}
               />
             </div>
 
@@ -1029,6 +1160,7 @@ export default function BillingDashboard({
                 style={{ width: '100px', height: '28px', border: 'none', background: 'transparent', padding: '2px 8px', textAlign: 'right', fontWeight: 'bold' }}
                 value={coolie}
                 onChange={(e) => setCoolie(e.target.value)}
+                readOnly={viewingTxIndex !== null}
               />
             </div>
 
@@ -1041,6 +1173,7 @@ export default function BillingDashboard({
                 style={{ width: '100px', height: '28px', border: 'none', background: 'transparent', padding: '2px 8px', textAlign: 'right', fontWeight: 'bold' }}
                 value={advance}
                 onChange={(e) => setAdvance(e.target.value)}
+                readOnly={viewingTxIndex !== null}
               />
             </div>
 
@@ -1100,38 +1233,31 @@ export default function BillingDashboard({
             <span className="input-label" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '4px', color: 'var(--primary)' }}>விசை வழிகாட்டி / Shortcuts</span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', color: 'var(--text-secondary)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>F1 / Ctrl+S</span> <span>Cash Settlement</span>
+                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>F10</span> <span>பில் சேமிக்க / Save Bill</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>F2</span> <span>Search Items</span>
+                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>F11</span> <span>தமிழ் அச்சிடல் / Print (Tamil)</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>F5</span> <span>Clear Bill</span>
+                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>F12</span> <span>ஆங்கில அச்சிடல் / Print (English)</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>F10</span> <span>Hold Bill</span>
+                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>F9</span> <span>பில் அழிக்க / Clear Bill</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>F7</span> <span>Product Master</span>
+                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Page Up</span> <span>முந்தைய பில் / Previous Bill</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>F12</span> <span>Sales History</span>
+                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Page Down</span> <span>அடுத்த பில் / Next Bill</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Esc</span> <span>Close Search</span>
+                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Alt + D</span> <span>வரிசை நீக்க / Delete Row</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Alt + D</span> <span>Delete Row</span>
+                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>F2</span> <span>பொருள் தேட / Search Items</span>
               </div>
-              <div style={{ borderTop: '1px dashed var(--border-color)', margin: '4px 0' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
-                <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>CTRL Combinations</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
-                <span>P - Prod Name</span> <span>R - Prod Rate</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
-                <span>U - Prod Unit</span> <span>G - Prod Group</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Esc</span> <span>தேடல் மூடுக / Close Search</span>
               </div>
             </div>
           </div>
