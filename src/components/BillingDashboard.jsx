@@ -13,11 +13,28 @@ export default function BillingDashboard({
   const [activeRowIndex, setActiveRowIndex] = useState(0);
   const [activeColumn, setActiveColumn] = useState('code'); // 'code' | 'qty' | 'rate'
   
+  const getNextBillNumber = () => {
+    if (!database || !database.transactions) return 1;
+    const todayStr = new Date().toLocaleDateString();
+    const todayTx = database.transactions.filter(t => t.date === todayStr);
+    return todayTx.length + 1;
+  };
+
+  const getTodayDateString = () => {
+    const d = new Date();
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  };
+
   // Header clock state
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
   
   // Customer details
-  const [customerSlNo, setCustomerSlNo] = useState('7');
+  const [customerSlNo, setCustomerSlNo] = useState(() => {
+    return getNextBillNumber().toString();
+  });
   const [customerType, setCustomerType] = useState('CASH');
   const [customerName, setCustomerName] = useState('CASH');
   const [addressLine1, setAddressLine1] = useState('');
@@ -70,6 +87,13 @@ export default function BillingDashboard({
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Sync customerSlNo when database transactions length changes
+  useEffect(() => {
+    if (database && database.transactions) {
+      setCustomerSlNo(getNextBillNumber().toString());
+    }
+  }, [database?.transactions?.length]);
 
   // Sync refs array length
   useEffect(() => {
@@ -479,7 +503,7 @@ export default function BillingDashboard({
 
   const handleClearBill = () => {
     setBillItems([createEmptyRow()]);
-    setCustomerSlNo('7');
+    setCustomerSlNo(getNextBillNumber().toString());
     setCustomerType('CASH');
     setCustomerName('CASH');
     setAddressLine1('');
@@ -504,7 +528,7 @@ export default function BillingDashboard({
     }
 
     const invoice = {
-      invoiceNo: database.transactions.length + 1,
+      invoiceNo: getNextBillNumber(),
       date: new Date().toLocaleDateString(),
       time: new Date().toLocaleTimeString(),
       customerName,
@@ -635,7 +659,7 @@ export default function BillingDashboard({
         {/* Digital Clock */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
-            <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>8/3/2026</span>
+            <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{new Date().toLocaleDateString()}</span>
             <span style={{ fontSize: '15px', fontFamily: 'var(--font-mono)', fontWeight: 'bold', color: 'var(--text-primary)' }}>{currentTime}</span>
           </div>
 
@@ -676,7 +700,7 @@ export default function BillingDashboard({
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span className="input-label" style={{ fontSize: '10px' }}>தேதி / Date</span>
-                <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-secondary)' }}>03/08/2026</span>
+                <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-secondary)' }}>{getTodayDateString()}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span className="input-label" style={{ fontSize: '10px' }}>வகை / Type</span>
