@@ -545,10 +545,13 @@ export default function BillingDashboard({
       tamilName: item.tamilName || '',
       unit: item.unit || 'kg',
       qty: item.qty || '',
+      mrp: item.mrp || 0,
+      basePrice: item.basePrice || 0,
       sellingRate: item.sellingRate || item.overridePrice || '0.00',
       overridePrice: item.overridePrice || '0.00',
       totalPrice: item.totalPrice || 0,
-      priceType: item.priceType || 'Quantity'
+      priceType: item.priceType || 'Quantity',
+      slabs: item.slabs || []
     }));
     
     setBillItems(rows);
@@ -994,7 +997,7 @@ export default function BillingDashboard({
                         />
                       </td>
                       <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                        {item.code ? item.mrp.toFixed(2) : '0.00'}
+                        {item.code ? (item.mrp || 0).toFixed(2) : '0.00'}
                       </td>
                       <td>
                         <input 
@@ -1025,7 +1028,7 @@ export default function BillingDashboard({
                         />
                       </td>
                       <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 'bold' }}>
-                        ₹{item.totalPrice.toFixed(2)}
+                        ₹{(item.totalPrice || 0).toFixed(2)}
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         <button className="btn-ghost" style={{ padding: '2px', color: 'var(--error)' }} onClick={() => removeRow(index)} disabled={viewingTxIndex !== null}>
