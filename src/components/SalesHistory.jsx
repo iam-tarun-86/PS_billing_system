@@ -2,11 +2,38 @@ import React, { useState } from 'react';
 import { ArrowLeft, Search, Calendar, DollarSign, RefreshCw, Printer, FileSpreadsheet } from 'lucide-react';
 import { exportToCSV } from '../utils/csv';
 
-export default function SalesHistory({ database, onBack, onPrintReceipt }) {
+export default function SalesHistory({ database, onUpdateDatabase, onBack, onPrintReceipt }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDate, setFilterDate] = useState('');
 
   const transactions = database.transactions || [];
+
+  const handleDeleteTransaction = (invoiceNo) => {
+    if (confirm(`நிச்சயமாக இந்த பில்லை நீக்க வேண்டுமா?\nAre you sure you want to delete Bill No ${invoiceNo}?`)) {
+      const txToDelete = transactions.find(t => t.invoiceNo === invoiceNo);
+      if (!txToDelete) return;
+
+      // Restore inventory stocks
+      const updatedProducts = database.products.map(p => {
+        const soldItem = txToDelete.items.find(item => item.code === p.code);
+        if (soldItem) {
+          return {
+            ...p,
+            currentStock: p.currentStock + (parseFloat(soldItem.qty) || 0)
+          };
+        }
+        return p;
+      });
+
+      const updatedTransactions = transactions.filter(t => t.invoiceNo !== invoiceNo);
+
+      onUpdateDatabase({
+        ...database,
+        products: updatedProducts,
+        transactions: updatedTransactions
+      });
+    }
+  };
 
   const handleExportCSV = () => {
     const headers = [
@@ -214,9 +241,12 @@ export default function SalesHistory({ database, onBack, onPrintReceipt }) {
                     <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', color: cred > 0 ? 'var(--warning)' : 'inherit' }}>
                       ₹{cred > 0 ? cred.toFixed(2) : '0.00'}
                     </td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td style={{ textAlign: 'center', display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
                       <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => onPrintReceipt(t)}>
                         <Printer size={12} /> அச்சிடு / Print
+                      </button>
+                      <button className="btn-error" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => handleDeleteTransaction(t.invoiceNo)}>
+                        நீக்கு / Delete
                       </button>
                     </td>
                   </tr>

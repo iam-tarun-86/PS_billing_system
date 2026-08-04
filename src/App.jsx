@@ -121,6 +121,7 @@ function App() {
       {currentPage === 'history' && (
         <SalesHistory 
           database={database}
+          onUpdateDatabase={handleUpdateDatabase}
           onBack={() => setCurrentPage('billing')}
           onPrintReceipt={(invoice, lang = 'tamil') => {
             setPrintLanguage(lang);

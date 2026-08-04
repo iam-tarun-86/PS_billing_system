@@ -353,7 +353,16 @@ async function syncDatabaseState(dbManager, data) {
 
   // Sync Transactions & items
   if (data.transactions && Array.isArray(data.transactions)) {
-    // Insert new transactions (we only insert/replace to prevent deleting existing ones)
+    // Delete any transactions in SQLite that were deleted in the UI
+    const existingTransactions = await dbManager.all('SELECT invoiceNo FROM transactions');
+    const incomingInvoiceNos = new Set(data.transactions.map(t => t.invoiceNo));
+    for (const et of existingTransactions) {
+      if (!incomingInvoiceNos.has(et.invoiceNo)) {
+        await dbManager.run('DELETE FROM transactions WHERE invoiceNo = ?', [et.invoiceNo]);
+      }
+    }
+
+    // Insert new or update changed transactions
     for (const t of data.transactions) {
       const now = t.timestamp ? new Date(t.timestamp) : new Date();
       const year = t.year || now.getFullYear();
