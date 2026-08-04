@@ -11,8 +11,14 @@ class DBManager {
   open() {
     return new Promise((resolve, reject) => {
       this.db = new sqlite3.Database(this.dbPath, (err) => {
-        if (err) reject(err);
-        else resolve();
+        if (err) {
+          reject(err);
+        } else {
+          this.db.run('PRAGMA journal_mode = WAL;', (err) => {
+            if (err) console.error('Failed to set WAL journal mode:', err);
+            resolve();
+          });
+        }
       });
     });
   }
