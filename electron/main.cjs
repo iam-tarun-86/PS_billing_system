@@ -1,12 +1,15 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { DBManager, initTables, migrateLegacyJson, insertSeedDataIfEmpty, fetchFullDatabaseState, syncDatabaseState } = require('./dbManager.cjs');
 
 let mainWindow;
 
 // Define storage paths
 const userDataPath = app.getPath('userData');
 const dbFilePath = path.join(userDataPath, 'database.json');
+const sqliteDbPath = path.join(userDataPath, 'billing.db');
+const dbManager = new DBManager(sqliteDbPath);
 
 // Default Seed Data
 const defaultDatabase = {
@@ -161,41 +164,23 @@ const defaultDatabase = {
   }
 };
 
-// Ensure database file exists and is populated
-function initializeDatabase() {
-  try {
-    if (!fs.existsSync(dbFilePath)) {
-      fs.writeFileSync(dbFilePath, JSON.stringify(defaultDatabase, null, 2), 'utf-8');
-      console.log('Database initialized with seed data at:', dbFilePath);
-    } else {
-      // Check if file is valid JSON, if not rewrite it
-      const raw = fs.readFileSync(dbFilePath, 'utf-8');
-      JSON.parse(raw);
-    }
-  } catch (err) {
-    console.error('Error loading or creating database. Resetting to default.', err);
-    fs.writeFileSync(dbFilePath, JSON.stringify(defaultDatabase, null, 2), 'utf-8');
-  }
-}
 
-// IPC Handlers for database read/write
+// IPC Handlers for database read/write using SQLite
 ipcMain.handle('db-read', async () => {
-  initializeDatabase();
   try {
-    const raw = fs.readFileSync(dbFilePath, 'utf-8');
-    return JSON.parse(raw);
+    return await fetchFullDatabaseState(dbManager);
   } catch (err) {
-    console.error('Read database failed:', err);
+    console.error('Read SQLite database failed:', err);
     return defaultDatabase;
   }
 });
 
 ipcMain.handle('db-write', async (event, data) => {
   try {
-    fs.writeFileSync(dbFilePath, JSON.stringify(data, null, 2), 'utf-8');
+    await syncDatabaseState(dbManager, data);
     return { success: true };
   } catch (err) {
-    console.error('Write database failed:', err);
+    console.error('Write SQLite database failed:', err);
     return { success: false, error: err.message };
   }
 });
@@ -263,8 +248,17 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(() => {
-  initializeDatabase();
+app.whenReady().then(async () => {
+  try {
+    await dbManager.open();
+    await initTables(dbManager);
+    await migrateLegacyJson(dbManager, dbFilePath);
+    await insertSeedDataIfEmpty(dbManager, defaultDatabase);
+    console.log('SQLite database initialized successfully at:', sqliteDbPath);
+  } catch (err) {
+    console.error('SQLite initialization failed on startup:', err);
+  }
+
   createWindow();
 
   app.on('activate', () => {
@@ -272,7 +266,13 @@ app.whenReady().then(() => {
   });
 });
 
-app.on('window-all-closed', () => {
+app.on('window-all-closed', async () => {
+  try {
+    await dbManager.close();
+    console.log('SQLite database connection closed.');
+  } catch (err) {
+    console.error('Failed to close SQLite database:', err);
+  }
   if (process.platform !== 'darwin') {
     app.quit();
   }
