@@ -15,7 +15,11 @@ export default function BillingDashboard({
   
   const getNextBillNumber = () => {
     if (!database || !database.transactions) return 1;
-    const todayStr = new Date().toLocaleDateString();
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = now.getFullYear();
+    const todayStr = `${dd}/${mm}/${yyyy}`;
     const todayTx = database.transactions.filter(t => t.date === todayStr);
     return todayTx.length + 1;
   };
@@ -666,10 +670,21 @@ export default function BillingDashboard({
       return;
     }
 
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = now.getFullYear();
+    const formattedDate = `${dd}/${mm}/${yyyy}`;
+    const formattedTime = now.toLocaleTimeString('en-US', { hour12: false });
+
     const invoice = {
       invoiceNo: getNextBillNumber(),
-      date: new Date().toLocaleDateString(),
-      time: new Date().toLocaleTimeString(),
+      timestamp: now.toISOString(),
+      year: yyyy,
+      month: now.getMonth() + 1,
+      day: now.getDate(),
+      date: formattedDate,
+      time: formattedTime,
       customerName,
       customerMobile,
       customerAddress: `${addressLine1} ${addressLine2} ${addressLine3}`.trim(),

@@ -14,7 +14,14 @@ export default function SalesHistory({ database, onBack, onPrintReceipt }) {
       t.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (t.customerMobile && t.customerMobile.includes(searchTerm));
     
-    const matchesDate = !filterDate || t.date === new Date(filterDate).toLocaleDateString();
+    let matchesDate = true;
+    if (filterDate) {
+      const parts = filterDate.split('-');
+      if (parts.length === 3) {
+        const formattedFilterDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        matchesDate = t.date === formattedFilterDate;
+      }
+    }
 
     return matchesSearch && matchesDate;
   }).reverse(); // Latest transaction first
