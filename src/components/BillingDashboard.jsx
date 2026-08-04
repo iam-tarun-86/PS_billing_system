@@ -176,6 +176,7 @@ export default function BillingDashboard({
     if (activeRowIndex >= 0 && activeRowIndex < billItems.length) {
       if (activeColumn === 'code' && codeRefs.current[activeRowIndex]) {
         codeRefs.current[activeRowIndex].focus();
+        codeRefs.current[activeRowIndex].select();
       } else if (activeColumn === 'qty' && qtyRefs.current[activeRowIndex]) {
         qtyRefs.current[activeRowIndex].focus();
         qtyRefs.current[activeRowIndex].select();
@@ -290,6 +291,28 @@ export default function BillingDashboard({
     if (e.altKey && e.key.toLowerCase() === 'd') {
       e.preventDefault();
       removeRow(rowIndex);
+      return;
+    }
+
+    // ArrowRight navigation between columns
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (column === 'code') {
+        setActiveColumn('qty');
+      } else if (column === 'qty') {
+        setActiveColumn('rate');
+      }
+      return;
+    }
+
+    // ArrowLeft navigation between columns
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (column === 'qty') {
+        setActiveColumn('code');
+      } else if (column === 'rate') {
+        setActiveColumn('qty');
+      }
       return;
     }
 
