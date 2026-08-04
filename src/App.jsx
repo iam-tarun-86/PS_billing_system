@@ -40,10 +40,16 @@ function App() {
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
     setCurrentPage('billing');
+    if (window.electronAPI && window.electronAPI.onLoginSuccess) {
+      window.electronAPI.onLoginSuccess();
+    }
   };
 
   const handleLogOut = () => {
     setIsLoggedIn(false);
+    if (window.electronAPI && window.electronAPI.onLogout) {
+      window.electronAPI.onLogout();
+    }
   };
 
   if (loading) {

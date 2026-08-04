@@ -200,12 +200,32 @@ ipcMain.handle('db-write', async (event, data) => {
   }
 });
 
+ipcMain.handle('window-login', () => {
+  if (mainWindow) {
+    mainWindow.setResizable(true);
+    mainWindow.setMaximizable(true);
+    mainWindow.maximize();
+  }
+  return { success: true };
+});
+
+ipcMain.handle('window-logout', () => {
+  if (mainWindow) {
+    mainWindow.unmaximize();
+    mainWindow.setResizable(false);
+    mainWindow.setMaximizable(false);
+    mainWindow.setSize(520, 480);
+    mainWindow.center();
+  }
+  return { success: true };
+});
+
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1300,
-    height: 850,
-    minWidth: 1024,
-    minHeight: 768,
+    width: 520,
+    height: 480,
+    resizable: false,
+    maximizable: false,
     frame: true, // Native window frame
     title: 'Express Bill - POS System',
     webPreferences: {
