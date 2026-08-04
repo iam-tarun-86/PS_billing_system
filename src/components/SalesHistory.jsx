@@ -1,11 +1,44 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Search, Calendar, DollarSign, RefreshCw, Printer } from 'lucide-react';
+import { ArrowLeft, Search, Calendar, DollarSign, RefreshCw, Printer, FileSpreadsheet } from 'lucide-react';
+import { exportToCSV } from '../utils/csv';
 
 export default function SalesHistory({ database, onBack, onPrintReceipt }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDate, setFilterDate] = useState('');
 
   const transactions = database.transactions || [];
+
+  const handleExportCSV = () => {
+    const headers = [
+      'Invoice No', 'Timestamp', 'Year', 'Month', 'Day', 'Date', 'Time',
+      'Customer Name', 'Mobile', 'Address', 'Gross Total', 'Discount',
+      'Rent', 'Labor/Coolie', 'Advance Paid', 'Net Total', 'Operator', 'Items Summary'
+    ];
+    const rows = filteredTransactions.map(t => {
+      const itemsSummary = t.items.map(item => `${item.name} (${item.qty} ${item.unit})`).join(' | ');
+      return [
+        t.invoiceNo,
+        t.timestamp || '',
+        t.year || '',
+        t.month || '',
+        t.day || '',
+        t.date || '',
+        t.time || '',
+        t.customerName || 'CASH',
+        t.customerMobile || '',
+        t.customerAddress || '',
+        t.grossTotal,
+        t.discount || 0,
+        t.rent || 0,
+        t.coolie || 0,
+        t.advance || 0,
+        t.netTotal,
+        t.operator || 'T',
+        itemsSummary
+      ];
+    });
+    exportToCSV('sales_transactions.csv', headers, rows);
+  };
 
   // Filtered lists
   const filteredTransactions = transactions.filter(t => {
@@ -55,6 +88,9 @@ export default function SalesHistory({ database, onBack, onPrintReceipt }) {
           </button>
           <h2 style={{ fontSize: '24px', fontWeight: 'bold' }}>விற்பனை சரித்திரம் / Sales Transaction Logs</h2>
         </div>
+        <button className="btn-secondary" style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={handleExportCSV}>
+          <FileSpreadsheet size={16} /> கோப்பு இறக்கம் / Export CSV
+        </button>
       </div>
 
       {/* KPI summaries row */}

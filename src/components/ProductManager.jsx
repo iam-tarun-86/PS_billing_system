@@ -1,11 +1,35 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit, Trash2, ArrowLeft, Layers, Percent, Box, Save, X } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, ArrowLeft, Layers, Percent, Box, Save, X, FileSpreadsheet } from 'lucide-react';
+import { exportToCSV } from '../utils/csv';
 
 export default function ProductManager({ database, onUpdateDatabase, onBack }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('All');
   const [editingProduct, setEditingProduct] = useState(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
+
+  const handleExportCSV = () => {
+    const headers = [
+      'Code', 'Product Name (English)', 'Tamil Name', 'Group', 'Unit', 
+      'Price Type', 'Selling Price (Rate)', 'MRP', 'Cost Price', 
+      'Opening Stock', 'Current Stock', 'Status'
+    ];
+    const rows = database.products.map(p => [
+      p.code,
+      p.name,
+      p.tamilName || '',
+      p.group || 'General',
+      p.unit || 'kg',
+      p.priceType || 'Fixed',
+      p.sellingPrice,
+      p.mrp,
+      p.costPrice || 0,
+      p.openingStock || 0,
+      p.currentStock || 0,
+      p.disableItem ? 'Disabled' : 'Active'
+    ]);
+    exportToCSV('products_inventory.csv', headers, rows);
+  };
 
   // Group list extracted from products
   const groups = ['All', ...new Set(database.products.map(p => p.group || 'General'))];
@@ -180,9 +204,14 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
           </button>
           <h2 style={{ fontSize: '24px', fontWeight: 'bold' }}>பொருட்கள் மேலாண்மை / Product Inventory Manager</h2>
         </div>
-        <button className="btn-success" style={{ padding: '10px 16px' }} onClick={handleAddNewClick}>
-          <Plus size={18} /> புதிய பொருள் / Add Product
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn-secondary" style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={handleExportCSV}>
+            <FileSpreadsheet size={16} /> கோப்பு இறக்கம் / Export CSV
+          </button>
+          <button className="btn-success" style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={handleAddNewClick}>
+            <Plus size={18} /> புதிய பொருள் / Add Product
+          </button>
+        </div>
       </div>
 
       {/* Main Grid */}
