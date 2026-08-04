@@ -214,7 +214,7 @@ ipcMain.handle('window-logout', () => {
     mainWindow.unmaximize();
     mainWindow.setResizable(false);
     mainWindow.setMaximizable(false);
-    mainWindow.setSize(520, 480);
+    mainWindow.setSize(500, 660);
     mainWindow.center();
   }
   return { success: true };
@@ -222,8 +222,9 @@ ipcMain.handle('window-logout', () => {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 520,
-    height: 480,
+    width: 500,
+    height: 660,
+    useContentSize: true,
     resizable: false,
     maximizable: false,
     frame: true, // Native window frame
