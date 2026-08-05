@@ -478,7 +478,23 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      webSecurity: false,
+      allowRunningInsecureContent: true
+    }
+  });
+
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    const logStr = `[FAIL LOAD] Code: ${errorCode}, Desc: ${errorDescription}, URL: ${validatedURL}\n`;
+    console.error(logStr);
+    try { fs.appendFileSync(path.join(userDataPath, 'electron-error.log'), logStr); } catch (e) {}
+  });
+
+  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    if (level >= 2) {
+      const logStr = `[CONSOLE ERR] ${message} (${sourceId}:${line})\n`;
+      console.error(logStr);
+      try { fs.appendFileSync(path.join(userDataPath, 'electron-error.log'), logStr); } catch (e) {}
     }
   });
 
@@ -490,8 +506,11 @@ function createWindow() {
     if (!fs.existsSync(indexPath)) {
       indexPath = path.join(app.getAppPath(), 'dist/index.html');
     }
+    console.log('Loading index.html from:', indexPath);
     mainWindow.loadFile(indexPath).catch((err) => {
-      console.error('Failed to load index.html:', err);
+      const logStr = `[LOADFILE ERR] ${err.stack || err.message}\n`;
+      console.error(logStr);
+      try { fs.appendFileSync(path.join(userDataPath, 'electron-error.log'), logStr); } catch (e) {}
     });
   };
 
@@ -513,6 +532,12 @@ function createWindow() {
   });
 }
 
+process.on('uncaughtException', (err) => {
+  const logStr = `[UNCAUGHT] ${err.stack || err.message}\n`;
+  console.error(logStr);
+  try { fs.appendFileSync(path.join(userDataPath, 'electron-error.log'), logStr); } catch (e) {}
+});
+
 app.whenReady().then(() => {
   readDatabaseFile();
   createWindow();
@@ -522,13 +547,7 @@ app.whenReady().then(() => {
   });
 });
 
-app.on('window-all-closed', async () => {
-  try {
-    await dbManager.close();
-    console.log('SQLite database connection closed.');
-  } catch (err) {
-    console.error('Failed to close SQLite database:', err);
-  }
+app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
