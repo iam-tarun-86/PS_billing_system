@@ -81,6 +81,7 @@ export default function BillingDashboard({
   const rateRefs = useRef([]);
   const searchInputRef = useRef(null);
   const activeSearchRowRef = useRef(null);
+  const overlayTableContainerRef = useRef(null);
 
   // Digital clock update
   useEffect(() => {
@@ -482,18 +483,10 @@ export default function BillingDashboard({
     }
   }, [searchQuery, showSearchOverlay, sortedActiveProducts]);
 
-  // Smooth scroll active search row into view using requestAnimationFrame (60 FPS, no freezing when holding down arrow)
+  // Keep search overlay scrolled to top of sliced window (60 FPS, zero header overlap)
   useEffect(() => {
-    if (showSearchOverlay && activeSearchRowRef.current) {
-      const handle = requestAnimationFrame(() => {
-        if (activeSearchRowRef.current) {
-          activeSearchRowRef.current.scrollIntoView({
-            behavior: 'auto',
-            block: 'start'
-          });
-        }
-      });
-      return () => cancelAnimationFrame(handle);
+    if (showSearchOverlay && overlayTableContainerRef.current) {
+      overlayTableContainerRef.current.scrollTop = 0;
     }
   }, [highlightedSearchIndex, showSearchOverlay]);
 
@@ -1146,7 +1139,7 @@ export default function BillingDashboard({
                   </button>
                 </div>
                 
-                <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
+                <div ref={overlayTableContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
                   <table className="pos-table">
                     <thead>
                       <tr>
