@@ -462,21 +462,7 @@ function createWindow() {
     }
   });
 
-  // Check if we are in dev mode
-  const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
-
-  if (isDev) {
-    // Retry logic to wait for Vite dev server
-    const devUrl = 'http://localhost:5173';
-    const loadUrlWithRetry = () => {
-      mainWindow.loadURL(devUrl).catch((err) => {
-        console.log('Dev server not ready yet. Retrying in 1s...');
-        setTimeout(loadUrlWithRetry, 1000);
-      });
-    };
-    loadUrlWithRetry();
-    mainWindow.webContents.openDevTools();
-  } else {
+  const loadLocalFile = () => {
     let indexPath = path.join(__dirname, '../dist/index.html');
     if (!fs.existsSync(indexPath)) {
       indexPath = path.join(__dirname, 'dist/index.html');
@@ -485,8 +471,20 @@ function createWindow() {
       indexPath = path.join(app.getAppPath(), 'dist/index.html');
     }
     mainWindow.loadFile(indexPath).catch((err) => {
-      console.error('Failed to load production build index.html:', err);
+      console.error('Failed to load index.html:', err);
     });
+  };
+
+  const isDev = process.env.NODE_ENV === 'development';
+
+  if (isDev) {
+    const devUrl = 'http://localhost:5173';
+    mainWindow.loadURL(devUrl).catch(() => {
+      console.log('Dev server not running at localhost:5173, loading local dist/index.html...');
+      loadLocalFile();
+    });
+  } else {
+    loadLocalFile();
     mainWindow.setMenu(null);
   }
 
