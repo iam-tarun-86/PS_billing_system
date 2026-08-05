@@ -51,10 +51,15 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
     const keys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'];
     if (!keys.includes(e.key)) return;
 
-    // Do not override standard option selection inside SELECT dropdowns
-    if (document.activeElement.tagName === 'SELECT' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-      return;
-    }
+    const active = document.activeElement;
+
+    // Do NOT intercept any keys inside SELECT dropdowns — let browser handle it
+    if (active.tagName === 'SELECT') return;
+
+    // Do NOT intercept ArrowLeft / ArrowRight inside text or number inputs
+    // Let the cursor move freely within the field; only navigate away when the
+    // user explicitly presses ArrowUp / ArrowDown or Enter.
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && (active.type === 'text' || active.type === 'number')) return;
 
     const editGrid = [
       ['code', 'group'],
@@ -274,7 +279,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
   // Ref to track the highlighted row for auto-scrolling
   const activeRowRef = useRef(null);
 
-  // Sync highlightedIndex and isTableFocused on search query changes
+  // Sync highlightedIndex on search query changes (billing-screen style: prefix highlight)
   useEffect(() => {
     const query = searchTerm.trim().toLowerCase();
     if (!query) {
@@ -283,14 +288,19 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
       return;
     }
 
-    // Check for exact code match in the current filtered view
-    const exactIdx = filteredProducts.findIndex(p => p.code.toLowerCase() === query);
-    if (exactIdx !== -1) {
-      setHighlightedIndex(exactIdx);
+    // 1. Exact code match
+    let idx = filteredProducts.findIndex(p => p.code.toLowerCase() === query);
+    // 2. Code starts with query
+    if (idx === -1) idx = filteredProducts.findIndex(p => p.code.toLowerCase().startsWith(query));
+    // 3. Name contains query
+    if (idx === -1) idx = filteredProducts.findIndex(p => p.name.toLowerCase().includes(query));
+
+    if (idx !== -1) {
+      setHighlightedIndex(idx);
       setIsTableFocused(true);
     } else {
-      setHighlightedIndex(-1);
-      setIsTableFocused(false);
+      setHighlightedIndex(0);
+      setIsTableFocused(filteredProducts.length > 0);
     }
   }, [searchTerm, selectedGroup]);
 
@@ -539,7 +549,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
                 style={{ paddingLeft: '36px' }}
                 value={searchTerm}
                 onChange={(e) => {
-                  setSearchTerm(e.target.value);
+                  setSearchTerm(e.target.value.toUpperCase());
                   setHighlightedIndex(-1);
                   setIsTableFocused(false);
                 }}
@@ -792,7 +802,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
                     className="pos-input mono" 
                     ref={formRefs.sellingPrice}
                     value={editingProduct.sellingPrice}
-                    onChange={(e) => handleInputChange('sellingPrice', parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleInputChange('sellingPrice', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
                   />
                 </div>
                 <div className="input-group">
@@ -803,7 +813,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
                     className="pos-input mono" 
                     ref={formRefs.netPrice}
                     value={editingProduct.netPrice}
-                    onChange={(e) => handleInputChange('netPrice', parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleInputChange('netPrice', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
                   />
                 </div>
               </div>
@@ -817,7 +827,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
                     className="pos-input mono" 
                     ref={formRefs.mrp}
                     value={editingProduct.mrp}
-                    onChange={(e) => handleInputChange('mrp', parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleInputChange('mrp', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
                   />
                 </div>
                 <div className="input-group">
@@ -828,7 +838,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
                     className="pos-input mono" 
                     ref={formRefs.costPrice}
                     value={editingProduct.costPrice}
-                    onChange={(e) => handleInputChange('costPrice', parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleInputChange('costPrice', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
                   />
                 </div>
               </div>
