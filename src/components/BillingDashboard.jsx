@@ -727,10 +727,12 @@ export default function BillingDashboard({
   };
 
   const handleSettleBill = (action = 'save') => {
-    // If viewing a past bill, only allow re-printing, not re-saving
+    // If viewing a past bill: F10 (save) does nothing, F11/F12 re-prints the saved bill
     if (viewingTxIndex !== null) {
       if (action !== 'save') {
         onPrintReceipt(database.transactions[viewingTxIndex], action);
+      } else {
+        alert(`நீங்கள் சேமிக்கப்பட்ட பில் #${database.transactions[viewingTxIndex]?.invoiceNo} பார்க்கிறீர்கள்!\nபுதிய பில் தொடங்க F9 அழுத்தவும்.\n\nYou are VIEWING saved Bill #${database.transactions[viewingTxIndex]?.invoiceNo}.\nPress F9 to start a new bill.`);
       }
       return;
     }
@@ -870,6 +872,26 @@ export default function BillingDashboard({
           </div>
         </div>
       </header>
+
+      {/* ⚠️ VIEWING OLD BILL BANNER - shown whenever we're browsing a past saved bill */}
+      {viewingTxIndex !== null && (
+        <div style={{
+          background: '#dc2626',
+          color: '#fff',
+          textAlign: 'center',
+          padding: '6px 16px',
+          fontWeight: 'bold',
+          fontSize: '13px',
+          letterSpacing: '0.5px',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '16px'
+        }}>
+          <span>📋 பழைய பில் பார்க்கிறீர்கள் / VIEWING SAVED BILL #{database.transactions[viewingTxIndex]?.invoiceNo} (Read-Only)</span>
+          <span style={{ opacity: 0.85, fontSize: '11px' }}>புதிய பில் தொடங்க F9 அழுத்தவும் / Press F9 to start a new bill &nbsp;|&nbsp; மீண்டும் அச்சிட F11/F12 / Reprint: F11 Tamil · F12 English</span>
+        </div>
+      )}
 
       {/* Main Screen Panels split */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', padding: '12px', gap: '12px' }}>
