@@ -13,60 +13,6 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
 
   const searchInputRef = useRef(null);
 
-  // Focus search input on mount
-  useEffect(() => {
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, []);
-
-  // Global keydown handler
-  useEffect(() => {
-    const handleGlobalKeyDown = (e) => {
-      // Escape key behavior
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        if (editingProduct) {
-          setEditingProduct(null);
-          setIsTableFocused(false);
-          setHighlightedIndex(-1);
-          setTimeout(() => {
-            if (searchInputRef.current) searchInputRef.current.focus();
-          }, 50);
-        } else if (isTableFocused) {
-          setIsTableFocused(false);
-          setHighlightedIndex(-1);
-          setTimeout(() => {
-            if (searchInputRef.current) searchInputRef.current.focus();
-          }, 50);
-        } else {
-          onBack();
-        }
-        return;
-      }
-
-      // Table keyboard navigation when focused
-      if (isTableFocused && filteredProducts.length > 0) {
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          setHighlightedIndex(prev => Math.min(filteredProducts.length - 1, prev + 1));
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          setHighlightedIndex(prev => Math.max(0, prev - 1));
-        } else if (e.key === 'Enter') {
-          e.preventDefault();
-          const selectedProduct = filteredProducts[highlightedIndex];
-          if (selectedProduct) {
-            setIsTableFocused(false);
-            handleEditClick(selectedProduct);
-          }
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [isTableFocused, filteredProducts, highlightedIndex, editingProduct, onBack]);
 
   const handleExportCSV = () => {
     const headers = [
@@ -124,6 +70,61 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
     setEditingProduct(cloned);
     setIsAddingNew(false);
   };
+
+  // Focus search input on mount
+  useEffect(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, []);
+
+  // Global keydown handler
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      // Escape key behavior
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (editingProduct) {
+          setEditingProduct(null);
+          setIsTableFocused(false);
+          setHighlightedIndex(-1);
+          setTimeout(() => {
+            if (searchInputRef.current) searchInputRef.current.focus();
+          }, 50);
+        } else if (isTableFocused) {
+          setIsTableFocused(false);
+          setHighlightedIndex(-1);
+          setTimeout(() => {
+            if (searchInputRef.current) searchInputRef.current.focus();
+          }, 50);
+        } else {
+          onBack();
+        }
+        return;
+      }
+
+      // Table keyboard navigation when focused
+      if (isTableFocused && filteredProducts.length > 0) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setHighlightedIndex(prev => Math.min(filteredProducts.length - 1, prev + 1));
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setHighlightedIndex(prev => Math.max(0, prev - 1));
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          const selectedProduct = filteredProducts[highlightedIndex];
+          if (selectedProduct) {
+            setIsTableFocused(false);
+            handleEditClick(selectedProduct);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [isTableFocused, filteredProducts, highlightedIndex, editingProduct, onBack]);
 
   const handleAddNewClick = () => {
     setEditingProduct({
