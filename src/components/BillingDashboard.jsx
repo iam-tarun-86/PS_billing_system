@@ -67,6 +67,7 @@ export default function BillingDashboard({
 
   // Viewing past bills
   const [viewingTxIndex, setViewingTxIndex] = useState(null);
+  const [isEditingSavedBill, setIsEditingSavedBill] = useState(false);
   const [draftBill, setDraftBill] = useState(null);
 
   // Menu bar dropdown visibility
@@ -167,8 +168,17 @@ export default function BillingDashboard({
         if (viewingTxIndex !== null) {
           e.preventDefault();
           setViewingTxIndex(null);
+          setIsEditingSavedBill(false);
           setDraftBill(null);
           handleClearBill();
+        }
+      }
+
+      // F8: Enable editing on currently viewed saved bill
+      if (e.key === 'F8') {
+        if (viewingTxIndex !== null) {
+          e.preventDefault();
+          setIsEditingSavedBill(true);
         }
       }
 
@@ -620,6 +630,7 @@ export default function BillingDashboard({
   };
 
   const loadTransactionToView = (tx) => {
+    setIsEditingSavedBill(false);
     const rows = tx.items.map(item => ({
       code: item.code || '',
       name: item.name || '',
@@ -717,6 +728,7 @@ export default function BillingDashboard({
     // IMPORTANT: reset history-viewing state so subsequent F10/F11/F12
     // operate on the new draft, not on the previously viewed saved transaction.
     setViewingTxIndex(null);
+    setIsEditingSavedBill(false);
     setDraftBill(null);
 
     setBillItems([createEmptyRow()]);
@@ -746,6 +758,7 @@ export default function BillingDashboard({
   // Helper: restore a saved draft back to the billing screen
   const restoreDraft = (draft) => {
     setViewingTxIndex(null);
+    setIsEditingSavedBill(false);
     setBillItems(draft.billItems);
     setCustomerType(draft.customerType);
     setCustomerName(draft.customerName);
@@ -969,7 +982,7 @@ export default function BillingDashboard({
       {/* ⚠️ VIEWING OLD BILL BANNER - shown whenever we're browsing a past saved bill */}
       {viewingTxIndex !== null && (
         <div style={{
-          background: '#dc2626',
+          background: isEditingSavedBill ? '#16a34a' : '#dc2626', // Green for edit mode, Red for read-only
           color: '#fff',
           textAlign: 'center',
           padding: '6px 16px',
@@ -981,13 +994,17 @@ export default function BillingDashboard({
           alignItems: 'center',
           gap: '16px'
         }}>
-          <span>📋 பழைய பில் பார்க்கிறீர்கள் / VIEWING SAVED BILL #{database.transactions[viewingTxIndex]?.invoiceNo} (Read-Only)</span>
-          <span style={{ opacity: 0.85, fontSize: '11px' }}>
-            {draftBill
-              ? `உங்கள் தற்போதைய பில் (${draftBill.billItems.filter(i=>i.code).length} பொருட்கள்) காத்திருக்கிறது / Your draft (${draftBill.billItems.filter(i=>i.code).length} items) is waiting — F9 or F11/F12 to go back & print`
-              : 'F9 = புதிய பில் / New Bill | F11/F12 = இந்த பில்லை மீண்டும் அச்சிடு / Reprint this bill'
-            }
-          </span>
+          {isEditingSavedBill ? (
+            <>
+              <span>✏️ பில் திருத்துகிறீர்கள் / EDITING SAVED BILL #{database.transactions[viewingTxIndex]?.invoiceNo}</span>
+              <span style={{ opacity: 0.85, fontSize: '11px' }}>திருத்தங்களைச் சேமித்து அச்சிட F11/F12 அழுத்தவும் / Press F11/F12 to save & print edits &nbsp;|&nbsp; வெளியேற Escape</span>
+            </>
+          ) : (
+            <>
+              <span>📋 பழைய பில் பார்க்கிறீர்கள் / VIEWING SAVED BILL #{database.transactions[viewingTxIndex]?.invoiceNo} (Read-Only)</span>
+              <span style={{ opacity: 0.85, fontSize: '11px' }}>பில்லைத் திருத்த F8 அழுத்தவும் / Press F8 to edit this bill &nbsp;|&nbsp; மீண்டும் அச்சிட F11/F12 / Reprint: F11/F12 &nbsp;|&nbsp; வெளியேற Escape</span>
+            </>
+          )}
         </div>
       )}
 
@@ -1024,6 +1041,7 @@ export default function BillingDashboard({
                   style={{ width: '80px', height: '28px', padding: '2px 8px' }} 
                   value={customerType}
                   onChange={(e) => setCustomerType(e.target.value)}
+                  readOnly={viewingTxIndex !== null && !isEditingSavedBill}
                 />
               </div>
             </div>
@@ -1040,6 +1058,7 @@ export default function BillingDashboard({
                     style={{ height: '28px', padding: '2px 8px' }}
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
+                    readOnly={viewingTxIndex !== null && !isEditingSavedBill}
                   />
                 </div>
                 <div className="input-group">
@@ -1051,6 +1070,7 @@ export default function BillingDashboard({
                     placeholder="994214XXXX"
                     value={customerMobile}
                     onChange={(e) => setCustomerMobile(e.target.value)}
+                    readOnly={viewingTxIndex !== null && !isEditingSavedBill}
                   />
                 </div>
               </div>
@@ -1065,6 +1085,7 @@ export default function BillingDashboard({
                   placeholder="Street / Line 1"
                   value={addressLine1}
                   onChange={(e) => setAddressLine1(e.target.value)}
+                  readOnly={viewingTxIndex !== null && !isEditingSavedBill}
                 />
                 <input 
                   type="text" 
@@ -1073,6 +1094,7 @@ export default function BillingDashboard({
                   placeholder="Village / Town"
                   value={addressLine2}
                   onChange={(e) => setAddressLine2(e.target.value)}
+                  readOnly={viewingTxIndex !== null && !isEditingSavedBill}
                 />
                 <input 
                   type="text" 
@@ -1081,6 +1103,7 @@ export default function BillingDashboard({
                   placeholder="District"
                   value={addressLine3}
                   onChange={(e) => setAddressLine3(e.target.value)}
+                  readOnly={viewingTxIndex !== null && !isEditingSavedBill}
                 />
               </div>
 
@@ -1096,6 +1119,7 @@ export default function BillingDashboard({
                   style={{ width: '40px', height: '28px', padding: '2px 4px', textAlign: 'center', fontWeight: 'bold' }} 
                   value={rwMode}
                   onChange={(e) => setRwMode(e.target.value)}
+                  readOnly={viewingTxIndex !== null && !isEditingSavedBill}
                 />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1106,6 +1130,7 @@ export default function BillingDashboard({
                   style={{ width: '40px', height: '28px', padding: '2px 4px', textAlign: 'center', fontWeight: 'bold', color: 'var(--error) !important' }} 
                   value={pricingMode}
                   onChange={(e) => setPricingMode(e.target.value)}
+                  readOnly={viewingTxIndex !== null && !isEditingSavedBill}
                 />
               </div>
             </div>
@@ -1144,6 +1169,7 @@ export default function BillingDashboard({
                           onChange={(e) => handleCellChange(index, 'code', e.target.value)}
                           onKeyDown={(e) => handleCellKeyDown(e, index, 'code')}
                           onFocus={() => { setActiveRowIndex(index); setActiveColumn('code'); }}
+                          readOnly={viewingTxIndex !== null && !isEditingSavedBill}
                         />
                       </td>
                       <td>
@@ -1175,6 +1201,7 @@ export default function BillingDashboard({
                           onChange={(e) => handleCellChange(index, 'qty', e.target.value)}
                           onKeyDown={(e) => handleCellKeyDown(e, index, 'qty')}
                           onFocus={() => { setActiveRowIndex(index); setActiveColumn('qty'); }}
+                          readOnly={viewingTxIndex !== null && !isEditingSavedBill}
                           onBlur={() => {
                             const updated = [...billItems];
                             const row = updated[index];
@@ -1208,6 +1235,7 @@ export default function BillingDashboard({
                           onChange={(e) => handleCellChange(index, 'rate', e.target.value)}
                           onKeyDown={(e) => handleCellKeyDown(e, index, 'rate')}
                           onFocus={() => { setActiveRowIndex(index); setActiveColumn('rate'); }}
+                          readOnly={viewingTxIndex !== null && !isEditingSavedBill}
                           onBlur={() => {
                             const updated = [...billItems];
                             const row = updated[index];
@@ -1224,7 +1252,7 @@ export default function BillingDashboard({
                         ₹{(item.totalPrice || 0).toFixed(2)}
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        <button className="btn-ghost" style={{ padding: '2px', color: 'var(--error)' }} onClick={() => removeRow(index)}>
+                        <button className="btn-ghost" style={{ padding: '2px', color: 'var(--error)' }} onClick={() => removeRow(index)} disabled={viewingTxIndex !== null && !isEditingSavedBill}>
                           <Trash2 size={13} />
                         </button>
                       </td>
@@ -1361,6 +1389,7 @@ export default function BillingDashboard({
                 style={{ width: '100px', height: '28px', border: 'none', background: 'transparent', padding: '2px 8px', textAlign: 'right', fontWeight: 'bold' }}
                 value={discount}
                 onChange={(e) => setDiscount(e.target.value)}
+                readOnly={viewingTxIndex !== null && !isEditingSavedBill}
               />
             </div>
 
@@ -1373,6 +1402,7 @@ export default function BillingDashboard({
                 style={{ width: '100px', height: '28px', border: 'none', background: 'transparent', padding: '2px 8px', textAlign: 'right', fontWeight: 'bold' }}
                 value={rent}
                 onChange={(e) => setRent(e.target.value)}
+                readOnly={viewingTxIndex !== null && !isEditingSavedBill}
               />
             </div>
 
@@ -1385,6 +1415,7 @@ export default function BillingDashboard({
                 style={{ width: '100px', height: '28px', border: 'none', background: 'transparent', padding: '2px 8px', textAlign: 'right', fontWeight: 'bold' }}
                 value={coolie}
                 onChange={(e) => setCoolie(e.target.value)}
+                readOnly={viewingTxIndex !== null && !isEditingSavedBill}
               />
             </div>
 
@@ -1397,6 +1428,7 @@ export default function BillingDashboard({
                 style={{ width: '100px', height: '28px', border: 'none', background: 'transparent', padding: '2px 8px', textAlign: 'right', fontWeight: 'bold' }}
                 value={advance}
                 onChange={(e) => setAdvance(e.target.value)}
+                readOnly={viewingTxIndex !== null && !isEditingSavedBill}
               />
             </div>
 
