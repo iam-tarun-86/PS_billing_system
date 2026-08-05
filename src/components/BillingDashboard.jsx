@@ -1149,7 +1149,6 @@ export default function BillingDashboard({
                         <th>Unit</th>
                         <th style={{ textAlign: 'right' }}>விற்பனை விலை / Selling Rate</th>
                         <th>விலை டைப் / Price Type</th>
-                        <th>இருப்பு / Stock</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1176,7 +1175,6 @@ export default function BillingDashboard({
                               <td>{p.unit}</td>
                               <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)' }}>₹{p.sellingPrice.toFixed(2)}</td>
                               <td>{p.priceType === 'Quantity' ? 'Qty Based' : 'Fixed'}</td>
-                              <td style={{ fontFamily: 'var(--font-mono)' }}>{p.currentStock.toFixed(1)}</td>
                             </tr>
                           );
                         });
