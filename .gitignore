@@ -26,6 +26,9 @@ dist-ssr
 # Packaged Desktop Builds
 dist-desktop
 
+# Video recordings
+*.mp4
+
 # Old SMS Legacy Data Folder
 Old_sms/
 

@@ -3,6 +3,13 @@ const path = require('path');
 const fs = require('fs');
 const { DBManager, initTables, migrateLegacyJson, insertSeedDataIfEmpty, fetchFullDatabaseState, syncDatabaseState } = require('./dbManager.cjs');
 
+// Disable GPU hardware acceleration and GPU disk caching to prevent Windows GPU cache access denied black screens
+app.disableHardwareAcceleration();
+app.commandLine.appendSwitch('disable-gpu');
+app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
+app.commandLine.appendSwitch('disable-gpu-program-cache');
+app.commandLine.appendSwitch('disable-software-rasterizer');
+
 let mainWindow;
 
 // Define storage paths
