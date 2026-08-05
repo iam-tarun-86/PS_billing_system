@@ -189,26 +189,32 @@ export default function BillingDashboard({
     return () => window.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Focus management based on row/column updates
+  // Focus management based on row/column updates, modal close, and bill clearing
   useEffect(() => {
+    if (isPrintModalOpen) return;
+
     if (showSearchOverlay) {
       if (searchInputRef.current) searchInputRef.current.focus();
       return;
     }
 
-    if (activeRowIndex >= 0 && activeRowIndex < billItems.length) {
-      if (activeColumn === 'code' && codeRefs.current[activeRowIndex]) {
-        codeRefs.current[activeRowIndex].focus();
-        codeRefs.current[activeRowIndex].select();
-      } else if (activeColumn === 'qty' && qtyRefs.current[activeRowIndex]) {
-        qtyRefs.current[activeRowIndex].focus();
-        qtyRefs.current[activeRowIndex].select();
-      } else if (activeColumn === 'rate' && rateRefs.current[activeRowIndex]) {
-        rateRefs.current[activeRowIndex].focus();
-        rateRefs.current[activeRowIndex].select();
+    const timer = setTimeout(() => {
+      if (activeRowIndex >= 0 && activeRowIndex < billItems.length) {
+        if (activeColumn === 'code' && codeRefs.current[activeRowIndex]) {
+          codeRefs.current[activeRowIndex].focus();
+          if (codeRefs.current[activeRowIndex].select) codeRefs.current[activeRowIndex].select();
+        } else if (activeColumn === 'qty' && qtyRefs.current[activeRowIndex]) {
+          qtyRefs.current[activeRowIndex].focus();
+          if (qtyRefs.current[activeRowIndex].select) qtyRefs.current[activeRowIndex].select();
+        } else if (activeColumn === 'rate' && rateRefs.current[activeRowIndex]) {
+          rateRefs.current[activeRowIndex].focus();
+          if (rateRefs.current[activeRowIndex].select) rateRefs.current[activeRowIndex].select();
+        }
       }
-    }
-  }, [activeRowIndex, activeColumn, showSearchOverlay]);
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [activeRowIndex, activeColumn, showSearchOverlay, isPrintModalOpen, billItems]);
 
   function createEmptyRow() {
     return {
@@ -702,6 +708,12 @@ export default function BillingDashboard({
     setPricingMode('R');
     setActiveRowIndex(0);
     setActiveColumn('code');
+    setTimeout(() => {
+      if (codeRefs.current[0]) {
+        codeRefs.current[0].focus();
+        if (codeRefs.current[0].select) codeRefs.current[0].select();
+      }
+    }, 50);
   };
 
   const handleSettleBill = (action = 'save') => {
