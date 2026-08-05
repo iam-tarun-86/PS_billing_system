@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Search, Edit, Trash2, ArrowLeft, Layers, Percent, Box, Save, X, FileSpreadsheet } from 'lucide-react';
 import { exportToCSV } from '../utils/csv';
 
@@ -7,6 +7,66 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
   const [selectedGroup, setSelectedGroup] = useState('All');
   const [editingProduct, setEditingProduct] = useState(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
+
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [isTableFocused, setIsTableFocused] = useState(false);
+
+  const searchInputRef = useRef(null);
+
+  // Focus search input on mount
+  useEffect(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, []);
+
+  // Global keydown handler
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      // Escape key behavior
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (editingProduct) {
+          setEditingProduct(null);
+          setIsTableFocused(false);
+          setHighlightedIndex(-1);
+          setTimeout(() => {
+            if (searchInputRef.current) searchInputRef.current.focus();
+          }, 50);
+        } else if (isTableFocused) {
+          setIsTableFocused(false);
+          setHighlightedIndex(-1);
+          setTimeout(() => {
+            if (searchInputRef.current) searchInputRef.current.focus();
+          }, 50);
+        } else {
+          onBack();
+        }
+        return;
+      }
+
+      // Table keyboard navigation when focused
+      if (isTableFocused && filteredProducts.length > 0) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setHighlightedIndex(prev => Math.min(filteredProducts.length - 1, prev + 1));
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setHighlightedIndex(prev => Math.max(0, prev - 1));
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          const selectedProduct = filteredProducts[highlightedIndex];
+          if (selectedProduct) {
+            setIsTableFocused(false);
+            handleEditClick(selectedProduct);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [isTableFocused, filteredProducts, highlightedIndex, editingProduct, onBack]);
 
   const handleExportCSV = () => {
     const headers = [
@@ -218,7 +278,15 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
       <div style={{ display: 'flex', gap: '20px', flex: 1, overflow: 'hidden' }}>
         
         {/* Left Side: Product Table list */}
-        <div className="pos-card" style={{ flex: editingProduct ? '2' : '1', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'all 0.3s ease' }}>
+        <div className="pos-card" style={{ 
+          flex: editingProduct ? '2' : '1', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          overflow: 'hidden', 
+          transition: 'all 0.3s ease',
+          border: isTableFocused ? '1.5px solid var(--border-focus)' : '1px solid var(--border-color)',
+          boxShadow: isTableFocused ? '0 0 8px var(--primary-glow)' : '0 2px 4px rgba(0, 0, 0, 0.05)'
+        }}>
           
           {/* Filters Bar */}
           <div style={{ display: 'flex', gap: '12px', marginBottom: '15px' }}>
@@ -227,12 +295,27 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                 <Search size={16} />
               </span>
               <input 
+                ref={searchInputRef}
                 type="text" 
                 placeholder="தேடுக (குறியீடு, பெயர்)... / Search by code, name..." 
                 className="pos-input" 
                 style={{ paddingLeft: '36px' }}
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setHighlightedIndex(-1);
+                  setIsTableFocused(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === 'ArrowDown') {
+                    if (filteredProducts.length > 0) {
+                      e.preventDefault();
+                      setHighlightedIndex(0);
+                      setIsTableFocused(true);
+                      if (searchInputRef.current) searchInputRef.current.blur();
+                    }
+                  }
+                }}
               />
             </div>
             
@@ -265,40 +348,62 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                 </tr>
               </thead>
               <tbody>
-                {filteredProducts.map(p => (
-                  <tr key={p.code} className={editingProduct?.code === p.code ? 'active-row' : ''} style={{ cursor: 'pointer' }} onClick={() => handleEditClick(p)}>
-                    <td style={{ fontFamily: 'var(--font-mono)' }}>{p.code}</td>
-                    <td style={{ fontWeight: '500' }}>{p.name}</td>
-                    <td>{p.tamilName || '-'}</td>
-                    <td>{p.group || 'General'}</td>
-                    <td><span style={{ background: 'var(--border-color)', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' }}>{p.unit}</span></td>
-                    <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)' }}>₹{p.sellingPrice.toFixed(2)}</td>
-                    <td>
-                      <span style={{ 
-                        fontSize: '12px', 
-                        padding: '2px 8px', 
-                        borderRadius: '12px',
-                        background: p.priceType === 'Quantity' ? 'var(--success-bg)' : 'var(--border-color)',
-                        color: p.priceType === 'Quantity' ? 'var(--success)' : 'var(--text-primary)'
-                      }}>
-                        {p.priceType === 'Quantity' ? 'Qty Based' : 'Fixed'}
-                      </span>
-                    </td>
-                    <td style={{ fontFamily: 'var(--font-mono)', color: p.currentStock <= 0 ? 'var(--error)' : 'var(--text-primary)' }}>
-                      {p.currentStock.toFixed(1)}
-                    </td>
-                    <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                        <button className="btn-ghost" style={{ padding: '6px' }} onClick={() => handleEditClick(p)}>
-                          <Edit size={14} />
-                        </button>
-                        <button className="btn-ghost" style={{ padding: '6px', color: 'var(--error)' }} onClick={() => handleDelete(p.code)}>
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {filteredProducts.map((p, i) => {
+                  const isHighlighted = highlightedIndex === i;
+                  const isActive = editingProduct?.code === p.code;
+
+                  return (
+                    <tr 
+                      key={p.code} 
+                      className={`${isActive ? 'active-row' : ''} ${isHighlighted ? 'highlighted-row' : ''}`} 
+                      style={{ 
+                        cursor: 'pointer',
+                        background: isHighlighted ? 'rgba(37, 99, 235, 0.1)' : isActive ? 'rgba(37, 99, 235, 0.05)' : '',
+                        borderLeft: isHighlighted ? '4px solid var(--primary)' : isActive ? '4px solid var(--primary)' : ''
+                      }} 
+                      onClick={() => {
+                        setHighlightedIndex(i);
+                        setIsTableFocused(false);
+                        handleEditClick(p);
+                      }}
+                    >
+                      <td style={{ fontFamily: 'var(--font-mono)' }}>{p.code}</td>
+                      <td style={{ fontWeight: '500' }}>{p.name}</td>
+                      <td>{p.tamilName || '-'}</td>
+                      <td>{p.group || 'General'}</td>
+                      <td><span style={{ background: 'var(--border-color)', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' }}>{p.unit}</span></td>
+                      <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)' }}>₹{p.sellingPrice.toFixed(2)}</td>
+                      <td>
+                        <span style={{ 
+                          fontSize: '12px', 
+                          padding: '2px 8px', 
+                          borderRadius: '12px',
+                          background: p.priceType === 'Quantity' ? 'var(--success-bg)' : 'var(--border-color)',
+                          color: p.priceType === 'Quantity' ? 'var(--success)' : 'var(--text-primary)'
+                        }}>
+                          {p.priceType === 'Quantity' ? 'Qty Based' : 'Fixed'}
+                        </span>
+                      </td>
+                      <td style={{ fontFamily: 'var(--font-mono)', color: p.currentStock <= 0 ? 'var(--error)' : 'var(--text-primary)' }}>
+                        {p.currentStock.toFixed(1)}
+                      </td>
+                      <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                          <button className="btn-ghost" style={{ padding: '6px' }} onClick={() => {
+                            setHighlightedIndex(i);
+                            setIsTableFocused(false);
+                            handleEditClick(p);
+                          }}>
+                            <Edit size={14} />
+                          </button>
+                          <button className="btn-ghost" style={{ padding: '6px', color: 'var(--error)' }} onClick={() => handleDelete(p.code)}>
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {filteredProducts.length === 0 && (
                   <tr>
                     <td colSpan="9" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
