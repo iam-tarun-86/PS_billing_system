@@ -189,7 +189,10 @@ export default function BillingDashboard({
     return () => window.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Focus management based on row/column updates, modal close, and bill clearing
+  // Focus management based on row/column navigation and modal state
+  // NOTE: billItems is intentionally NOT in this dependency array.
+  // Including it caused .select() to fire on every keystroke (since typing updates billItems),
+  // which selected all text so each new character replaced what was typed before.
   useEffect(() => {
     if (isPrintModalOpen) return;
 
@@ -199,10 +202,9 @@ export default function BillingDashboard({
     }
 
     const timer = setTimeout(() => {
-      if (activeRowIndex >= 0 && activeRowIndex < billItems.length) {
+      if (activeRowIndex >= 0) {
         if (activeColumn === 'code' && codeRefs.current[activeRowIndex]) {
           codeRefs.current[activeRowIndex].focus();
-          if (codeRefs.current[activeRowIndex].select) codeRefs.current[activeRowIndex].select();
         } else if (activeColumn === 'qty' && qtyRefs.current[activeRowIndex]) {
           qtyRefs.current[activeRowIndex].focus();
           if (qtyRefs.current[activeRowIndex].select) qtyRefs.current[activeRowIndex].select();
@@ -214,7 +216,7 @@ export default function BillingDashboard({
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [activeRowIndex, activeColumn, showSearchOverlay, isPrintModalOpen, billItems]);
+  }, [activeRowIndex, activeColumn, showSearchOverlay, isPrintModalOpen]);
 
   function createEmptyRow() {
     return {
