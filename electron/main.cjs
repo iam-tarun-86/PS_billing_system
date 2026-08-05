@@ -110,53 +110,9 @@ const defaultDatabase = {
       slabs: []
     },
     {
-      code: '101',
-      name: 'Sugar',
-      tamilName: 'சீனி / சர்க்கரை',
-      group: 'Groceries',
-      unit: 'kg',
-      priceType: 'Quantity',
-      billItem: true,
-      salableItem: true,
-      disableItem: false,
-      sellingPrice: 40,
-      netPrice: 40,
-      mrp: 42,
-      costPrice: 34,
-      openingStock: 1000,
-      currentStock: 850,
-      slabs: [
-        { qtyLimit: 0.100, offset: 20 }, // 60 Rs/kg -> 6 Rs
-        { qtyLimit: 0.250, offset: 20 }, // 60 Rs/kg -> 15 Rs
-        { qtyLimit: 0.500, offset: 10 }  // 50 Rs/kg -> 25 Rs
-      ]
-    },
-    {
-      code: '102',
-      name: 'Toor Dal',
-      tamilName: 'துவரம் பருப்பு',
-      group: 'Dals',
-      unit: 'kg',
-      priceType: 'Quantity',
-      billItem: true,
-      salableItem: true,
-      disableItem: false,
-      sellingPrice: 140,
-      netPrice: 140,
-      mrp: 150,
-      costPrice: 120,
-      openingStock: 500,
-      currentStock: 320,
-      slabs: [
-        { qtyLimit: 0.100, offset: 20 }, // 160 Rs/kg -> 16 Rs
-        { qtyLimit: 0.250, offset: 20 }, // 160 Rs/kg -> 40 Rs
-        { qtyLimit: 0.500, offset: 10 }  // 150 Rs/kg -> 75 Rs
-      ]
-    },
-    {
       code: 'M00',
       name: 'Tata Salt',
-      tamilName: 'டாடா உப்பு M00',
+      tamilName: 'டாடா உப்பு',
       group: 'Groceries',
       unit: 'piece',
       priceType: 'Fixed',
@@ -173,8 +129,8 @@ const defaultDatabase = {
     },
     {
       code: 'M03',
-      name: 'Sugar M03',
-      tamilName: 'சீனி M03',
+      name: 'Sugar',
+      tamilName: 'சீனி / சர்க்கரை',
       group: 'Groceries',
       unit: 'kg',
       priceType: 'Quantity',
@@ -195,8 +151,8 @@ const defaultDatabase = {
     },
     {
       code: 'M04',
-      name: 'Toor Dhaal',
-      tamilName: 'துவரம் பருப்பு M04',
+      name: 'Toor Dal',
+      tamilName: 'துவரம் பருப்பு',
       group: 'Dals',
       unit: 'kg',
       priceType: 'Quantity',
@@ -218,7 +174,7 @@ const defaultDatabase = {
     {
       code: 'M05',
       name: 'Black Gram',
-      tamilName: 'உளுந்தம் பருப்பு M05',
+      tamilName: 'உளுந்தம் பருப்பு',
       group: 'Dals',
       unit: 'kg',
       priceType: 'Quantity',
@@ -240,7 +196,7 @@ const defaultDatabase = {
     {
       code: 'M06',
       name: 'White Gram',
-      tamilName: 'வெள்ளை உளுந்து M06',
+      tamilName: 'வெள்ளை உளுந்து',
       group: 'Dals',
       unit: 'kg',
       priceType: 'Quantity',
@@ -262,7 +218,7 @@ const defaultDatabase = {
     {
       code: 'B01',
       name: 'Lux Soap 100g',
-      tamilName: 'லக்ஸ் சோப்பு B01',
+      tamilName: 'லக்ஸ் சோப்பு',
       group: 'Soaps',
       unit: 'piece',
       priceType: 'Fixed',
@@ -280,7 +236,7 @@ const defaultDatabase = {
     {
       code: 'B02',
       name: 'Hamam Soap 100g',
-      tamilName: 'ஹமாம் சோப்பு B02',
+      tamilName: 'ஹமாம் சோப்பு',
       group: 'Soaps',
       unit: 'piece',
       priceType: 'Fixed',
@@ -298,7 +254,7 @@ const defaultDatabase = {
     {
       code: 'B03',
       name: 'Lifebuoy Soap 100g',
-      tamilName: 'லைஃப்பாய் சோப்பு B03',
+      tamilName: 'லைஃப்பாய் சோப்பு',
       group: 'Soaps',
       unit: 'piece',
       priceType: 'Fixed',
@@ -316,7 +272,7 @@ const defaultDatabase = {
     {
       code: 'O01',
       name: 'Gold Winner Oil 1L',
-      tamilName: 'கோல்டு வின்னர் எண்ணெய் O01',
+      tamilName: 'கோல்டு வின்னர் எண்ணெய்',
       group: 'Oils',
       unit: 'litre',
       priceType: 'Quantity',
@@ -334,7 +290,7 @@ const defaultDatabase = {
     {
       code: 'O02',
       name: 'Coconut Oil 1L',
-      tamilName: 'தேங்காய் எண்ணெய் O02',
+      tamilName: 'தேங்காய் எண்ணெய்',
       group: 'Oils',
       unit: 'litre',
       priceType: 'Quantity',
@@ -352,7 +308,7 @@ const defaultDatabase = {
     {
       code: 'K01',
       name: 'Ashirvaad Atta 1kg',
-      tamilName: 'ஆசிர்வாத் கோதுமை மாவு K01',
+      tamilName: 'ஆசிர்வாத் கோதுமை மாவு',
       group: 'Rava / Flour',
       unit: 'packet',
       priceType: 'Fixed',
@@ -370,7 +326,7 @@ const defaultDatabase = {
     {
       code: 'K02',
       name: 'Maida 1kg',
-      tamilName: 'மைதா மாவு K02',
+      tamilName: 'மைதா மாவு',
       group: 'Rava / Flour',
       unit: 'kg',
       priceType: 'Quantity',
@@ -388,7 +344,7 @@ const defaultDatabase = {
     {
       code: 'C01',
       name: 'Vim Bar 100g',
-      tamilName: 'விம் சோப்பு C01',
+      tamilName: 'விம் சோப்பு',
       group: 'Cleaning Items',
       unit: 'piece',
       priceType: 'Fixed',
@@ -406,7 +362,7 @@ const defaultDatabase = {
     {
       code: 'C02',
       name: 'Exo Touch',
-      tamilName: 'எக்ஸோ சோப்பு C02',
+      tamilName: 'எக்ஸோ சோப்பு',
       group: 'Cleaning Items',
       unit: 'piece',
       priceType: 'Fixed',
@@ -424,7 +380,7 @@ const defaultDatabase = {
     {
       code: 'C03',
       name: 'A-One Bleaching Powder',
-      tamilName: 'ஏ-ஒன் பிளீச்சிங் பவுடர் C03',
+      tamilName: 'ஏ-ஒன் பிளீச்சிங் பவுடர்',
       group: 'Cleaning Items',
       unit: 'packet',
       priceType: 'Fixed',
@@ -437,7 +393,6 @@ const defaultDatabase = {
       costPrice: 30,
       openingStock: 100,
       currentStock: 98,
-      slabs: []
     }
   ],
   transactions: [],
