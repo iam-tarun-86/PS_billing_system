@@ -812,8 +812,6 @@ export default function BillingDashboard({
     }
   };
 
-  const results = getFilteredSearchResults();
-
   return (
     <div className="billing-dashboard-screen screen-fade" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       
