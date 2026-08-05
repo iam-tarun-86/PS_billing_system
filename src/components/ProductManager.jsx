@@ -41,17 +41,56 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
   const groups = ['All', ...new Set(database.products.map(p => p.group || 'General'))];
   const units = ['kg', 'litre', 'piece', 'nos', 'packet', 'box', 'bag'];
 
-  // Filtered products list
-  const filteredProducts = database.products.filter(p => {
-    const matchesSearch = 
-      p.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.tamilName && p.tamilName.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesGroup = selectedGroup === 'All' || (p.group || 'General') === selectedGroup;
-    
-    return matchesSearch && matchesGroup;
-  });
+  // Alphanumeric natural sorting comparator
+  const naturalCompare = (a, b) => {
+    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+  };
+
+  const sortedProducts = [...database.products].sort((a, b) => naturalCompare(a.code, b.code));
+  const groupFilteredProducts = sortedProducts.filter(p => selectedGroup === 'All' || (p.group || 'General') === selectedGroup);
+
+  // Custom prioritised search results
+  const getFilteredProducts = () => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) {
+      return groupFilteredProducts;
+    }
+
+    // Check if there is an exact code match
+    const hasExactMatch = groupFilteredProducts.some(p => p.code.toLowerCase() === query);
+    if (hasExactMatch) {
+      // If there is an exact code match, show the full list (groupFilteredProducts)
+      // so surrounding items are visible in the table.
+      return groupFilteredProducts;
+    }
+
+    // Prioritized search:
+    // 1. Code starts with query
+    // 2. Code contains query (but not starts with)
+    // 3. Name or TamilName or Group contains query
+    const startsWithCode = [];
+    const containsCode = [];
+    const containsName = [];
+
+    groupFilteredProducts.forEach(p => {
+      const codeLower = p.code.toLowerCase();
+      const nameLower = p.name.toLowerCase();
+      const tamilLower = (p.tamilName || '').toLowerCase();
+      const groupLower = (p.group || 'General').toLowerCase();
+
+      if (codeLower.startsWith(query)) {
+        startsWithCode.push(p);
+      } else if (codeLower.includes(query)) {
+        containsCode.push(p);
+      } else if (nameLower.includes(query) || tamilLower.includes(query) || groupLower.includes(query)) {
+        containsName.push(p);
+      }
+    });
+
+    return [...startsWithCode, ...containsCode, ...containsName];
+  };
+
+  const filteredProducts = getFilteredProducts();
 
   const handleEditClick = (product) => {
     // Deep clone product to avoid mutation before save
@@ -70,6 +109,29 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
     setEditingProduct(cloned);
     setIsAddingNew(false);
   };
+
+  // Ref to track the highlighted row for auto-scrolling
+  const activeRowRef = useRef(null);
+
+  // Sync highlightedIndex and isTableFocused on search query changes
+  useEffect(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) {
+      setHighlightedIndex(-1);
+      setIsTableFocused(false);
+      return;
+    }
+
+    // Check for exact code match in the current filtered view
+    const exactIdx = filteredProducts.findIndex(p => p.code.toLowerCase() === query);
+    if (exactIdx !== -1) {
+      setHighlightedIndex(exactIdx);
+      setIsTableFocused(true);
+    } else {
+      setHighlightedIndex(-1);
+      setIsTableFocused(false);
+    }
+  }, [searchTerm, selectedGroup]);
 
   // Focus search input on mount
   useEffect(() => {
@@ -125,6 +187,16 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [isTableFocused, filteredProducts, highlightedIndex, editingProduct, onBack]);
+
+  // Auto-scroll the highlighted row into view
+  useEffect(() => {
+    if (activeRowRef.current) {
+      activeRowRef.current.scrollIntoView({
+        behavior: 'auto',
+        block: 'nearest'
+      });
+    }
+  }, [highlightedIndex]);
 
   const handleAddNewClick = () => {
     setEditingProduct({
@@ -356,6 +428,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                   return (
                     <tr 
                       key={p.code} 
+                      ref={isHighlighted ? activeRowRef : null}
                       className={`${isActive ? 'active-row' : ''} ${isHighlighted ? 'highlighted-row' : ''}`} 
                       style={{ 
                         cursor: 'pointer',

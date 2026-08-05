@@ -79,6 +79,7 @@ export default function BillingDashboard({
   const qtyRefs = useRef([]);
   const rateRefs = useRef([]);
   const searchInputRef = useRef(null);
+  const activeSearchRowRef = useRef(null);
 
   // Digital clock update
   useEffect(() => {
@@ -428,17 +429,73 @@ export default function BillingDashboard({
   };
 
   const getFilteredSearchResults = () => {
-    if (!searchQuery) return database.products.filter(p => !p.disableItem).slice(0, 8);
-    
-    return database.products.filter(p => 
-      !p.disableItem && (
-        p.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.tamilName && p.tamilName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (p.group && p.group.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-    ).slice(0, 8);
+    const activeProducts = database.products.filter(p => !p.disableItem);
+    const sorted = [...activeProducts].sort((a, b) => 
+      a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' })
+    );
+
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      return sorted.slice(0, 8);
+    }
+
+    // Check if there is an exact code match
+    const hasExactMatch = sorted.some(p => p.code.toLowerCase() === query);
+    if (hasExactMatch) {
+      // Return full sorted list so surrounding items are shown
+      return sorted;
+    }
+
+    const startsWithCode = [];
+    const containsCode = [];
+    const containsName = [];
+
+    sorted.forEach(p => {
+      const codeLower = p.code.toLowerCase();
+      const nameLower = p.name.toLowerCase();
+      const tamilLower = (p.tamilName || '').toLowerCase();
+      const groupLower = (p.group || 'General').toLowerCase();
+
+      if (codeLower.startsWith(query)) {
+        startsWithCode.push(p);
+      } else if (codeLower.includes(query)) {
+        containsCode.push(p);
+      } else if (nameLower.includes(query) || tamilLower.includes(query) || groupLower.includes(query)) {
+        containsName.push(p);
+      }
+    });
+
+    return [...startsWithCode, ...containsCode, ...containsName].slice(0, 15);
   };
+
+  // Sync highlightedSearchIndex on exact code match in billing search overlay
+  useEffect(() => {
+    if (!showSearchOverlay) return;
+    
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      setHighlightedSearchIndex(0);
+      return;
+    }
+
+    const results = getFilteredSearchResults();
+    const exactIdx = results.findIndex(p => p.code.toLowerCase() === query);
+    if (exactIdx !== -1) {
+      setHighlightedSearchIndex(exactIdx);
+    } else {
+      setHighlightedSearchIndex(0);
+    }
+  }, [searchQuery, showSearchOverlay]);
+
+  // Scroll active search row into view in overlay
+  useEffect(() => {
+    if (showSearchOverlay && activeSearchRowRef.current) {
+      activeSearchRowRef.current.scrollIntoView({
+        behavior: 'auto',
+        block: 'nearest'
+      });
+    }
+  }, [highlightedSearchIndex, showSearchOverlay]);
 
   const handleSearchOverlayKeyDown = (e) => {
     const results = getFilteredSearchResults();
@@ -1109,6 +1166,7 @@ export default function BillingDashboard({
                       {results.map((p, i) => (
                         <tr 
                           key={p.code} 
+                          ref={highlightedSearchIndex === i ? activeSearchRowRef : null}
                           className={highlightedSearchIndex === i ? 'active-row' : ''}
                           style={{ cursor: 'pointer' }}
                           onClick={() => addProductToRow(p, activeRowIndex)}
