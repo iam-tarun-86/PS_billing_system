@@ -697,6 +697,11 @@ export default function BillingDashboard({
   };
 
   const handleClearBill = () => {
+    // IMPORTANT: reset history-viewing state so subsequent F10/F11/F12
+    // operate on the new draft, not on the previously viewed saved transaction.
+    setViewingTxIndex(null);
+    setDraftBill(null);
+
     setBillItems([createEmptyRow()]);
     setCustomerSlNo(getNextBillNumber().toString());
     setCustomerType('CASH');
