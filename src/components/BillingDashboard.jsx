@@ -167,6 +167,11 @@ export default function BillingDashboard({
       if (e.key === 'Escape') {
         if (viewingTxIndex !== null) {
           e.preventDefault();
+          if (isEditingSavedBill) {
+            if (!confirm('திருத்தங்களை ரத்து செய்துவிட்டு புதிய பில் தொடங்க வேண்டுமா? / Discard edits and start a new bill?')) {
+              return;
+            }
+          }
           setViewingTxIndex(null);
           setIsEditingSavedBill(false);
           setDraftBill(null);
