@@ -366,11 +366,17 @@ export default function BillingDashboard({
       e.preventDefault();
       
       if (column === 'code') {
-        const codeValue = billItems[rowIndex].code;
+        const codeValue = (billItems[rowIndex].code || '').trim();
         if (!codeValue) {
           openSearch('');
         } else {
-          const match = database.products.find(p => p.code.toLowerCase() === codeValue.toLowerCase() && !p.disableItem);
+          // 1. Check exact match
+          let match = database.products.find(p => p.code.toLowerCase() === codeValue.toLowerCase() && !p.disableItem);
+          // 2. Check prefix match (e.g. typing '2' matches '201')
+          if (!match) {
+            match = sortedActiveProducts.find(p => p.code.toLowerCase().startsWith(codeValue.toLowerCase()));
+          }
+
           if (match) {
             addProductToRow(match, rowIndex);
           } else {
