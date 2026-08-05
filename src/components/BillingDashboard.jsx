@@ -151,7 +151,7 @@ export default function BillingDashboard({
       if (e.key === 'F9') {
         e.preventDefault();
         if (viewingTxIndex !== null && draftBill) {
-          // In viewing mode with a saved draft — restore it without asking
+          // In viewing mode with a saved draft — restore it
           restoreDraft(draftBill);
         } else {
           if (confirm('நிச்சயமாக இந்த பில்லை அழிக்க வேண்டுமா? / Clear current bill?')) {
@@ -159,6 +159,16 @@ export default function BillingDashboard({
             setDraftBill(null);
             handleClearBill();
           }
+        }
+      }
+
+      // Escape: Exit edit/view mode and start a new fresh bill
+      if (e.key === 'Escape') {
+        if (viewingTxIndex !== null) {
+          e.preventDefault();
+          setViewingTxIndex(null);
+          setDraftBill(null);
+          handleClearBill();
         }
       }
 
@@ -763,28 +773,6 @@ export default function BillingDashboard({
   }, [viewingTxIndex, draftBill]);
 
   const handleSettleBill = (action = 'save') => {
-    // If viewing a past bill and F11/F12 pressed: restore draft first, then print
-    if (viewingTxIndex !== null) {
-      if (action !== 'save') {
-        if (draftBill) {
-          // Restore draft and trigger print after state settles
-          pendingPrintRef.current = action;
-          restoreDraft(draftBill);
-        } else {
-          // No draft — reprint the currently viewed saved bill
-          onPrintReceipt(database.transactions[viewingTxIndex], action);
-        }
-      } else {
-        // F10 while viewing: just go back to draft
-        if (draftBill) {
-          restoreDraft(draftBill);
-        } else {
-          handleClearBill();
-        }
-      }
-      return;
-    }
-
     const itemsToSave = billItems.filter(item => item.code !== '');
     if (itemsToSave.length === 0) {
       alert('பில்லில் பொருட்கள் இல்லை! / No items in the bill!');
@@ -798,6 +786,62 @@ export default function BillingDashboard({
     const formattedDate = `${dd}/${mm}/${yyyy}`;
     const formattedTime = now.toLocaleTimeString('en-US', { hour12: false });
 
+    if (viewingTxIndex !== null) {
+      // EDIT MODE: Update existing transaction in database & adjust stock
+      const originalTx = database.transactions[viewingTxIndex];
+      
+      const updatedProducts = database.products.map(p => {
+        let stock = p.currentStock;
+        
+        // 1. Revert old stock deduction
+        const oldItem = originalTx.items.find(item => item.code === p.code);
+        if (oldItem) {
+          stock += (parseFloat(oldItem.qty) || 0);
+        }
+        
+        // 2. Deduct new stock
+        const newItem = itemsToSave.find(item => item.code === p.code);
+        if (newItem) {
+          stock -= (parseFloat(newItem.qty) || 0);
+        }
+        
+        return { ...p, currentStock: stock };
+      });
+
+      const updatedInvoice = {
+        ...originalTx,
+        customerName,
+        customerMobile,
+        customerAddress: `${addressLine1} ${addressLine2} ${addressLine3}`.trim(),
+        items: itemsToSave,
+        grossTotal: calculateGrossTotal(),
+        discount: parseFloat(discount) || 0,
+        rent: parseFloat(rent) || 0,
+        coolie: parseFloat(coolie) || 0,
+        advance: parseFloat(advance) || 0,
+        netTotal: calculateNetTotal()
+      };
+
+      const updatedTransactions = [...database.transactions];
+      updatedTransactions[viewingTxIndex] = updatedInvoice;
+
+      onUpdateDatabase({
+        ...database,
+        products: updatedProducts,
+        transactions: updatedTransactions
+      });
+
+      if (action === 'save') {
+        alert('பில் திருத்தம் சேமிக்கப்பட்டது! / Bill edits saved successfully!');
+      } else {
+        onPrintReceipt(updatedInvoice, action);
+      }
+      
+      // IMPORTANT: Keep the edited bill on screen (do not clear it)
+      return;
+    }
+
+    // NEW BILL MODE: Save new transaction & deduct stock
     const invoice = {
       invoiceNo: getNextBillNumber(),
       timestamp: now.toISOString(),
@@ -843,6 +887,7 @@ export default function BillingDashboard({
       onPrintReceipt(invoice, action); // action is 'tamil' or 'english'
     }
 
+    // Automatically clear screen and start next new bill
     handleClearBill();
   };
 
@@ -979,7 +1024,6 @@ export default function BillingDashboard({
                   style={{ width: '80px', height: '28px', padding: '2px 8px' }} 
                   value={customerType}
                   onChange={(e) => setCustomerType(e.target.value)}
-                  readOnly={viewingTxIndex !== null}
                 />
               </div>
             </div>
@@ -996,7 +1040,6 @@ export default function BillingDashboard({
                     style={{ height: '28px', padding: '2px 8px' }}
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    readOnly={viewingTxIndex !== null}
                   />
                 </div>
                 <div className="input-group">
@@ -1008,7 +1051,6 @@ export default function BillingDashboard({
                     placeholder="994214XXXX"
                     value={customerMobile}
                     onChange={(e) => setCustomerMobile(e.target.value)}
-                    readOnly={viewingTxIndex !== null}
                   />
                 </div>
               </div>
@@ -1023,7 +1065,6 @@ export default function BillingDashboard({
                   placeholder="Street / Line 1"
                   value={addressLine1}
                   onChange={(e) => setAddressLine1(e.target.value)}
-                  readOnly={viewingTxIndex !== null}
                 />
                 <input 
                   type="text" 
@@ -1032,7 +1073,6 @@ export default function BillingDashboard({
                   placeholder="Village / Town"
                   value={addressLine2}
                   onChange={(e) => setAddressLine2(e.target.value)}
-                  readOnly={viewingTxIndex !== null}
                 />
                 <input 
                   type="text" 
@@ -1041,7 +1081,6 @@ export default function BillingDashboard({
                   placeholder="District"
                   value={addressLine3}
                   onChange={(e) => setAddressLine3(e.target.value)}
-                  readOnly={viewingTxIndex !== null}
                 />
               </div>
 
@@ -1057,7 +1096,6 @@ export default function BillingDashboard({
                   style={{ width: '40px', height: '28px', padding: '2px 4px', textAlign: 'center', fontWeight: 'bold' }} 
                   value={rwMode}
                   onChange={(e) => setRwMode(e.target.value)}
-                  readOnly={viewingTxIndex !== null}
                 />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1068,7 +1106,6 @@ export default function BillingDashboard({
                   style={{ width: '40px', height: '28px', padding: '2px 4px', textAlign: 'center', fontWeight: 'bold', color: 'var(--error) !important' }} 
                   value={pricingMode}
                   onChange={(e) => setPricingMode(e.target.value)}
-                  readOnly={viewingTxIndex !== null}
                 />
               </div>
             </div>
@@ -1107,7 +1144,6 @@ export default function BillingDashboard({
                           onChange={(e) => handleCellChange(index, 'code', e.target.value)}
                           onKeyDown={(e) => handleCellKeyDown(e, index, 'code')}
                           onFocus={() => { setActiveRowIndex(index); setActiveColumn('code'); }}
-                          readOnly={viewingTxIndex !== null}
                         />
                       </td>
                       <td>
@@ -1139,7 +1175,6 @@ export default function BillingDashboard({
                           onChange={(e) => handleCellChange(index, 'qty', e.target.value)}
                           onKeyDown={(e) => handleCellKeyDown(e, index, 'qty')}
                           onFocus={() => { setActiveRowIndex(index); setActiveColumn('qty'); }}
-                          readOnly={viewingTxIndex !== null}
                           onBlur={() => {
                             const updated = [...billItems];
                             const row = updated[index];
@@ -1173,7 +1208,6 @@ export default function BillingDashboard({
                           onChange={(e) => handleCellChange(index, 'rate', e.target.value)}
                           onKeyDown={(e) => handleCellKeyDown(e, index, 'rate')}
                           onFocus={() => { setActiveRowIndex(index); setActiveColumn('rate'); }}
-                          readOnly={viewingTxIndex !== null}
                           onBlur={() => {
                             const updated = [...billItems];
                             const row = updated[index];
@@ -1190,7 +1224,7 @@ export default function BillingDashboard({
                         ₹{(item.totalPrice || 0).toFixed(2)}
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        <button className="btn-ghost" style={{ padding: '2px', color: 'var(--error)' }} onClick={() => removeRow(index)} disabled={viewingTxIndex !== null}>
+                        <button className="btn-ghost" style={{ padding: '2px', color: 'var(--error)' }} onClick={() => removeRow(index)}>
                           <Trash2 size={13} />
                         </button>
                       </td>
@@ -1327,7 +1361,6 @@ export default function BillingDashboard({
                 style={{ width: '100px', height: '28px', border: 'none', background: 'transparent', padding: '2px 8px', textAlign: 'right', fontWeight: 'bold' }}
                 value={discount}
                 onChange={(e) => setDiscount(e.target.value)}
-                readOnly={viewingTxIndex !== null}
               />
             </div>
 
@@ -1340,7 +1373,6 @@ export default function BillingDashboard({
                 style={{ width: '100px', height: '28px', border: 'none', background: 'transparent', padding: '2px 8px', textAlign: 'right', fontWeight: 'bold' }}
                 value={rent}
                 onChange={(e) => setRent(e.target.value)}
-                readOnly={viewingTxIndex !== null}
               />
             </div>
 
@@ -1353,7 +1385,6 @@ export default function BillingDashboard({
                 style={{ width: '100px', height: '28px', border: 'none', background: 'transparent', padding: '2px 8px', textAlign: 'right', fontWeight: 'bold' }}
                 value={coolie}
                 onChange={(e) => setCoolie(e.target.value)}
-                readOnly={viewingTxIndex !== null}
               />
             </div>
 
@@ -1366,7 +1397,6 @@ export default function BillingDashboard({
                 style={{ width: '100px', height: '28px', border: 'none', background: 'transparent', padding: '2px 8px', textAlign: 'right', fontWeight: 'bold' }}
                 value={advance}
                 onChange={(e) => setAdvance(e.target.value)}
-                readOnly={viewingTxIndex !== null}
               />
             </div>
 
