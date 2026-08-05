@@ -54,13 +54,11 @@ def byte_bamini_to_unicode(byte_data):
     while i < n:
         b = byte_data[i]
         
-        # Prefixes: ெ (166 / 0xa6), ே (167 / 0xa7), ை (168 / 0xa8)
         if b in (166, 167, 168):
             if i + 1 < n:
                 b2 = byte_data[i + 1]
                 if b2 in BYTE_CONSONANTS:
                     tamil_cons = BYTE_CONSONANTS[b2]
-                    # check for third byte ா (161 / 0xa1) or ள (199 / 0xc7)
                     if i + 2 < n and byte_data[i + 2] == 161:
                         if b == 166:
                             out.append(tamil_cons + 'ொ')
@@ -105,15 +103,15 @@ def byte_bamini_to_unicode(byte_data):
             tamil_cons = BYTE_CONSONANTS[b]
             if i + 1 < n:
                 b2 = byte_data[i + 1]
-                if b2 == 161: # ா
+                if b2 == 161:
                     out.append(tamil_cons + 'ா')
                     i += 2
                     continue
-                elif b2 == 162: # ி
+                elif b2 == 162:
                     out.append(tamil_cons + 'ி')
                     i += 2
                     continue
-                elif b2 == 163: # ீ
+                elif b2 == 163:
                     out.append(tamil_cons + 'ீ')
                     i += 2
                     continue
@@ -121,7 +119,6 @@ def byte_bamini_to_unicode(byte_data):
             i += 1
             
         else:
-            # Keep standard printable ASCII
             if 32 <= b <= 126:
                 out.append(chr(b))
             else:
@@ -163,7 +160,6 @@ def read_dbf_table(filepath):
             if len(record_data) < record_len:
                 break
             
-            # Check delete flag: '*' represents deleted
             is_deleted = record_data[0] == 0x2A
             
             record = {'_deleted': is_deleted}
@@ -237,24 +233,36 @@ def main():
     im_records = read_dbf_table(os.path.join(data_dir, "IM012026.DBF"))
     print(f"Total raw items read: {len(im_records)}")
 
-    # Connect to SQLite database
+    # Prepare SQLite and JSON target paths
     sqlite_path = os.path.expandvars(r"%APPDATA%\ps\billing.db")
-    print(f"\nStep 4: Preparing target SQLite Database at {sqlite_path}...")
+    json_path = os.path.expandvars(r"%APPDATA%\ps\database.json")
     
-    if os.path.exists(sqlite_path):
-        backup_path = sqlite_path + ".bak"
-        shutil.copy2(sqlite_path, backup_path)
-        print(f"Backup created at {backup_path}")
-    else:
-        print("Target SQLite file not found, creating a new database...")
-        os.makedirs(os.path.dirname(sqlite_path), exist_ok=True)
+    os.makedirs(os.path.dirname(sqlite_path), exist_ok=True)
+    os.makedirs(os.path.dirname(json_path), exist_ok=True)
 
+    # Prepare SQLite
     conn = sqlite3.connect(sqlite_path)
     cursor = conn.cursor()
-
-    # Clear existing products
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS products (
+          code TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          tamilName TEXT,
+          product_group TEXT,
+          unit TEXT,
+          priceType TEXT,
+          sellingPrice REAL DEFAULT 0,
+          mrp REAL DEFAULT 0,
+          costPrice REAL DEFAULT 0,
+          openingStock REAL DEFAULT 0,
+          currentStock REAL DEFAULT 0,
+          disableItem INTEGER DEFAULT 0,
+          slabs TEXT
+        )
+    """)
     cursor.execute("DELETE FROM products")
-    print("Cleared existing products from target SQLite table.")
+
+    json_products = []
 
     inserted_count = 0
     for r in im_records:
@@ -273,7 +281,6 @@ def main():
         font_bytes = r.get('FONT', b'').strip(b' \x00')
         tamil_name = byte_bamini_to_unicode(font_bytes) if font_bytes else ""
         
-        # Prices
         srate_bytes = r.get('SRATE', b'').decode('cp1252', errors='replace').strip()
         mrp_bytes = r.get('MRP', b'').decode('cp1252', errors='replace').strip()
         crate_bytes = r.get('CRATE', b'').decode('cp1252', errors='replace').strip()
@@ -302,8 +309,7 @@ def main():
         disabled_val = r.get('DISABLE', b'').decode('cp1252', errors='replace').strip()
         disable_item = 1 if disabled_val in ('Y', 'T') else 0
 
-        slabs = json.dumps([])
-
+        # SQLite Insert
         cursor.execute("""
             INSERT OR REPLACE INTO products 
             (code, name, tamilName, product_group, unit, priceType, sellingPrice, mrp, costPrice, openingStock, currentStock, disableItem, slabs)
@@ -311,13 +317,59 @@ def main():
         """, (
             code, name, tamil_name, group_name, unit, price_type,
             selling_price, mrp, cost_price, opening_stock, current_stock,
-            disable_item, slabs
+            disable_item, json.dumps([])
         ))
+
+        # JSON item
+        json_products.append({
+            "code": code,
+            "name": name,
+            "tamilName": tamil_name,
+            "group": group_name,
+            "unit": unit,
+            "priceType": price_type,
+            "billItem": True,
+            "salableItem": True,
+            "disableItem": disable_item == 1,
+            "sellingPrice": selling_price,
+            "netPrice": selling_price,
+            "mrp": mrp,
+            "costPrice": cost_price,
+            "openingStock": opening_stock,
+            "currentStock": current_stock,
+            "slabs": []
+        })
+
         inserted_count += 1
 
     conn.commit()
     conn.close()
-    print(f"\nMigration completed successfully! Imported {inserted_count} products into SQLite database.")
+
+    # Save to JSON database file for pure JS Electron compatibility
+    existing_json = {
+        "products": [],
+        "transactions": [],
+        "settings": {
+            "shopName": "SRI PERUMAL STORES",
+            "headerSlogan": "ஸ்ரீ முருகன் துணை",
+            "phoneNumbers": "9942143460, 9629708861",
+            "defaultOperator": "T",
+            "theme": "dark"
+        }
+    }
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, 'r', encoding='utf-8') as jf:
+                existing_json = json.load(jf)
+        except Exception:
+            pass
+
+    existing_json["products"] = json_products
+
+    with open(json_path, 'w', encoding='utf-8') as jf:
+        json.dump(existing_json, jf, ensure_ascii=False, indent=2)
+
+    print(f"\nMigration completed successfully! Saved {inserted_count} products into SQLite and database.json.")
 
 if __name__ == '__main__':
     main()
