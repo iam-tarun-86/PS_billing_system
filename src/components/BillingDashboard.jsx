@@ -489,7 +489,7 @@ export default function BillingDashboard({
         if (activeSearchRowRef.current) {
           activeSearchRowRef.current.scrollIntoView({
             behavior: 'auto',
-            block: 'nearest'
+            block: 'start'
           });
         }
       });
@@ -1161,10 +1161,10 @@ export default function BillingDashboard({
                     </thead>
                     <tbody>
                       {(() => {
-                        const WINDOW_BEFORE = 15;
-                        const WINDOW_AFTER = 25;
+                        const WINDOW_BEFORE = 0;
+                        const WINDOW_AFTER = 40;
                         const winStart = Math.max(0, highlightedSearchIndex - WINDOW_BEFORE);
-                        const winEnd = Math.min(sortedActiveProducts.length, highlightedSearchIndex + WINDOW_AFTER);
+                        const winEnd = Math.min(sortedActiveProducts.length, winStart + WINDOW_AFTER);
                         const visibleOverlayProducts = sortedActiveProducts.slice(winStart, winEnd);
 
                         return visibleOverlayProducts.map((p) => {
