@@ -443,10 +443,12 @@ export default function BillingDashboard({
     }
 
     // Check if there is an exact code match
-    const hasExactMatch = sorted.some(p => p.code.toLowerCase() === query);
-    if (hasExactMatch) {
-      // Return full sorted list so surrounding items are shown
-      return sorted;
+    const exactIdx = sorted.findIndex(p => p.code.toLowerCase() === query);
+    if (exactIdx !== -1) {
+      // Return a window of surrounding items (e.g., 15 before and 15 after) to prevent rendering freeze
+      const start = Math.max(0, exactIdx - 15);
+      const end = Math.min(sorted.length, exactIdx + 15);
+      return sorted.slice(start, end);
     }
 
     const startsWithCode = [];

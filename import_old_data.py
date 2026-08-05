@@ -198,7 +198,7 @@ def normalize_unit(unit_str):
         return 'piece'
 
 def main():
-    data_dir = r"C:\Users\tarun\Downloads\COLLEGE\projects\ps\Old_sms\Sms3\Data"
+    data_dir = r"C:\Users\tarun\Downloads\COLLEGE\projects\ps\Old_sms\SMS\data"
     
     print("Step 1: Reading unit mapping table (UN012026.dbf)...")
     un_records = read_dbf_table(os.path.join(data_dir, "UN012026.dbf"))
@@ -206,9 +206,12 @@ def main():
     for r in un_records:
         if r['_deleted']:
             continue
-        code = r['UNITCODE'].decode('cp1252', errors='replace').strip()
-        name = r['UNIT'].decode('cp1252', errors='replace').strip()
-        units_map[code] = normalize_unit(name)
+        code_bytes = r.get('UNITCODE', b'')
+        name_bytes = r.get('UNIT', b'')
+        code = code_bytes.decode('cp1252', errors='replace').strip() if code_bytes else ""
+        name = name_bytes.decode('cp1252', errors='replace').strip() if name_bytes else ""
+        if code:
+            units_map[code] = normalize_unit(name)
     print(f"Loaded {len(units_map)} unit code mappings.")
 
     print("\nStep 2: Reading group mapping table (IG012026.DBF)...")
@@ -217,13 +220,17 @@ def main():
     for r in ig_records:
         if r['_deleted']:
             continue
-        code = r['IGROUPCODE'].decode('cp1252', errors='replace').strip()
-        font_bytes = r['FONT'].strip(b' \x00')
+        code_bytes = r.get('IGROUPCODE', b'')
+        font_bytes = r.get('FONT', b'').strip(b' \x00')
+        eng_bytes = r.get('IGROUP', b'')
+        
+        code = code_bytes.decode('cp1252', errors='replace').strip() if code_bytes else ""
         tamil_name = byte_bamini_to_unicode(font_bytes) if font_bytes else ""
-        english_name = r['IGROUP'].decode('cp1252', errors='replace').strip()
+        english_name = eng_bytes.decode('cp1252', errors='replace').strip() if eng_bytes else ""
         
         group_display = tamil_name if tamil_name else clean_group_name(english_name)
-        groups_map[code] = group_display
+        if code:
+            groups_map[code] = group_display
     print(f"Loaded {len(groups_map)} group mappings.")
 
     print("\nStep 3: Loading item master table (IM012026.DBF)...")
@@ -254,21 +261,24 @@ def main():
         if r['_deleted']:
             continue
         
-        code = r['CODE'].decode('cp1252', errors='replace').strip()
-        name = r['ITEM'].decode('cp1252', errors='replace').strip()
+        code_bytes = r.get('CODE', b'')
+        name_bytes = r.get('ITEM', b'')
+        
+        code = code_bytes.decode('cp1252', errors='replace').strip() if code_bytes else ""
+        name = name_bytes.decode('cp1252', errors='replace').strip() if name_bytes else ""
         
         if not code or not name:
             continue
         
-        font_bytes = r['FONT'].strip(b' \x00')
+        font_bytes = r.get('FONT', b'').strip(b' \x00')
         tamil_name = byte_bamini_to_unicode(font_bytes) if font_bytes else ""
         
         # Prices
-        srate_bytes = r['SRATE'].decode('cp1252', errors='replace').strip()
-        mrp_bytes = r['MRP'].decode('cp1252', errors='replace').strip()
-        crate_bytes = r['CRATE'].decode('cp1252', errors='replace').strip()
-        cs_bytes = r['CS'].decode('cp1252', errors='replace').strip()
-        os_bytes = r['OS'].decode('cp1252', errors='replace').strip()
+        srate_bytes = r.get('SRATE', b'').decode('cp1252', errors='replace').strip()
+        mrp_bytes = r.get('MRP', b'').decode('cp1252', errors='replace').strip()
+        crate_bytes = r.get('CRATE', b'').decode('cp1252', errors='replace').strip()
+        cs_bytes = r.get('CS', b'').decode('cp1252', errors='replace').strip() if r.get('CS') else ""
+        os_bytes = r.get('OS', b'').decode('cp1252', errors='replace').strip() if r.get('OS') else ""
         
         selling_price = float(srate_bytes) if srate_bytes else 0.0
         mrp = float(mrp_bytes) if mrp_bytes else 0.0
@@ -281,15 +291,15 @@ def main():
         if selling_price == 0.0:
             selling_price = mrp
             
-        group_code = r['IGROUPCODE'].decode('cp1252', errors='replace').strip()
+        group_code = r.get('IGROUPCODE', b'').decode('cp1252', errors='replace').strip()
         group_name = groups_map.get(group_code, "Groceries")
         
-        unit_code = r['UNITCODE'].decode('cp1252', errors='replace').strip()
+        unit_code = r.get('UNITCODE', b'').decode('cp1252', errors='replace').strip()
         unit = units_map.get(unit_code, "piece")
         
         price_type = "Quantity" if unit in ('kg', 'litre') else "Fixed"
         
-        disabled_val = r['DISABLE'].decode('cp1252', errors='replace').strip()
+        disabled_val = r.get('DISABLE', b'').decode('cp1252', errors='replace').strip()
         disable_item = 1 if disabled_val in ('Y', 'T') else 0
 
         slabs = json.dumps([])

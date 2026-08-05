@@ -217,11 +217,12 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
     }
 
     // Check if there is an exact code match
-    const hasExactMatch = groupFilteredProducts.some(p => p.code.toLowerCase() === query);
-    if (hasExactMatch) {
-      // If there is an exact code match, show the full list (groupFilteredProducts)
-      // so surrounding items are visible in the table.
-      return groupFilteredProducts;
+    const exactIdx = groupFilteredProducts.findIndex(p => p.code.toLowerCase() === query);
+    if (exactIdx !== -1) {
+      // Return a window of surrounding items (e.g., 20 before and 20 after) to prevent rendering freeze
+      const start = Math.max(0, exactIdx - 20);
+      const end = Math.min(groupFilteredProducts.length, exactIdx + 20);
+      return groupFilteredProducts.slice(start, end);
     }
 
     // Prioritized search:
