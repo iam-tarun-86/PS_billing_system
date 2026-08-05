@@ -389,7 +389,9 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
 
   const handleInputChange = (field, value) => {
     setEditingProduct(prev => {
-      const updated = { ...prev, [field]: value };
+      // Force code always uppercase
+      const finalValue = field === 'code' ? (typeof value === 'string' ? value.toUpperCase() : value) : value;
+      const updated = { ...prev, [field]: finalValue };
       
       // Keep sellingPrice and netPrice synchronized by default
       if (field === 'sellingPrice') {
@@ -681,6 +683,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
                     disabled={!isAddingNew}
                     ref={formRefs.code}
                     value={editingProduct.code}
+                    style={{ textTransform: 'uppercase' }}
                     onChange={(e) => handleInputChange('code', e.target.value)}
                   />
                 </div>

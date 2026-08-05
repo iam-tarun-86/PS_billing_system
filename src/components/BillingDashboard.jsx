@@ -285,13 +285,10 @@ export default function BillingDashboard({
     const row = updated[rowIndex];
 
     if (column === 'code') {
-      row.code = value;
-      // Check if code matches a product instantly
-      const match = database.products.find(p => p.code.toLowerCase() === value.toLowerCase() && !p.disableItem);
-      if (match) {
-        addProductToRow(match, rowIndex);
-        return;
-      }
+      // Always store code in uppercase
+      row.code = value.toUpperCase();
+      // NOTE: Do NOT auto-fill on every keypress — user must press Enter to confirm.
+      // This prevents partial codes (e.g. typing 'M') from instantly matching wrong items.
     } else if (column === 'qty') {
       row.qty = value;
       
@@ -1023,7 +1020,7 @@ export default function BillingDashboard({
                           type="text" 
                           ref={el => codeRefs.current[index] = el}
                           className="pos-input mono" 
-                          style={{ border: activeRowIndex === index && activeColumn === 'code' ? '1.5px solid var(--border-focus)' : 'none', background: 'transparent', padding: '2px' }}
+                          style={{ border: activeRowIndex === index && activeColumn === 'code' ? '1.5px solid var(--border-focus)' : 'none', background: 'transparent', padding: '2px', textTransform: 'uppercase' }}
                           value={item.code}
                           onChange={(e) => handleCellChange(index, 'code', e.target.value)}
                           onKeyDown={(e) => handleCellKeyDown(e, index, 'code')}
@@ -1148,7 +1145,7 @@ export default function BillingDashboard({
                       className="pos-input" 
                       style={{ paddingLeft: '32px', height: '32px' }}
                       value={searchQuery}
-                      onChange={(e) => { setSearchQuery(e.target.value); setHighlightedSearchIndex(0); }}
+                      onChange={(e) => { setSearchQuery(e.target.value.toUpperCase()); setHighlightedSearchIndex(0); }}
                       onKeyDown={handleSearchOverlayKeyDown}
                     />
                   </div>
