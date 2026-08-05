@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Search, Edit, Trash2, ArrowLeft, Layers, Percent, Box, Save, X, FileSpreadsheet } from 'lucide-react';
 import { exportToCSV } from '../utils/csv';
 
-export default function ProductManager({ database, onUpdateDatabase, onBack }) {
+export default function ProductManager({ database, onUpdateDatabase, onBack, isPrintModalOpen }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('All');
   const [editingProduct, setEditingProduct] = useState(null);
@@ -303,6 +303,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
   // Global keydown handler
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
+      if (isPrintModalOpen) return;
       // Escape key behavior
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -346,7 +347,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [isTableFocused, filteredProducts, highlightedIndex, editingProduct, onBack]);
+  }, [isTableFocused, filteredProducts, highlightedIndex, editingProduct, onBack, isPrintModalOpen]);
 
   // Auto-scroll the highlighted row into view
   useEffect(() => {

@@ -7,7 +7,8 @@ export default function BillingDashboard({
   onLogOut, 
   onNavigateToInventory, 
   onNavigateToHistory,
-  onPrintReceipt
+  onPrintReceipt,
+  isPrintModalOpen
 }) {
   const [billItems, setBillItems] = useState([createEmptyRow()]);
   const [activeRowIndex, setActiveRowIndex] = useState(0);
@@ -114,6 +115,8 @@ export default function BillingDashboard({
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
+      if (isPrintModalOpen) return;
+
       // Avoid shortcuts when typing in search overlay query
       if (showSearchOverlay) {
         if (e.key === 'Escape') {
@@ -174,7 +177,7 @@ export default function BillingDashboard({
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [billItems, activeRowIndex, activeColumn, showSearchOverlay, customerName, customerMobile, discount, rent, coolie, advance, viewingTxIndex, draftBill]);
+  }, [billItems, activeRowIndex, activeColumn, showSearchOverlay, customerName, customerMobile, discount, rent, coolie, advance, viewingTxIndex, draftBill, isPrintModalOpen]);
 
   // Close menus on click outside
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Printer, X } from 'lucide-react';
 
 export default function PrintReceiptModal({ invoice, settings = {}, printLanguage = 'tamil', onClose }) {
@@ -11,6 +11,20 @@ export default function PrintReceiptModal({ invoice, settings = {}, printLanguag
   const handlePrint = () => {
     window.print();
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handlePrint();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const gross = invoice.grossTotal || 0;
   const net = invoice.netTotal || 0;
@@ -156,12 +170,6 @@ export default function PrintReceiptModal({ invoice, settings = {}, printLanguag
                 </div>
               )}
 
-              {balance > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', color: '#000000' }}>
-                  <span>{labelCredit}</span>
-                  <span>₹{balance.toFixed(2)}</span>
-                </div>
-              )}
             </div>
 
             <div style={{ borderTop: '1px dashed #000000', margin: '6px 0' }}></div>

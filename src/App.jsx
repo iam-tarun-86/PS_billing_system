@@ -107,6 +107,7 @@ function App() {
             setPrintLanguage(lang);
             setActivePrintInvoice(invoice);
           }}
+          isPrintModalOpen={!!activePrintInvoice}
         />
       )}
 
@@ -115,6 +116,7 @@ function App() {
           database={database}
           onUpdateDatabase={handleUpdateDatabase}
           onBack={() => setCurrentPage('billing')}
+          isPrintModalOpen={!!activePrintInvoice}
         />
       )}
 
@@ -127,6 +129,7 @@ function App() {
             setPrintLanguage(lang);
             setActivePrintInvoice(invoice);
           }}
+          isPrintModalOpen={!!activePrintInvoice}
         />
       )}
 

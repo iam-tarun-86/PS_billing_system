@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Search, Calendar, DollarSign, RefreshCw, Printer, FileSpreadsheet } from 'lucide-react';
 import { exportToCSV } from '../utils/csv';
 
-export default function SalesHistory({ database, onUpdateDatabase, onBack, onPrintReceipt }) {
+export default function SalesHistory({ database, onUpdateDatabase, onBack, onPrintReceipt, isPrintModalOpen }) {
   const getTodayDateString = () => {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -25,6 +25,7 @@ export default function SalesHistory({ database, onUpdateDatabase, onBack, onPri
   // Escape key to navigate back
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (isPrintModalOpen) return;
       if (e.key === 'Escape') {
         e.preventDefault();
         onBack();
@@ -32,7 +33,7 @@ export default function SalesHistory({ database, onUpdateDatabase, onBack, onPri
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onBack]);
+  }, [onBack, isPrintModalOpen]);
 
   const transactions = database.transactions || [];
 
