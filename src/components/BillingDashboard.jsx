@@ -431,96 +431,84 @@ export default function BillingDashboard({
     setSearchQuery('');
   };
 
-  const getFilteredSearchResults = () => {
-    const activeProducts = database.products.filter(p => !p.disableItem);
-    const sorted = [...activeProducts].sort((a, b) => 
+  // Master sorted list of all active products for continuous overlay navigation
+  const sortedActiveProducts = useMemo(() => {
+    const active = database.products.filter(p => !p.disableItem);
+    return [...active].sort((a, b) => 
       a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' })
     );
+  }, [database.products]);
 
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) {
-      // Find the first index where code is numeric and >= 100
-      const startIndex = sorted.findIndex(p => {
-        const codeNum = parseInt(p.code, 10);
-        return !isNaN(codeNum) && codeNum >= 100;
-      });
-      const start = startIndex !== -1 ? startIndex : 0;
-      return sorted.slice(start, start + 150);
-    }
-
-    // Check if there is an exact code match
-    const exactIdx = sorted.findIndex(p => p.code.toLowerCase() === query);
-    if (exactIdx !== -1) {
-      // Return a window of surrounding items (e.g., 15 before and 15 after) to prevent rendering freeze
-      const start = Math.max(0, exactIdx - 15);
-      const end = Math.min(sorted.length, exactIdx + 15);
-      return sorted.slice(start, end);
-    }
-
-    const startsWithCode = [];
-    const containsCode = [];
-    const containsName = [];
-
-    sorted.forEach(p => {
-      const codeLower = p.code.toLowerCase();
-      const nameLower = p.name.toLowerCase();
-      const tamilLower = (p.tamilName || '').toLowerCase();
-      const groupLower = (p.group || 'General').toLowerCase();
-
-      if (codeLower.startsWith(query)) {
-        startsWithCode.push(p);
-      } else if (codeLower.includes(query)) {
-        containsCode.push(p);
-      } else if (nameLower.includes(query) || tamilLower.includes(query) || groupLower.includes(query)) {
-        containsName.push(p);
-      }
-    });
-
-    return [...startsWithCode, ...containsCode, ...containsName].slice(0, 150);
-  };
-
-  // Sync highlightedSearchIndex on exact code match in billing search overlay
+  // Jump cursor to matching search position in master list
   useEffect(() => {
-    if (!showSearchOverlay) return;
-    
+    if (!showSearchOverlay || sortedActiveProducts.length === 0) return;
+
     const query = searchQuery.trim().toLowerCase();
+
     if (!query) {
-      setHighlightedSearchIndex(0);
+      // Default view: Find first item with numeric code >= 100
+      const idx100 = sortedActiveProducts.findIndex(p => {
+        const num = parseInt(p.code, 10);
+        return !isNaN(num) && num >= 100;
+      });
+      setHighlightedSearchIndex(idx100 !== -1 ? idx100 : 0);
       return;
     }
 
-    const results = getFilteredSearchResults();
-    const exactIdx = results.findIndex(p => p.code.toLowerCase() === query);
-    if (exactIdx !== -1) {
-      setHighlightedSearchIndex(exactIdx);
+    // 1. Code starts with query (or exact match)
+    const startMatchIdx = sortedActiveProducts.findIndex(p => p.code.toLowerCase().startsWith(query));
+    if (startMatchIdx !== -1) {
+      setHighlightedSearchIndex(startMatchIdx);
+      return;
+    }
+
+    // 2. Code includes query
+    const codeContainsIdx = sortedActiveProducts.findIndex(p => p.code.toLowerCase().includes(query));
+    if (codeContainsIdx !== -1) {
+      setHighlightedSearchIndex(codeContainsIdx);
+      return;
+    }
+
+    // 3. Name / TamilName / Group contains query
+    const nameMatchIdx = sortedActiveProducts.findIndex(p => 
+      p.name.toLowerCase().includes(query) || 
+      (p.tamilName || '').toLowerCase().includes(query) ||
+      (p.group || '').toLowerCase().includes(query)
+    );
+    if (nameMatchIdx !== -1) {
+      setHighlightedSearchIndex(nameMatchIdx);
     } else {
       setHighlightedSearchIndex(0);
     }
-  }, [searchQuery, showSearchOverlay]);
+  }, [searchQuery, showSearchOverlay, sortedActiveProducts]);
 
-  // Scroll active search row into view in overlay
+  // Smooth scroll active search row into view using requestAnimationFrame (60 FPS, no freezing when holding down arrow)
   useEffect(() => {
     if (showSearchOverlay && activeSearchRowRef.current) {
-      activeSearchRowRef.current.scrollIntoView({
-        behavior: 'auto',
-        block: 'nearest'
+      const handle = requestAnimationFrame(() => {
+        if (activeSearchRowRef.current) {
+          activeSearchRowRef.current.scrollIntoView({
+            behavior: 'auto',
+            block: 'nearest'
+          });
+        }
       });
+      return () => cancelAnimationFrame(handle);
     }
   }, [highlightedSearchIndex, showSearchOverlay]);
 
   const handleSearchOverlayKeyDown = (e) => {
-    const results = getFilteredSearchResults();
-    
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setHighlightedSearchIndex(prev => Math.min(results.length - 1, prev + 1));
+      setHighlightedSearchIndex(prev => Math.min(sortedActiveProducts.length - 1, prev + 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setHighlightedSearchIndex(prev => Math.max(0, prev - 1));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (results[highlightedSearchIndex]) {
-        addProductToRow(results[highlightedSearchIndex], activeRowIndex);
+      const selectedProduct = sortedActiveProducts[highlightedSearchIndex];
+      if (selectedProduct) {
+        addProductToRow(selectedProduct, activeRowIndex);
       }
     }
   };
@@ -1174,23 +1162,34 @@ export default function BillingDashboard({
                       </tr>
                     </thead>
                     <tbody>
-                      {results.map((p, i) => (
-                        <tr 
-                          key={p.code} 
-                          ref={highlightedSearchIndex === i ? activeSearchRowRef : null}
-                          className={highlightedSearchIndex === i ? 'active-row' : ''}
-                          style={{ cursor: 'pointer' }}
-                          onClick={() => addProductToRow(p, activeRowIndex)}
-                        >
-                          <td style={{ fontFamily: 'var(--font-mono)' }}>{p.code}</td>
-                          <td style={{ fontWeight: '600' }}>{p.name}</td>
-                          <td>{p.tamilName}</td>
-                          <td>{p.unit}</td>
-                          <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)' }}>₹{p.sellingPrice.toFixed(2)}</td>
-                          <td>{p.priceType === 'Quantity' ? 'Qty Based' : 'Fixed'}</td>
-                          <td style={{ fontFamily: 'var(--font-mono)' }}>{p.currentStock.toFixed(1)}</td>
-                        </tr>
-                      ))}
+                      {(() => {
+                        const WINDOW_BEFORE = 15;
+                        const WINDOW_AFTER = 25;
+                        const winStart = Math.max(0, highlightedSearchIndex - WINDOW_BEFORE);
+                        const winEnd = Math.min(sortedActiveProducts.length, highlightedSearchIndex + WINDOW_AFTER);
+                        const visibleOverlayProducts = sortedActiveProducts.slice(winStart, winEnd);
+
+                        return visibleOverlayProducts.map((p) => {
+                          const isHighlighted = sortedActiveProducts[highlightedSearchIndex]?.code === p.code;
+                          return (
+                            <tr 
+                              key={p.code} 
+                              ref={isHighlighted ? activeSearchRowRef : null}
+                              className={isHighlighted ? 'active-row' : ''}
+                              style={{ cursor: 'pointer' }}
+                              onClick={() => addProductToRow(p, activeRowIndex)}
+                            >
+                              <td style={{ fontFamily: 'var(--font-mono)' }}>{p.code}</td>
+                              <td style={{ fontWeight: '600' }}>{p.name}</td>
+                              <td>{p.tamilName}</td>
+                              <td>{p.unit}</td>
+                              <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)' }}>₹{p.sellingPrice.toFixed(2)}</td>
+                              <td>{p.priceType === 'Quantity' ? 'Qty Based' : 'Fixed'}</td>
+                              <td style={{ fontFamily: 'var(--font-mono)' }}>{p.currentStock.toFixed(1)}</td>
+                            </tr>
+                          );
+                        });
+                      })()}
                     </tbody>
                   </table>
                 </div>
