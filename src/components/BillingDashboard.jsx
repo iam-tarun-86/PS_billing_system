@@ -82,6 +82,8 @@ export default function BillingDashboard({
   const searchInputRef = useRef(null);
   const activeSearchRowRef = useRef(null);
   const overlayTableContainerRef = useRef(null);
+  // Used to trigger a save+print after async draft-restore completes
+  const pendingPrintRef = useRef(null);
 
   // Digital clock update
   useEffect(() => {
@@ -145,13 +147,18 @@ export default function BillingDashboard({
         handleSettleBill('english');
       }
 
-      // F9: Clear current bill contents
+      // F9: Clear / restore draft
       if (e.key === 'F9') {
         e.preventDefault();
-        if (confirm('நிச்சயமாக இந்த பில்லை அழிக்க வேண்டுமா? / Clear current bill?')) {
-          setViewingTxIndex(null);
-          setDraftBill(null);
-          handleClearBill();
+        if (viewingTxIndex !== null && draftBill) {
+          // In viewing mode with a saved draft — restore it without asking
+          restoreDraft(draftBill);
+        } else {
+          if (confirm('நிச்சயமாக இந்த பில்லை அழிக்க வேண்டுமா? / Clear current bill?')) {
+            setViewingTxIndex(null);
+            setDraftBill(null);
+            handleClearBill();
+          }
         }
       }
 
@@ -726,13 +733,54 @@ export default function BillingDashboard({
     }, 50);
   };
 
+  // Helper: restore a saved draft back to the billing screen
+  const restoreDraft = (draft) => {
+    setViewingTxIndex(null);
+    setBillItems(draft.billItems);
+    setCustomerType(draft.customerType);
+    setCustomerName(draft.customerName);
+    setAddressLine1(draft.addressLine1 || '');
+    setAddressLine2(draft.addressLine2 || '');
+    setAddressLine3(draft.addressLine3 || '');
+    setCustomerMobile(draft.customerMobile);
+    setDiscount(draft.discount);
+    setRent(draft.rent);
+    setCoolie(draft.coolie);
+    setAdvance(draft.advance);
+    setRwMode(draft.rwMode);
+    setPricingMode(draft.pricingMode);
+    setDraftBill(null);
+  };
+
+  // After draft-restore completes, fire the pending save+print action
+  useEffect(() => {
+    if (pendingPrintRef.current && viewingTxIndex === null && !draftBill) {
+      const action = pendingPrintRef.current;
+      pendingPrintRef.current = null;
+      // Give React one tick to settle state, then trigger
+      setTimeout(() => handleSettleBill(action), 0);
+    }
+  }, [viewingTxIndex, draftBill]);
+
   const handleSettleBill = (action = 'save') => {
-    // If viewing a past bill: F10 (save) does nothing, F11/F12 re-prints the saved bill
+    // If viewing a past bill and F11/F12 pressed: restore draft first, then print
     if (viewingTxIndex !== null) {
       if (action !== 'save') {
-        onPrintReceipt(database.transactions[viewingTxIndex], action);
+        if (draftBill) {
+          // Restore draft and trigger print after state settles
+          pendingPrintRef.current = action;
+          restoreDraft(draftBill);
+        } else {
+          // No draft — reprint the currently viewed saved bill
+          onPrintReceipt(database.transactions[viewingTxIndex], action);
+        }
       } else {
-        alert(`நீங்கள் சேமிக்கப்பட்ட பில் #${database.transactions[viewingTxIndex]?.invoiceNo} பார்க்கிறீர்கள்!\nபுதிய பில் தொடங்க F9 அழுத்தவும்.\n\nYou are VIEWING saved Bill #${database.transactions[viewingTxIndex]?.invoiceNo}.\nPress F9 to start a new bill.`);
+        // F10 while viewing: just go back to draft
+        if (draftBill) {
+          restoreDraft(draftBill);
+        } else {
+          handleClearBill();
+        }
       }
       return;
     }
@@ -889,7 +937,12 @@ export default function BillingDashboard({
           gap: '16px'
         }}>
           <span>📋 பழைய பில் பார்க்கிறீர்கள் / VIEWING SAVED BILL #{database.transactions[viewingTxIndex]?.invoiceNo} (Read-Only)</span>
-          <span style={{ opacity: 0.85, fontSize: '11px' }}>புதிய பில் தொடங்க F9 அழுத்தவும் / Press F9 to start a new bill &nbsp;|&nbsp; மீண்டும் அச்சிட F11/F12 / Reprint: F11 Tamil · F12 English</span>
+          <span style={{ opacity: 0.85, fontSize: '11px' }}>
+            {draftBill
+              ? `உங்கள் தற்போதைய பில் (${draftBill.billItems.filter(i=>i.code).length} பொருட்கள்) காத்திருக்கிறது / Your draft (${draftBill.billItems.filter(i=>i.code).length} items) is waiting — F9 or F11/F12 to go back & print`
+              : 'F9 = புதிய பில் / New Bill | F11/F12 = இந்த பில்லை மீண்டும் அச்சிடு / Reprint this bill'
+            }
+          </span>
         </div>
       )}
 
