@@ -10,9 +10,169 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
 
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [isTableFocused, setIsTableFocused] = useState(false);
-
   const searchInputRef = useRef(null);
 
+  const formRefs = {
+    code: useRef(null),
+    group: useRef(null),
+    name: useRef(null),
+    tamilName: useRef(null),
+    unit: useRef(null),
+    priceType: useRef(null),
+    billItem: useRef(null),
+    salableItem: useRef(null),
+    disableItem: useRef(null),
+    sellingPrice: useRef(null),
+    netPrice: useRef(null),
+    mrp: useRef(null),
+    costPrice: useRef(null),
+    openingStock: useRef(null),
+    currentStock: useRef(null),
+    btnCancel: useRef(null),
+    btnSave: useRef(null)
+  };
+
+  // Focus first editable input when editingProduct is opened
+  useEffect(() => {
+    if (editingProduct) {
+      setTimeout(() => {
+        if (isAddingNew && formRefs.code.current) {
+          formRefs.code.current.focus();
+          formRefs.code.current.select();
+        } else if (formRefs.group.current) {
+          formRefs.group.current.focus();
+          formRefs.group.current.select();
+        }
+      }, 100);
+    }
+  }, [editingProduct, isAddingNew]);
+
+  const handleEditFormKeyDown = (e) => {
+    const keys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'];
+    if (!keys.includes(e.key)) return;
+
+    // Do not override standard option selection inside SELECT dropdowns
+    if (document.activeElement.tagName === 'SELECT' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      return;
+    }
+
+    const editGrid = [
+      ['code', 'group'],
+      ['name'],
+      ['tamilName'],
+      ['unit', 'priceType'],
+      ['billItem', 'salableItem', 'disableItem'],
+      ['sellingPrice', 'netPrice'],
+      ['mrp', 'costPrice'],
+      ['openingStock', 'currentStock'],
+      ['btnCancel', 'btnSave']
+    ];
+
+    const flatOrder = [
+      'code', 'group',
+      'name',
+      'tamilName',
+      'unit', 'priceType',
+      'billItem', 'salableItem', 'disableItem',
+      'sellingPrice', 'netPrice',
+      'mrp', 'costPrice',
+      'openingStock', 'currentStock',
+      'btnSave'
+    ];
+
+    // Find current active field
+    let currentField = null;
+    for (const [key, ref] of Object.entries(formRefs)) {
+      if (ref.current === document.activeElement) {
+        currentField = key;
+        break;
+      }
+    }
+
+    if (!currentField) return;
+
+    const focusField = (field) => {
+      const ref = formRefs[field];
+      if (ref && ref.current && !ref.current.disabled) {
+        ref.current.focus();
+        if (typeof ref.current.select === 'function') {
+          ref.current.select();
+        }
+        return true;
+      }
+      return false;
+    };
+
+    if (e.key === 'Enter') {
+      if (document.activeElement.tagName === 'BUTTON') return;
+      
+      e.preventDefault();
+      const currentIndex = flatOrder.indexOf(currentField);
+      
+      if (e.shiftKey) {
+        for (let i = currentIndex - 1; i >= 0; i--) {
+          if (focusField(flatOrder[i])) return;
+        }
+      } else {
+        for (let i = currentIndex + 1; i < flatOrder.length; i++) {
+          if (focusField(flatOrder[i])) return;
+        }
+      }
+      return;
+    }
+
+    let r = -1;
+    let c = -1;
+    for (let i = 0; i < editGrid.length; i++) {
+      const colIndex = editGrid[i].indexOf(currentField);
+      if (colIndex !== -1) {
+        r = i;
+        c = colIndex;
+        break;
+      }
+    }
+
+    if (r === -1 || c === -1) return;
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      for (let prevRow = r - 1; prevRow >= 0; prevRow--) {
+        const nextCol = Math.min(c, editGrid[prevRow].length - 1);
+        const nextField = editGrid[prevRow][nextCol];
+        if (focusField(nextField)) return;
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      for (let nextRow = r + 1; nextRow < editGrid.length; nextRow++) {
+        const nextCol = Math.min(c, editGrid[nextRow].length - 1);
+        const nextField = editGrid[nextRow][nextCol];
+        if (focusField(nextField)) return;
+      }
+    } else if (e.key === 'ArrowLeft') {
+      const cursorAtStart = document.activeElement.selectionStart === 0 || document.activeElement.selectionStart === undefined;
+      if (cursorAtStart) {
+        for (let prevCol = c - 1; prevCol >= 0; prevCol--) {
+          const nextField = editGrid[r][prevCol];
+          if (focusField(nextField)) {
+            e.preventDefault();
+            return;
+          }
+        }
+      }
+    } else if (e.key === 'ArrowRight') {
+      const valLength = document.activeElement.value ? document.activeElement.value.length : 0;
+      const cursorAtEnd = document.activeElement.selectionEnd === valLength || document.activeElement.selectionEnd === undefined;
+      if (cursorAtEnd) {
+        for (let nextCol = c + 1; nextCol < editGrid[r].length; nextCol++) {
+          const nextField = editGrid[r][nextCol];
+          if (focusField(nextField)) {
+            e.preventDefault();
+            return;
+          }
+        }
+      }
+    }
+  };
 
   const handleExportCSV = () => {
     const headers = [
@@ -492,7 +652,11 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
 
         {/* Right Side: Inline Sliding edit card */}
         {editingProduct && (
-          <div className="pos-card screen-fade" style={{ flex: '1', display: 'flex', flexDirection: 'column', overflowY: 'auto', borderLeft: '3px solid var(--primary)' }}>
+          <div 
+            className="pos-card screen-fade" 
+            style={{ flex: '1', display: 'flex', flexDirection: 'column', overflowY: 'auto', borderLeft: '3px solid var(--primary)' }}
+            onKeyDown={handleEditFormKeyDown}
+          >
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', marginBottom: '15px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 'bold' }}>
@@ -513,6 +677,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                     type="text" 
                     className="pos-input mono" 
                     disabled={!isAddingNew}
+                    ref={formRefs.code}
                     value={editingProduct.code}
                     onChange={(e) => handleInputChange('code', e.target.value)}
                   />
@@ -522,6 +687,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                   <input 
                     type="text" 
                     className="pos-input" 
+                    ref={formRefs.group}
                     value={editingProduct.group}
                     onChange={(e) => handleInputChange('group', e.target.value)}
                   />
@@ -534,6 +700,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                 <input 
                   type="text" 
                   className="pos-input" 
+                  ref={formRefs.name}
                   value={editingProduct.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                 />
@@ -544,6 +711,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                 <input 
                   type="text" 
                   className="pos-input" 
+                  ref={formRefs.tamilName}
                   value={editingProduct.tamilName}
                   onChange={(e) => handleInputChange('tamilName', e.target.value)}
                 />
@@ -555,6 +723,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                   <span className="input-label">அலகு / Unit</span>
                   <select 
                     className="pos-input" 
+                    ref={formRefs.unit}
                     value={editingProduct.unit}
                     onChange={(e) => handleInputChange('unit', e.target.value)}
                   >
@@ -567,6 +736,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                   <span className="input-label">விலை வகை / Price Type</span>
                   <select 
                     className="pos-input" 
+                    ref={formRefs.priceType}
                     value={editingProduct.priceType}
                     onChange={(e) => handleInputChange('priceType', e.target.value)}
                   >
@@ -581,6 +751,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
                   <input 
                     type="checkbox" 
+                    ref={formRefs.billItem}
                     checked={editingProduct.billItem} 
                     onChange={(e) => handleInputChange('billItem', e.target.checked)}
                   />
@@ -589,6 +760,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
                   <input 
                     type="checkbox" 
+                    ref={formRefs.salableItem}
                     checked={editingProduct.salableItem} 
                     onChange={(e) => handleInputChange('salableItem', e.target.checked)}
                   />
@@ -597,6 +769,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: editingProduct.disableItem ? 'var(--error)' : 'inherit' }}>
                   <input 
                     type="checkbox" 
+                    ref={formRefs.disableItem}
                     checked={editingProduct.disableItem} 
                     onChange={(e) => handleInputChange('disableItem', e.target.checked)}
                   />
@@ -612,6 +785,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                     type="number" 
                     step="0.01"
                     className="pos-input mono" 
+                    ref={formRefs.sellingPrice}
                     value={editingProduct.sellingPrice}
                     onChange={(e) => handleInputChange('sellingPrice', parseFloat(e.target.value) || 0)}
                   />
@@ -622,6 +796,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                     type="number" 
                     step="0.01"
                     className="pos-input mono" 
+                    ref={formRefs.netPrice}
                     value={editingProduct.netPrice}
                     onChange={(e) => handleInputChange('netPrice', parseFloat(e.target.value) || 0)}
                   />
@@ -635,6 +810,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                     type="number" 
                     step="0.01"
                     className="pos-input mono" 
+                    ref={formRefs.mrp}
                     value={editingProduct.mrp}
                     onChange={(e) => handleInputChange('mrp', parseFloat(e.target.value) || 0)}
                   />
@@ -645,6 +821,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                     type="number" 
                     step="0.01"
                     className="pos-input mono" 
+                    ref={formRefs.costPrice}
                     value={editingProduct.costPrice}
                     onChange={(e) => handleInputChange('costPrice', parseFloat(e.target.value) || 0)}
                   />
@@ -658,6 +835,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                   <input 
                     type="number" 
                     className="pos-input mono" 
+                    ref={formRefs.openingStock}
                     value={editingProduct.openingStock}
                     onChange={(e) => handleInputChange('openingStock', parseFloat(e.target.value) || 0)}
                   />
@@ -667,6 +845,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
                   <input 
                     type="number" 
                     className="pos-input mono" 
+                    ref={formRefs.currentStock}
                     value={editingProduct.currentStock}
                     onChange={(e) => handleInputChange('currentStock', parseFloat(e.target.value) || 0)}
                   />
@@ -753,16 +932,27 @@ export default function ProductManager({ database, onUpdateDatabase, onBack }) {
 
             {/* Save/Cancel Panel */}
             <div style={{ display: 'flex', gap: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '15px', marginTop: '20px' }}>
-              <button className="btn-secondary" style={{ flex: 1, padding: '10px' }} onClick={() => setEditingProduct(null)}>
+              <button 
+                className="btn-secondary" 
+                style={{ flex: 1, padding: '10px' }} 
+                ref={formRefs.btnCancel}
+                onClick={() => setEditingProduct(null)}
+              >
                 ரத்து செய் / Cancel
               </button>
-              <button className="btn-success" style={{ flex: 1, padding: '10px' }} onClick={handleSave}>
+              <button 
+                className="btn-success" 
+                style={{ flex: 1, padding: '10px' }} 
+                ref={formRefs.btnSave}
+                onClick={handleSave}
+              >
                 <Save size={16} /> சேமி / Save
               </button>
             </div>
 
           </div>
         )}
+
 
       </div>
     </div>
