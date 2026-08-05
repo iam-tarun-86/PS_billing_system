@@ -26,3 +26,7 @@ dist-ssr
 # Packaged Desktop Builds
 dist-desktop
 
+# Old SMS Legacy Data Folder
+Old_sms/
+
+
