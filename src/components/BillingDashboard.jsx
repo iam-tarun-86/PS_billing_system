@@ -439,7 +439,13 @@ export default function BillingDashboard({
 
     const query = searchQuery.trim().toLowerCase();
     if (!query) {
-      return sorted.slice(0, 8);
+      // Find the first index where code is numeric and >= 100
+      const startIndex = sorted.findIndex(p => {
+        const codeNum = parseInt(p.code, 10);
+        return !isNaN(codeNum) && codeNum >= 100;
+      });
+      const start = startIndex !== -1 ? startIndex : 0;
+      return sorted.slice(start, start + 150);
     }
 
     // Check if there is an exact code match
@@ -470,7 +476,7 @@ export default function BillingDashboard({
       }
     });
 
-    return [...startsWithCode, ...containsCode, ...containsName].slice(0, 15);
+    return [...startsWithCode, ...containsCode, ...containsName].slice(0, 150);
   };
 
   // Sync highlightedSearchIndex on exact code match in billing search overlay
