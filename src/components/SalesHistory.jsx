@@ -1,10 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Search, Calendar, DollarSign, RefreshCw, Printer, FileSpreadsheet } from 'lucide-react';
 import { exportToCSV } from '../utils/csv';
 
 export default function SalesHistory({ database, onUpdateDatabase, onBack, onPrintReceipt }) {
+  const getTodayDateString = () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const getTodayDbDate = () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${dd}/${mm}/${yyyy}`;
+  };
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterDate, setFilterDate] = useState('');
+  const [filterDate, setFilterDate] = useState(getTodayDateString());
+
+  // Escape key to navigate back
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onBack();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onBack]);
 
   const transactions = database.transactions || [];
 
@@ -121,47 +149,36 @@ export default function SalesHistory({ database, onUpdateDatabase, onBack, onPri
       </div>
 
       {/* KPI summaries row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-        
-        <div className="pos-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>விற்பனைகள் / Bills Count</span>
-            <span style={{ fontSize: '24px', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}>{filteredTransactions.length}</span>
-          </div>
-          <RefreshCw size={24} style={{ color: 'var(--primary)' }} />
-        </div>
+      {(() => {
+        const todayDbFormatted = getTodayDbDate();
+        const todayTransactions = transactions.filter(t => t.date === todayDbFormatted);
+        const todayBillsCount = todayTransactions.length;
+        const todayTotalRevenue = todayTransactions.reduce((sum, t) => sum + t.netTotal, 0);
 
-        <div className="pos-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>மொத்த வரவு / Total Revenue</span>
-            <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--success)', fontFamily: 'var(--font-mono)' }}>
-              ₹{calculateTotalSales().toFixed(2)}
-            </span>
-          </div>
-          <DollarSign size={24} style={{ color: 'var(--success)' }} />
-        </div>
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+            
+            <div className="pos-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>இன்றைய விற்பனைகள் / Today's Bills Count</span>
+                <span style={{ fontSize: '24px', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}>{todayBillsCount}</span>
+              </div>
+              <RefreshCw size={24} style={{ color: 'var(--primary)' }} />
+            </div>
 
-        <div className="pos-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>பணம் / Cash Received</span>
-            <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary)', fontFamily: 'var(--font-mono)' }}>
-              ₹{calculateTotalCash().toFixed(2)}
-            </span>
-          </div>
-          <DollarSign size={24} style={{ color: 'var(--primary)' }} />
-        </div>
+            <div className="pos-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>இன்றைய மொத்த வரவு / Today's Total Revenue</span>
+                <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--success)', fontFamily: 'var(--font-mono)' }}>
+                  ₹{todayTotalRevenue.toFixed(2)}
+                </span>
+              </div>
+              <DollarSign size={24} style={{ color: 'var(--success)' }} />
+            </div>
 
-        <div className="pos-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>கடன் / Outstanding Credit</span>
-            <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--warning)', fontFamily: 'var(--font-mono)' }}>
-              ₹{calculateTotalCredit().toFixed(2)}
-            </span>
           </div>
-          <DollarSign size={24} style={{ color: 'var(--warning)' }} />
-        </div>
-
-      </div>
+        );
+      })()}
 
       {/* Filter and Table container */}
       <div className="pos-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
