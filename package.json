@@ -10,7 +10,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "package": "vite build && electron-packager . --platform=win32 --arch=x64 --out=dist-desktop --overwrite"
+    "package": "vite build && electron-packager . --platform=win32 --arch=x64 --out=dist-desktop --overwrite --ignore=\"^(/(src|Old_sms|public|\\..*|.*\\.py|.*\\.md|.*\\.txt))\""
   },
   "dependencies": {
     "lucide-react": "^1.28.0",

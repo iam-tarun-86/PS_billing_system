@@ -477,10 +477,16 @@ function createWindow() {
     loadUrlWithRetry();
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html')).catch((err) => {
+    let indexPath = path.join(__dirname, '../dist/index.html');
+    if (!fs.existsSync(indexPath)) {
+      indexPath = path.join(__dirname, 'dist/index.html');
+    }
+    if (!fs.existsSync(indexPath)) {
+      indexPath = path.join(app.getAppPath(), 'dist/index.html');
+    }
+    mainWindow.loadFile(indexPath).catch((err) => {
       console.error('Failed to load production build index.html:', err);
     });
-    // Remove menu bar in production
     mainWindow.setMenu(null);
   }
 
