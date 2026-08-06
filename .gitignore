@@ -25,6 +25,13 @@ dist-ssr
 
 # Packaged Desktop Builds
 dist-desktop
+dist-installer
+
+# Image assets
+*.jpeg
+*.jpg
+*.png
+*.ico
 
 # Video recordings
 *.mp4

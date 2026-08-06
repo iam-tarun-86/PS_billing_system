@@ -417,9 +417,24 @@ function readDatabaseFile() {
       if (parsed && parsed.products && Array.isArray(parsed.products)) {
         return parsed;
       }
+    } else {
+      // Seed database from bundled file on first run
+      let seedPath = path.join(__dirname, 'seed_database.json');
+      if (!fs.existsSync(seedPath)) {
+        seedPath = path.join(app.getAppPath(), 'electron/seed_database.json');
+      }
+      if (fs.existsSync(seedPath)) {
+        console.log('Seeding database from bundled file:', seedPath);
+        const seedRaw = fs.readFileSync(seedPath, 'utf-8');
+        const seedParsed = JSON.parse(seedRaw);
+        if (seedParsed && seedParsed.products && Array.isArray(seedParsed.products)) {
+          writeDatabaseFile(seedParsed);
+          return seedParsed;
+        }
+      }
     }
   } catch (err) {
-    console.error('Failed to read database.json:', err);
+    console.error('Failed to read/seed database.json:', err);
   }
   writeDatabaseFile(defaultDatabase);
   return defaultDatabase;
@@ -446,6 +461,21 @@ ipcMain.handle('db-write', async (event, data) => {
   return writeDatabaseFile(data);
 });
 
+ipcMain.handle('print-silent', async () => {
+  if (mainWindow) {
+    mainWindow.webContents.print({
+      silent: true,
+      printBackground: true
+    }, (success, errorType) => {
+      if (!success) {
+        console.error('Silent print failed:', errorType);
+      }
+    });
+    return { success: true };
+  }
+  return { success: false, error: 'Main window not available' };
+});
+
 ipcMain.handle('window-login', () => {
   if (mainWindow) {
     mainWindow.setResizable(true);
@@ -467,6 +497,14 @@ ipcMain.handle('window-logout', () => {
 });
 
 function createWindow() {
+  let iconPath = path.join(__dirname, '../public/logo.png');
+  if (!fs.existsSync(iconPath)) {
+    iconPath = path.join(__dirname, '../dist/logo.png');
+  }
+  if (!fs.existsSync(iconPath)) {
+    iconPath = path.join(app.getAppPath(), 'dist/logo.png');
+  }
+
   mainWindow = new BrowserWindow({
     width: 500,
     height: 660,
@@ -474,7 +512,8 @@ function createWindow() {
     resizable: false,
     maximizable: false,
     frame: true, // Native window frame
-    title: 'Express Bill - POS System',
+    title: 'PS Cash Memo - POS System',
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,

@@ -1,0 +1,144 @@
+========================================================================
+             PS BILLING SYSTEM - THERMAL PRINTING OPTIMIZATION
+========================================================================
+
+If you start a new chat with an AI assistant, share this file so the assistant 
+understands how thermal receipt printing, silent printing, and sales 
+visualizations are configured in the codebase.
+
+------------------------------------------------------------------------
+1. PROBLEM DESCRIPTION (PRINT DITHERING / FAINTNESS):
+------------------------------------------------------------------------
+When printing receipts to a monochrome 1-bit thermal printer (like TVS RP 3160 STAR) 
+via Electron's `window.print()`:
+- Small fonts (like 10px-11px JetBrains Mono) have thin stems.
+- Chromium applies anti-aliasing (gray pixels) at the edges of the font.
+- The thermal printer driver converts these gray pixels into a dotted dither 
+  pattern to simulate gray, making the letters look faint or invisible.
+- Colors like gray (#4b5563) used on slogan/operator details get heavily 
+  dithered and print as faint, unreadable dot clusters.
+
+------------------------------------------------------------------------
+2. SOLUTION DETAILS (PRINT DITHERING FIX):
+------------------------------------------------------------------------
+We updated the `@media print` queries in `src/index.css` with the following 
+optimizations specifically designed for 80mm/72mm thermal rolls:
+
+- Solid Pure Black: Forced `color: #000000 !important;` on `.print-receipt-area` 
+  and all nested elements (`.print-receipt-area *`). This prevents the browser 
+  from outputting any gray shades, eliminating dithering on slogans/headers/footers.
+- Bold Text: Forced `font-weight: 700 !important;` on all receipt text elements. 
+  Bolder text increases the width of the printed stems.
+- Stroke Thickness: Added `-webkit-text-stroke: 0.25px #000000 !important;` to 
+  thicken text outlines slightly, ensuring the thermal print head burns solid lines.
+- System Sans-Serif: Changed `font-family` during printing to standard system 
+  sans-serif (`system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial`) 
+  which has simpler, cleaner, and thicker stems than JetBrains Mono at small sizes, 
+  significantly enhancing Tamil and English legibility.
+- Minimum Size: Forced a minimum highly readable print font-size of `12px` 
+  via `.print-receipt-area * { font-size: 12px !important; }`, while preserving 
+  the main shop title at `18px` via a helper class `.receipt-shop-name`.
+
+------------------------------------------------------------------------
+3. DIRECT SILENT PRINTING (NO DIALOG POPUP):
+------------------------------------------------------------------------
+To match the old software and print directly to the default printer without popping 
+up the Electron/Chromium print settings preview window:
+
+- IPC print handler: Added a `print-silent` handler in `electron/main.cjs` that calls 
+  `webContents.print({ silent: true, printBackground: true })` on the main window.
+- Preload Context Bridge: Exposed `printSilent` to the frontend via `electron/preload.cjs`.
+- React Print Trigger: Modified `handlePrint` in `src/components/PrintReceiptModal.jsx` 
+  to invoke the silent print IPC call and automatically close the modal 500ms after the 
+  print job is queued (giving Chromium enough time to capture the print frame).
+
+------------------------------------------------------------------------
+4. SALES TREND VISUALIZATION MODAL:
+------------------------------------------------------------------------
+Added an interactive sales trend visualizer inside the Sales History page:
+
+- Trigger Button: Added a green "வரைபடம் / Visualize Sales" button inside 
+  `src/components/SalesHistory.jsx` next to the "Export CSV" button.
+- Aggregations: Dynamic filters summarizing transaction history by:
+  - Daily Trend (last 7 days)
+  - Weekly Trend (last 4 weeks)
+  - Monthly Trend (last 6 months)
+  - Yearly Trend (last 3 years)
+- SVG Interactive Charts: Custom render system using responsive vector shapes (<rect>), 
+  gradients, gridlines, hover listener nodes, and absolute HTML tooltips displaying 
+  exact value popups (e.g. ₹338.00) on cursor hover.
+- Summary Stats: Displays Total Sales, Average Sales, and Peak (Max) Sales.
+- Growth Metrics: Compares current period to the previous period (e.g., today 
+  vs yesterday, this week vs last week) and calculates growth/decline percentage.
+- Keyboard Close Handler: Pressing `Escape` while the chart visualizer is open will 
+  close the visualizer modal. Pressing `Escape` again will navigate back to the 
+  billing dashboard.
+
+------------------------------------------------------------------------
+5. MODIFIED FILES:
+------------------------------------------------------------------------
+1. `src/components/PrintReceiptModal.jsx`
+   - Added class `className="receipt-shop-name"` to the shop name <div>.
+   - Updated `handlePrint` to call `window.electronAPI.printSilent()` and auto-close modal.
+2. `src/index.css`
+   - Completely replaced the `@media print` block with optimized thermal printing styles.
+3. `electron/preload.cjs`
+   - Exposed `printSilent` to `window.electronAPI`.
+4. `electron/main.cjs`
+   - Added IPC handler for `print-silent` to trigger silent background printing.
+5. `src/components/SalesHistory.jsx`
+   - Added imports, visualization states, helper data calculation functions.
+   - Inserted "Visualize Sales" trigger button in the header.
+   - Updated `Escape` key event listener.
+   - Embedded `SalesVisualizerModal` rendering code.
+
+------------------------------------------------------------------------
+6. REFERENCE CSS CODE BLOCK (from src/index.css):
+------------------------------------------------------------------------
+/* Print CSS Styles */
+@media print {
+  @page {
+    margin: 0 !important;
+  }
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .print-receipt-area, .print-receipt-area * {
+    visibility: visible !important;
+    color: #000000 !important;
+    background: transparent !important;
+    font-weight: 700 !important; /* Force bold/thick text for clear thermal print */
+    -webkit-text-stroke: 0.25px #000000 !important; /* Thicken text outlines slightly to prevent faint print */
+    text-shadow: none !important;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  }
+  .print-receipt-area * {
+    font-size: 12px !important; /* Force minimum highly readable font size for all print contents */
+  }
+  .print-receipt-area .receipt-shop-name {
+    font-size: 18px !important; /* Keep the shop name large and prominent */
+  }
+  .print-receipt-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 72mm !important; /* Fits perfectly on standard 80mm thermal rolls */
+    padding: 4mm 4mm 12mm 4mm !important; /* Safe margins and bottom tear-off space */
+    font-size: 12px !important;
+    line-height: 1.3 !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+  }
+  .print-receipt-area th, .print-receipt-area td {
+    border: none !important;
+    padding: 2px 0 !important;
+    color: #000000 !important;
+  }
+}
+------------------------------------------------------------------------
+========================================================================

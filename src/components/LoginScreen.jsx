@@ -51,6 +51,10 @@ export default function LoginScreen({ onLogin }) {
     if (u === 'T' && p === 'T') {
       setError('');
       setIsLoading(true);
+      // Maximize window immediately to absorb the maximize layout/render lag during the loading screen
+      if (window.electronAPI && window.electronAPI.onLoginSuccess) {
+        window.electronAPI.onLoginSuccess();
+      }
     } else {
       setError('தவறான பயனர் பெயர் / கடவுச்சொல்! (Invalid Username/Password)');
       setPassword('');
@@ -76,8 +80,18 @@ export default function LoginScreen({ onLogin }) {
     }
   };
 
+  const getLoadingPhaseText = () => {
+    if (progress < 15) return { ta: "கடையில் விளக்குகளை ஒளிரச் செய்கிறது...", en: "Powering store lighting systems..." };
+    if (progress < 35) return { ta: "பொருட்களை அடுக்குகளில் அடுக்கப்படுகிறது...", en: "Arranging retail products on shelves..." };
+    if (progress < 55) return { ta: "விலைப் பட்டியலைச் சரிபார்க்கிறது...", en: "Calibrating item retail prices..." };
+    if (progress < 75) return { ta: "கணக்கு விவரங்களைச் சேகரிக்கிறது...", en: "Fetching cash register logs..." };
+    if (progress < 92) return { ta: "பணப்பெட்டியைத் தயார் செய்கிறது...", en: "Calibrating drawer registers..." };
+    return { ta: "பயன்பாடு தயாராக உள்ளது!", en: "POS dashboard is ready!" };
+  };
+
   // If loading, show the loading screen overlay
   if (isLoading) {
+    const phase = getLoadingPhaseText();
     return (
       <div className="login-screen screen-fade" style={{ 
         display: 'flex', 
@@ -86,23 +100,84 @@ export default function LoginScreen({ onLogin }) {
         justifyContent: 'center', 
         height: '100vh', 
         width: '100vw',
+        position: 'relative',
         background: 'radial-gradient(circle at center, #0f172a 0%, #020617 100%)',
         color: '#ffffff',
-        fontFamily: 'var(--font-sans, sans-serif)'
+        fontFamily: 'var(--font-sans, sans-serif)',
+        overflow: 'hidden'
       }}>
+        {/* Blurred Shop Background */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundImage: 'url("./shop.jpeg")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: 'blur(8px) brightness(0.25)',
+          zIndex: 0,
+          transform: 'scale(1.05)'
+        }} />
+
         <style dangerouslySetInnerHTML={{__html: `
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-          .spinner-animate {
-            animation: spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-          }
           .progress-bar-fill {
             height: 100%;
             background: linear-gradient(90deg, #3b82f6, #10b981);
             border-radius: 4px;
             box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
             transition: width 0.03s linear;
+          }
+          /* Rack arranging animation */
+          .racks-animation {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 140px;
+            margin: 0 auto 28px auto;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.45);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(5px);
+          }
+          .rack {
+            height: 16px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.25);
+            display: flex;
+            gap: 6px;
+            align-items: flex-end;
+            padding-bottom: 2px;
+            position: relative;
+          }
+          .rack-item {
+            width: 12px;
+            border-radius: 2px 2px 0 0;
+            animation: arrangeRackItem 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite alternate;
+            opacity: 0;
+          }
+          .ri-1 { height: 12px; background: #3b82f6; animation-delay: 0.1s; }
+          .ri-2 { height: 16px; background: #10b981; animation-delay: 0.3s; }
+          .ri-3 { height: 10px; background: #f97316; animation-delay: 0.5s; }
+          
+          .ri-4 { height: 15px; background: #eab308; animation-delay: 0.2s; }
+          .ri-5 { height: 11px; background: #3b82f6; animation-delay: 0.4s; }
+          .ri-6 { height: 14px; background: #10b981; animation-delay: 0.6s; }
+
+          .ri-7 { height: 9px;  background: #f97316; animation-delay: 0.3s; }
+          .ri-8 { height: 15px; background: #eab308; animation-delay: 0.5s; }
+          .ri-9 { height: 11px; background: #3b82f6; animation-delay: 0.7s; }
+
+          @keyframes arrangeRackItem {
+            0% {
+              opacity: 0;
+              transform: translateY(-16px) scale(0.6);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
           }
         `}} />
         
@@ -115,34 +190,44 @@ export default function LoginScreen({ onLogin }) {
           backdropFilter: 'blur(20px)',
           border: '1px solid rgba(255, 255, 255, 0.08)',
           borderRadius: '24px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+          zIndex: 1
         }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
-            <div style={{
-              width: '72px',
-              height: '72px',
-              borderRadius: '50%',
-              background: 'rgba(59, 130, 246, 0.1)',
-              border: '1px solid rgba(59, 130, 246, 0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#3b82f6'
-            }} className="spinner-animate">
-              <RefreshCw size={32} />
+          {/* Rack Arranging Animation instead of round arrow */}
+          <div className="racks-animation">
+            <div className="rack">
+              <div className="rack-item ri-1" />
+              <div className="rack-item ri-2" />
+              <div className="rack-item ri-3" />
+            </div>
+            <div className="rack">
+              <div className="rack-item ri-4" />
+              <div className="rack-item ri-5" />
+              <div className="rack-item ri-6" />
+            </div>
+            <div className="rack">
+              <div className="rack-item ri-7" />
+              <div className="rack-item ri-8" />
+              <div className="rack-item ri-9" />
             </div>
           </div>
           
           <h3 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '8px', color: '#ffffff' }}>
             ஸ்ரீ முருகன் துணை
           </h3>
-          <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '16px', color: '#3b82f6', letterSpacing: '-0.02em' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '20px', color: '#3b82f6', letterSpacing: '-0.02em' }}>
             SRI PERUMAL STORES
           </h2>
           
-          <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)', marginBottom: '32px' }}>
-            அமைப்பை அணுகுகிறது... / Loading system...
-          </p>
+          {/* Dynamic Loading Phase Text */}
+          <div style={{ minHeight: '52px', marginBottom: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <span style={{ fontSize: '14.5px', color: '#ffffff', fontWeight: '600' }}>
+              {phase.ta}
+            </span>
+            <span style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.45)', marginTop: '4px' }}>
+              {phase.en}
+            </span>
+          </div>
 
           <div style={{ 
             width: '100%', 
@@ -171,9 +256,26 @@ export default function LoginScreen({ onLogin }) {
       justifyContent: 'center', 
       height: '100vh', 
       width: '100vw',
+      position: 'relative',
       background: 'radial-gradient(circle at center, #0f172a 0%, #020617 100%)',
-      fontFamily: 'var(--font-sans, sans-serif)'
+      fontFamily: 'var(--font-sans, sans-serif)',
+      overflow: 'hidden'
     }}>
+      {/* Blurred Shop Background */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundImage: 'url("./shop.jpeg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        filter: 'blur(6px) brightness(0.28)',
+        zIndex: 0,
+        transform: 'scale(1.05)'
+      }} />
+
       <style dangerouslySetInnerHTML={{__html: `
         .login-input {
           width: 100%;
@@ -194,14 +296,15 @@ export default function LoginScreen({ onLogin }) {
         .login-card {
           max-width: 420px;
           width: 90%;
-          padding: 40px 30px;
+          padding: 30px;
           text-align: center;
-          background: rgba(15, 23, 42, 0.45);
+          background: rgba(15, 23, 42, 0.55);
           backdrop-filter: blur(20px);
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 24px;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
           animation: cardSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          z-index: 1;
         }
         @keyframes cardSlideUp {
           from {
@@ -217,6 +320,27 @@ export default function LoginScreen({ onLogin }) {
       
       <div className="login-card">
         
+        {/* logo header */}
+        <div style={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          marginBottom: '24px',
+          padding: '10px 0'
+        }}>
+          <img 
+            src="./logo.png" 
+            alt="PS Logo" 
+            style={{
+              maxHeight: '110px',
+              maxWidth: '85%',
+              objectFit: 'contain',
+              borderRadius: '12px',
+              filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.25))'
+            }}
+          />
+        </div>
+
         {/* Divine Slogan & Store Name */}
         <div style={{ fontSize: '12px', color: '#10b981', fontWeight: 'bold', letterSpacing: '0.05em', marginBottom: '4px' }}>
           ஸ்ரீ முருகன் துணை
@@ -226,26 +350,9 @@ export default function LoginScreen({ onLogin }) {
           SRI PERUMAL STORES
         </h2>
         
-        <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.5)', marginBottom: '32px' }}>
+        <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.5)', marginBottom: '24px' }}>
           வேகமான பில்லிங் மென்பொருள் / Express POS System
         </p>
-
-        {/* Lock Icon */}
-        <div style={{ 
-          width: '64px', 
-          height: '64px', 
-          borderRadius: '50%', 
-          background: error ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)', 
-          border: error ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(59, 130, 246, 0.2)',
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          margin: '0 auto 28px auto',
-          color: error ? '#ef4444' : '#3b82f6',
-          transition: 'all 0.3s ease'
-        }}>
-          <Key size={26} />
-        </div>
 
         {/* Error Alert Box */}
         {error && (
@@ -357,7 +464,8 @@ export default function LoginScreen({ onLogin }) {
               boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)',
               border: 'none',
               fontWeight: '700',
-              color: '#ffffff'
+              color: '#ffffff',
+              cursor: 'pointer'
             }}
           >
             உள்நுழை / Login (Enter)
@@ -372,7 +480,7 @@ export default function LoginScreen({ onLogin }) {
           gap: '6px', 
           fontSize: '11px', 
           color: 'rgba(255, 255, 255, 0.4)',
-          marginTop: '28px',
+          marginTop: '24px',
           borderTop: '1px solid rgba(255, 255, 255, 0.08)',
           paddingTop: '16px'
         }}>

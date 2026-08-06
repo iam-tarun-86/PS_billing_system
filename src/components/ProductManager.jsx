@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Plus, Search, Edit, Trash2, ArrowLeft, Layers, Percent, Box, Save, X, FileSpreadsheet } from 'lucide-react';
 import { exportToCSV } from '../utils/csv';
 
@@ -10,7 +10,14 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
 
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [isTableFocused, setIsTableFocused] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(100);
+  // Two-mode dropdown: false = navigation mode (arrows skip past), true = edit mode (arrows change option)
+  const [dropdownEditMode, setDropdownEditMode] = useState(false);
+  // Increments only when a product edit panel is opened — NOT on every field change.
+  // This prevents the initial-focus useEffect from re-firing on every keystroke.
+  const [editOpenId, setEditOpenId] = useState(0);
   const searchInputRef = useRef(null);
+  const tableContainerRef = useRef(null);
 
   const formRefs = {
     code: useRef(null),
@@ -32,34 +39,87 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
     btnSave: useRef(null)
   };
 
-  // Focus first editable input when editingProduct is opened
+  // Focus first editable input when the edit panel OPENS.
+  // Depends on editOpenId (not editingProduct) so it fires exactly once per open,
+  // never when the user is typing and updating editingProduct state.
   useEffect(() => {
-    if (editingProduct) {
-      setTimeout(() => {
-        if (isAddingNew && formRefs.code.current) {
-          formRefs.code.current.focus();
-          formRefs.code.current.select();
-        } else if (formRefs.group.current) {
-          formRefs.group.current.focus();
-          formRefs.group.current.select();
-        }
-      }, 100);
-    }
-  }, [editingProduct, isAddingNew]);
+    if (editOpenId === 0) return; // skip initial mount
+    setTimeout(() => {
+      if (isAddingNew && formRefs.code.current) {
+        formRefs.code.current.focus();
+        formRefs.code.current.select();
+      } else if (formRefs.group.current) {
+        formRefs.group.current.focus();
+        formRefs.group.current.select();
+      }
+    }, 100);
+  }, [editOpenId]);
 
   const handleEditFormKeyDown = (e) => {
-    const keys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'];
+    const keys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape'];
     if (!keys.includes(e.key)) return;
 
     const active = document.activeElement;
 
-    // Do NOT intercept any keys inside SELECT dropdowns — let browser handle it
-    if (active.tagName === 'SELECT') return;
+    // ── Two-mode SELECT handling ──────────────────────────────────────────────
+    if (active.tagName === 'SELECT') {
+      if (dropdownEditMode) {
+        // EDIT MODE: up/down change the option value; Enter confirms + moves on; Escape cancels
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          return; // let browser change option naturally
+        }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          setDropdownEditMode(false);
+          // advance to the next field in flat order
+          const flatOrder = [
+            'code', 'group', 'name', 'tamilName',
+            'unit', 'priceType',
+            'billItem', 'salableItem', 'disableItem',
+            'sellingPrice', 'netPrice', 'mrp', 'costPrice',
+            'openingStock', 'currentStock', 'btnSave'
+          ];
+          let currentField = null;
+          for (const [key, ref] of Object.entries(formRefs)) {
+            if (ref.current === active) { currentField = key; break; }
+          }
+          if (currentField) {
+            const ci = flatOrder.indexOf(currentField);
+            for (let i = ci + 1; i < flatOrder.length; i++) {
+              const ref = formRefs[flatOrder[i]];
+              if (ref?.current && !ref.current.disabled) {
+                ref.current.focus();
+                if (typeof ref.current.select === 'function') ref.current.select();
+                return;
+              }
+            }
+          }
+          return;
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation(); // don't close the whole edit panel
+          setDropdownEditMode(false);
+          return;
+        }
+        e.preventDefault();
+        return;
+      } else {
+        // NAVIGATION MODE: Enter activates edit mode; arrows navigate between fields
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          setDropdownEditMode(true);
+          return;
+        }
+        // Fall through to grid navigation below — arrow keys will call preventDefault
+        // there, stopping the browser from changing the option.
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     // Do NOT intercept ArrowLeft / ArrowRight inside text or number inputs
-    // Let the cursor move freely within the field; only navigate away when the
-    // user explicitly presses ArrowUp / ArrowDown or Enter.
-    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && (active.type === 'text' || active.type === 'number')) return;
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && active.tagName !== 'SELECT' &&
+        (active.type === 'text' || active.type === 'number')) return;
 
     const editGrid = [
       ['code', 'group'],
@@ -154,7 +214,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
         if (focusField(nextField)) return;
       }
     } else if (e.key === 'ArrowLeft') {
-      const cursorAtStart = document.activeElement.selectionStart === 0 || document.activeElement.selectionStart === undefined;
+      const cursorAtStart = active.tagName === 'SELECT' || active.selectionStart === 0 || active.selectionStart === undefined;
       if (cursorAtStart) {
         for (let prevCol = c - 1; prevCol >= 0; prevCol--) {
           const nextField = editGrid[r][prevCol];
@@ -165,8 +225,8 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
         }
       }
     } else if (e.key === 'ArrowRight') {
-      const valLength = document.activeElement.value ? document.activeElement.value.length : 0;
-      const cursorAtEnd = document.activeElement.selectionEnd === valLength || document.activeElement.selectionEnd === undefined;
+      const valLength = active.tagName === 'SELECT' ? 999 : (active.value ? active.value.length : 0);
+      const cursorAtEnd = active.tagName === 'SELECT' || active.selectionEnd === valLength || active.selectionEnd === undefined;
       if (cursorAtEnd) {
         for (let nextCol = c + 1; nextCol < editGrid[r].length; nextCol++) {
           const nextField = editGrid[r][nextCol];
@@ -203,7 +263,10 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
   };
 
   // Group list extracted from products
-  const groups = ['All', ...new Set(database.products.map(p => p.group || 'General'))];
+  const groups = useMemo(() => {
+    return ['All', ...new Set(database.products.map(p => p.group || 'General'))];
+  }, [database.products]);
+  
   const units = ['kg', 'litre', 'piece', 'nos', 'packet', 'box', 'bag'];
 
   // Alphanumeric natural sorting comparator
@@ -211,52 +274,37 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
     return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
   };
 
-  const sortedProducts = [...database.products].sort((a, b) => naturalCompare(a.code, b.code));
-  const groupFilteredProducts = sortedProducts.filter(p => selectedGroup === 'All' || (p.group || 'General') === selectedGroup);
+  const sortedProducts = useMemo(() => {
+    return [...database.products].sort((a, b) => naturalCompare(a.code, b.code));
+  }, [database.products]);
 
-  // Custom prioritised search results
-  const getFilteredProducts = () => {
-    const query = searchTerm.trim().toLowerCase();
-    if (!query) {
-      return groupFilteredProducts;
+  const groupFilteredProducts = useMemo(() => {
+    return sortedProducts.filter(p => selectedGroup === 'All' || (p.group || 'General') === selectedGroup);
+  }, [sortedProducts, selectedGroup]);
+
+  // Billing-tab style: keep the full sorted list, just find the best match index.
+  // visibleProducts = a window of 40 items starting from highlightedIndex.
+  // The matched item is always at the top, followed by items in sorted order.
+  const filteredProducts = groupFilteredProducts; // full list, never shrinks
+
+  const WINDOW_SIZE = 40;
+  const query = searchTerm.trim().toLowerCase();
+  // Reset visibleCount on search/group changes
+  useEffect(() => {
+    setVisibleCount(100);
+  }, [searchTerm, selectedGroup]);
+
+  // Handle lazy loading scroll
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
+    if (scrollHeight - scrollTop - clientHeight < 120) {
+      setVisibleCount(prev => Math.min(filteredProducts.length, prev + 100));
     }
-
-    // Check if there is an exact code match
-    const exactIdx = groupFilteredProducts.findIndex(p => p.code.toLowerCase() === query);
-    if (exactIdx !== -1) {
-      // Return a window of surrounding items (e.g., 20 before and 20 after) to prevent rendering freeze
-      const start = Math.max(0, exactIdx - 20);
-      const end = Math.min(groupFilteredProducts.length, exactIdx + 20);
-      return groupFilteredProducts.slice(start, end);
-    }
-
-    // Prioritized search:
-    // 1. Code starts with query
-    // 2. Code contains query (but not starts with)
-    // 3. Name or TamilName or Group contains query
-    const startsWithCode = [];
-    const containsCode = [];
-    const containsName = [];
-
-    groupFilteredProducts.forEach(p => {
-      const codeLower = p.code.toLowerCase();
-      const nameLower = p.name.toLowerCase();
-      const tamilLower = (p.tamilName || '').toLowerCase();
-      const groupLower = (p.group || 'General').toLowerCase();
-
-      if (codeLower.startsWith(query)) {
-        startsWithCode.push(p);
-      } else if (codeLower.includes(query)) {
-        containsCode.push(p);
-      } else if (nameLower.includes(query) || tamilLower.includes(query) || groupLower.includes(query)) {
-        containsName.push(p);
-      }
-    });
-
-    return [...startsWithCode, ...containsCode, ...containsName];
   };
 
-  const filteredProducts = getFilteredProducts();
+  const visibleProducts = (highlightedIndex >= 0)
+    ? filteredProducts.slice(highlightedIndex, Math.min(filteredProducts.length, highlightedIndex + WINDOW_SIZE))
+    : filteredProducts.slice(0, visibleCount);
 
   const handleEditClick = (product) => {
     // Deep clone product to avoid mutation before save
@@ -274,33 +322,37 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
     
     setEditingProduct(cloned);
     setIsAddingNew(false);
+    setEditOpenId(prev => prev + 1); // triggers the initial-focus effect exactly once
   };
 
   // Ref to track the highlighted row for auto-scrolling
   const activeRowRef = useRef(null);
 
-  // Sync highlightedIndex on search query changes (billing-screen style: prefix highlight)
+  // Sync highlightedIndex on search query changes (billing-tab style)
   useEffect(() => {
-    const query = searchTerm.trim().toLowerCase();
-    if (!query) {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) {
       setHighlightedIndex(-1);
       setIsTableFocused(false);
       return;
     }
 
-    // 1. Exact code match
-    let idx = filteredProducts.findIndex(p => p.code.toLowerCase() === query);
-    // 2. Code starts with query
-    if (idx === -1) idx = filteredProducts.findIndex(p => p.code.toLowerCase().startsWith(query));
-    // 3. Name contains query
-    if (idx === -1) idx = filteredProducts.findIndex(p => p.name.toLowerCase().includes(query));
+    // Find best match index in the full list
+    let idx = filteredProducts.findIndex(p => p.code.toLowerCase() === q);
+    if (idx === -1) idx = filteredProducts.findIndex(p => p.code.toLowerCase().startsWith(q));
+    if (idx === -1) idx = filteredProducts.findIndex(p => p.code.toLowerCase().includes(q));
+    if (idx === -1) idx = filteredProducts.findIndex(p =>
+      p.name.toLowerCase().includes(q) ||
+      (p.tamilName || '').toLowerCase().includes(q) ||
+      (p.group || 'General').toLowerCase().includes(q)
+    );
 
     if (idx !== -1) {
       setHighlightedIndex(idx);
       setIsTableFocused(true);
     } else {
-      setHighlightedIndex(0);
-      setIsTableFocused(filteredProducts.length > 0);
+      setHighlightedIndex(-1);
+      setIsTableFocused(false);
     }
   }, [searchTerm, selectedGroup]);
 
@@ -337,7 +389,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
         return;
       }
 
-      // Table keyboard navigation when focused
+      // Table keyboard navigation when focused (navigates the full filteredProducts list)
       if (isTableFocused && filteredProducts.length > 0) {
         if (e.key === 'ArrowDown') {
           e.preventDefault();
@@ -347,6 +399,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
           setHighlightedIndex(prev => Math.max(0, prev - 1));
         } else if (e.key === 'Enter') {
           e.preventDefault();
+          // highlightedIndex is an index into the full filteredProducts list
           const selectedProduct = filteredProducts[highlightedIndex];
           if (selectedProduct) {
             setIsTableFocused(false);
@@ -360,13 +413,11 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [isTableFocused, filteredProducts, highlightedIndex, editingProduct, onBack, isPrintModalOpen]);
 
-  // Auto-scroll the highlighted row into view
+  // Keep table scrolled to top of sliced window — same as billing tab.
+  // Since the highlighted item is always visibleProducts[0], scrollTop=0 always shows it.
   useEffect(() => {
-    if (activeRowRef.current) {
-      activeRowRef.current.scrollIntoView({
-        behavior: 'auto',
-        block: 'nearest'
-      });
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollTop = 0;
     }
   }, [highlightedIndex]);
 
@@ -395,6 +446,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
       ]
     });
     setIsAddingNew(true);
+    setEditOpenId(prev => prev + 1); // triggers the initial-focus effect exactly once
   };
 
   const handleInputChange = (field, value) => {
@@ -424,16 +476,16 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
   const handleSlabOffsetChange = (index, value) => {
     setEditingProduct(prev => {
       const updatedSlabs = [...prev.slabs];
-      updatedSlabs[index] = { ...updatedSlabs[index], offset: parseFloat(value) || 0 };
+      updatedSlabs[index] = { ...updatedSlabs[index], offset: value };
       return { ...prev, slabs: updatedSlabs };
     });
   };
 
   const handleSlabQtyChange = (index, gramsValue) => {
-    const floatGrams = parseFloat(gramsValue) || 0;
     setEditingProduct(prev => {
       const updatedSlabs = [...prev.slabs];
-      updatedSlabs[index] = { ...updatedSlabs[index], qtyLimit: floatGrams / 1000 };
+      const qtyVal = gramsValue === '' ? '' : (parseFloat(gramsValue) / 1000 || 0);
+      updatedSlabs[index] = { ...updatedSlabs[index], qtyLimit: qtyVal };
       return { ...prev, slabs: updatedSlabs };
     });
   };
@@ -462,17 +514,54 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
       return;
     }
 
+    let sanitizedProduct = { ...editingProduct };
+
+    if (sanitizedProduct.priceType === 'Quantity' && sanitizedProduct.slabs && sanitizedProduct.slabs.length > 0) {
+      const seenWeights = new Set();
+      const duplicateWeights = new Set();
+      let hasInvalidSlab = false;
+
+      const sanitizedSlabs = sanitizedProduct.slabs.map(s => {
+        const qtyVal = s.qtyLimit === '' ? 0 : parseFloat(s.qtyLimit) || 0;
+        const offsetVal = s.offset === '' ? 0 : parseFloat(s.offset) || 0;
+        
+        const grams = Math.round(qtyVal * 1000);
+        if (grams <= 0) {
+          hasInvalidSlab = true;
+        }
+        if (seenWeights.has(grams)) {
+          duplicateWeights.add(grams);
+        }
+        seenWeights.add(grams);
+
+        return { qtyLimit: qtyVal, offset: offsetVal };
+      });
+
+      if (hasInvalidSlab) {
+        alert('ஸ்லாப் அளவு பூஜ்ஜியத்தை விட அதிகமாக இருக்க வேண்டும்! / Slab quantity must be greater than 0g!');
+        return;
+      }
+
+      if (duplicateWeights.size > 0) {
+        const dupList = Array.from(duplicateWeights).map(g => `${g}g`).join(', ');
+        alert(`ஒரே எடையுள்ள பல ஸ்லாப்கள் உள்ளன (${dupList})! நகல்களை நீக்கவும் அல்லது மாற்றவும். / Duplicate slab weights detected (${dupList})! Please remove or change duplicate weights.`);
+        return;
+      }
+
+      sanitizedProduct.slabs = sanitizedSlabs;
+    }
+
     let updatedProducts = [...database.products];
     
     if (isAddingNew) {
       // Check for duplicate code
-      if (database.products.some(p => p.code.toLowerCase() === editingProduct.code.toLowerCase())) {
+      if (database.products.some(p => p.code.toLowerCase() === sanitizedProduct.code.toLowerCase())) {
         alert('இந்த குறியீடு ஏற்கனவே உள்ளது! / This item code already exists!');
         return;
       }
-      updatedProducts.push(editingProduct);
+      updatedProducts.push(sanitizedProduct);
     } else {
-      updatedProducts = updatedProducts.map(p => p.code === editingProduct.code ? editingProduct : p);
+      updatedProducts = updatedProducts.map(p => p.code === sanitizedProduct.code ? sanitizedProduct : p);
     }
 
     onUpdateDatabase({
@@ -496,8 +585,10 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
 
   // Helper to calculate live slab price preview
   const calculateSlabPricePreview = (basePrice, qty, offset) => {
-    const effectiveRate = basePrice + offset;
-    return (effectiveRate * qty).toFixed(2);
+    const parsedQty = qty === '' ? 0 : parseFloat(qty) || 0;
+    const parsedOffset = offset === '' ? 0 : parseFloat(offset) || 0;
+    const effectiveRate = basePrice + parsedOffset;
+    return (effectiveRate * parsedQty).toFixed(2);
   };
 
   return (
@@ -557,7 +648,8 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
                   if (e.key === 'Enter' || e.key === 'ArrowDown') {
                     if (filteredProducts.length > 0) {
                       e.preventDefault();
-                      setHighlightedIndex(0);
+                      // highlightedIndex is already set correctly by the useEffect;
+                      // just activate table focus so Enter/arrows work on the table.
                       setIsTableFocused(true);
                       if (searchInputRef.current) searchInputRef.current.blur();
                     }
@@ -579,7 +671,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
           </div>
 
           {/* Table Container */}
-          <div className="table-container" style={{ flex: 1 }}>
+          <div ref={tableContainerRef} className="table-container" style={{ flex: 1 }} onScroll={handleScroll}>
             <table className="pos-table">
               <thead>
                 <tr>
@@ -595,8 +687,9 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
                 </tr>
               </thead>
               <tbody>
-                {filteredProducts.map((p, i) => {
-                  const isHighlighted = highlightedIndex === i;
+                {visibleProducts.map((p) => {
+                  // isHighlighted: compare by code against the item at highlightedIndex in the full list
+                  const isHighlighted = filteredProducts[highlightedIndex]?.code === p.code;
                   const isActive = editingProduct?.code === p.code;
 
                   return (
@@ -610,7 +703,9 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
                         borderLeft: isHighlighted ? '4px solid var(--primary)' : isActive ? '4px solid var(--primary)' : ''
                       }} 
                       onClick={() => {
-                        setHighlightedIndex(i);
+                        // Find true index in full list and open edit
+                        const trueIdx = filteredProducts.findIndex(x => x.code === p.code);
+                        setHighlightedIndex(trueIdx);
                         setIsTableFocused(false);
                         handleEditClick(p);
                       }}
@@ -638,7 +733,8 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
                       <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           <button className="btn-ghost" style={{ padding: '6px' }} onClick={() => {
-                            setHighlightedIndex(i);
+                            const trueIdx = filteredProducts.findIndex(x => x.code === p.code);
+                            setHighlightedIndex(trueIdx);
                             setIsTableFocused(false);
                             handleEditClick(p);
                           }}>
@@ -652,7 +748,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
                     </tr>
                   );
                 })}
-                {filteredProducts.length === 0 && (
+                {visibleProducts.length === 0 && (
                   <tr>
                     <td colSpan="9" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
                       பொருட்கள் எதுவும் கிடைக்கவில்லை. / No products found.
@@ -735,12 +831,27 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
               {/* Row 3: Unit and Price Type */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="input-group">
-                  <span className="input-label">அலகு / Unit</span>
+                  <span className="input-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>அலகு / Unit</span>
+                    {dropdownEditMode && document.activeElement === formRefs.unit.current && (
+                      <span style={{ fontSize: '10px', color: 'var(--primary)', fontWeight: 'bold', background: 'rgba(37,99,235,0.1)', padding: '1px 6px', borderRadius: '4px' }}>↑↓ select · ↵ confirm</span>
+                    )}
+                    {!dropdownEditMode && document.activeElement === formRefs.unit.current && (
+                      <span style={{ fontSize: '10px', color: 'var(--text-secondary)', background: 'var(--border-color)', padding: '1px 6px', borderRadius: '4px' }}>↵ to edit</span>
+                    )}
+                  </span>
                   <select 
                     className="pos-input" 
                     ref={formRefs.unit}
                     value={editingProduct.unit}
                     onChange={(e) => handleInputChange('unit', e.target.value)}
+                    onFocus={() => setDropdownEditMode(false)}
+                    onBlur={() => setDropdownEditMode(false)}
+                    style={{
+                      outline: dropdownEditMode && document.activeElement === formRefs.unit.current
+                        ? '2px solid var(--primary)' : undefined,
+                      pointerEvents: dropdownEditMode && document.activeElement === formRefs.unit.current ? 'auto' : 'none'
+                    }}
                   >
                     {units.map(u => (
                       <option key={u} value={u}>{u}</option>
@@ -748,12 +859,27 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
                   </select>
                 </div>
                 <div className="input-group">
-                  <span className="input-label">விலை வகை / Price Type</span>
+                  <span className="input-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>விலை வகை / Price Type</span>
+                    {dropdownEditMode && document.activeElement === formRefs.priceType.current && (
+                      <span style={{ fontSize: '10px', color: 'var(--primary)', fontWeight: 'bold', background: 'rgba(37,99,235,0.1)', padding: '1px 6px', borderRadius: '4px' }}>↑↓ select · ↵ confirm</span>
+                    )}
+                    {!dropdownEditMode && document.activeElement === formRefs.priceType.current && (
+                      <span style={{ fontSize: '10px', color: 'var(--text-secondary)', background: 'var(--border-color)', padding: '1px 6px', borderRadius: '4px' }}>↵ to edit</span>
+                    )}
+                  </span>
                   <select 
                     className="pos-input" 
                     ref={formRefs.priceType}
                     value={editingProduct.priceType}
                     onChange={(e) => handleInputChange('priceType', e.target.value)}
+                    onFocus={() => setDropdownEditMode(false)}
+                    onBlur={() => setDropdownEditMode(false)}
+                    style={{
+                      outline: dropdownEditMode && document.activeElement === formRefs.priceType.current
+                        ? '2px solid var(--primary)' : undefined,
+                      pointerEvents: dropdownEditMode && document.activeElement === formRefs.priceType.current ? 'auto' : 'none'
+                    }}
                   >
                     <option value="Fixed">Fixed (நிலையானது)</option>
                     <option value="Quantity">Quantity (அளவு சார்ந்தது)</option>
@@ -901,8 +1027,9 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
                             type="number" 
                             className="pos-input mono" 
                             style={{ height: '32px', fontSize: '12px', padding: '4px' }}
-                            value={Math.round(s.qtyLimit * 1000)}
+                            value={s.qtyLimit === '' ? '' : Math.round(s.qtyLimit * 1000)}
                             onChange={(e) => handleSlabQtyChange(index, e.target.value)}
+                            onFocus={(e) => e.target.select()}
                           />
                           <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>g</span>
                         </div>
@@ -913,8 +1040,9 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
                             type="number" 
                             className="pos-input mono" 
                             style={{ paddingRight: '14px', paddingLeft: '6px', height: '32px', fontSize: '12px' }}
-                            value={s.offset}
+                            value={s.offset === '' ? '' : s.offset}
                             onChange={(e) => handleSlabOffsetChange(index, e.target.value)}
+                            onFocus={(e) => e.target.select()}
                           />
                           <span style={{ position: 'absolute', right: '4px', top: '7px', fontSize: '10px', color: 'var(--text-secondary)' }}>₹</span>
                         </div>
