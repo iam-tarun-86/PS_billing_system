@@ -1,10 +1,10 @@
 ========================================================================
-             PS BILLING SYSTEM - THERMAL PRINTING OPTIMIZATION
+             PS BILLING SYSTEM - THERMAL PRINTING & PRODUCTION LOGS
 ========================================================================
 
 If you start a new chat with an AI assistant, share this file so the assistant 
-understands how thermal receipt printing, silent printing, and sales 
-visualizations are configured in the codebase.
+understands how thermal receipt printing, silent printing, sales visualizations, 
+and production logging are configured in this codebase.
 
 ------------------------------------------------------------------------
 1. PROBLEM DESCRIPTION (PRINT DITHERING / FAINTNESS):
@@ -67,33 +67,57 @@ Added an interactive sales trend visualizer inside the Sales History page:
 - SVG Interactive Charts: Custom render system using responsive vector shapes (<rect>), 
   gradients, gridlines, hover listener nodes, and absolute HTML tooltips displaying 
   exact value popups (e.g. ₹338.00) on cursor hover.
-- Summary Stats: Displays Total Sales, Average Sales, and Peak (Max) Sales.
-- Growth Metrics: Compares current period to the previous period (e.g., today 
-  vs yesterday, this week vs last week) and calculates growth/decline percentage.
+- Summary Stats: Displays Total Sales, Average Sales, Peak (Max) Sales, and growth comparison.
 - Keyboard Close Handler: Pressing `Escape` while the chart visualizer is open will 
   close the visualizer modal. Pressing `Escape` again will navigate back to the 
   billing dashboard.
 
 ------------------------------------------------------------------------
-5. MODIFIED FILES:
+5. PRODUCTION LOGGING SYSTEM (app.log WITH AUTO-ROTATION):
+------------------------------------------------------------------------
+To aid in remote debugging without cluttering the UI, we implemented a full 
+production logging system:
+
+- Log Storage Path: Saved to `app.log` in the application's root user data folder 
+  (the same folder containing `database.json`, accessible in the OS filesystem at 
+  `AppData\Roaming\PS Billing System\`). It cannot be accessed from the application UI.
+- Lightweight Auto-rotation: Includes a strict limit check. If `app.log` exceeds **1 MB**, 
+  it is renamed to `app.log.old` (replacing the previous `.old` file). This caps the 
+  total log storage strictly at **2 MB** max, ensuring the app remains light and manageable.
+- Recorded Events:
+  - System Lifecycle: App start, startup platform metadata, user data folder paths, window loads.
+  - IPC Operations: Window login/logout calls, database reads/writes (along with performance/speed 
+    durations and data summary metrics), and silent print triggers.
+  - Renderer User Actions: Exposes a `logMessage` bridge API. React components log logins, logout, 
+    bill saves, bill deletions, visualizer open/close events, and CSV export triggers.
+  - Crashes & Errors: Intercepts `uncaughtException` in the main process, `did-fail-load` window 
+    load failures, and warnings/errors originating in the React console (`console-message` handler).
+
+------------------------------------------------------------------------
+6. MODIFIED FILES:
 ------------------------------------------------------------------------
 1. `src/components/PrintReceiptModal.jsx`
    - Added class `className="receipt-shop-name"` to the shop name <div>.
-   - Updated `handlePrint` to call `window.electronAPI.printSilent()` and auto-close modal.
+   - Updated `handlePrint` to call `window.electronAPI.printSilent()`, log actions, and auto-close.
 2. `src/index.css`
    - Completely replaced the `@media print` block with optimized thermal printing styles.
 3. `electron/preload.cjs`
-   - Exposed `printSilent` to `window.electronAPI`.
+   - Exposed `printSilent` and `logMessage` to `window.electronAPI`.
 4. `electron/main.cjs`
-   - Added IPC handler for `print-silent` to trigger silent background printing.
+   - Implemented `writeLog` logging system with 1MB file rotation.
+   - Added IPC handlers for `print-silent` and `log-message`.
+   - Logged database reads/writes, window changes, lifecycles, and exceptions.
 5. `src/components/SalesHistory.jsx`
    - Added imports, visualization states, helper data calculation functions.
    - Inserted "Visualize Sales" trigger button in the header.
    - Updated `Escape` key event listener.
    - Embedded `SalesVisualizerModal` rendering code.
+   - Logged CSV exports, deletions, and visualizer tab changes.
+6. `src/components/BillingDashboard.jsx`
+   - Logged component mounting, saves of bill edits, and saves of new bills.
 
 ------------------------------------------------------------------------
-6. REFERENCE CSS CODE BLOCK (from src/index.css):
+7. REFERENCE CSS CODE BLOCK (from src/index.css):
 ------------------------------------------------------------------------
 /* Print CSS Styles */
 @media print {

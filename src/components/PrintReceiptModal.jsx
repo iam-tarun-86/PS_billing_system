@@ -14,19 +14,27 @@ export default function PrintReceiptModal({ invoice, settings = {}, printLanguag
     .join(', ');
 
   const handlePrint = async () => {
+    const logInfo = (msg) => window.electronAPI && window.electronAPI.logMessage && window.electronAPI.logMessage('info', msg);
+    const logError = (msg) => window.electronAPI && window.electronAPI.logMessage && window.electronAPI.logMessage('error', msg);
+
+    logInfo(`Triggering print for Invoice #${invoice.invoiceNo} (Language: ${printLanguage})`);
+
     if (window.electronAPI && window.electronAPI.printSilent) {
       try {
+        const startTime = Date.now();
         await window.electronAPI.printSilent();
+        logInfo(`Silent print IPC triggered in ${Date.now() - startTime}ms`);
         // Wait 500ms to ensure Chromium's print pipeline captures the receipt layout before unmounting the modal
         setTimeout(() => {
           onClose();
         }, 500);
       } catch (err) {
-        console.error('Silent print IPC failed:', err);
+        logError(`Silent print IPC failed: ${err.message}. Falling back to window.print()`);
         window.print();
         onClose();
       }
     } else {
+      logInfo('Electron silent print API not available. Using window.print() fallback.');
       window.print();
       onClose();
     }

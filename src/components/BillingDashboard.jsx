@@ -10,9 +10,24 @@ export default function BillingDashboard({
   onPrintReceipt,
   isPrintModalOpen
 }) {
+  const logInfo = (msg) => {
+    if (window.electronAPI && window.electronAPI.logMessage) {
+      window.electronAPI.logMessage('info', msg);
+    }
+  };
+  const logError = (msg) => {
+    if (window.electronAPI && window.electronAPI.logMessage) {
+      window.electronAPI.logMessage('error', msg);
+    }
+  };
+
   const [billItems, setBillItems] = useState([createEmptyRow()]);
   const [activeRowIndex, setActiveRowIndex] = useState(0);
   const [activeColumn, setActiveColumn] = useState('code'); // 'code' | 'qty' | 'rate'
+
+  useEffect(() => {
+    logInfo('BillingDashboard mounted');
+  }, []);
   
   const getTodayStats = () => {
     if (!database || !database.transactions) return { total: 0, count: 0 };
@@ -926,6 +941,8 @@ export default function BillingDashboard({
       const updatedTransactions = [...database.transactions];
       updatedTransactions[viewingTxIndex] = updatedInvoice;
 
+      logInfo(`Saving bill edits for Invoice #${updatedInvoice.invoiceNo}. Items: ${updatedInvoice.items.length}, Net Total: ₹${updatedInvoice.netTotal.toFixed(2)}, Customer: ${updatedInvoice.customerName || 'CASH'}`);
+
       onUpdateDatabase({
         ...database,
         products: updatedProducts,
@@ -975,6 +992,8 @@ export default function BillingDashboard({
       }
       return p;
     });
+
+    logInfo(`Saving new bill: Invoice #${invoice.invoiceNo}. Items: ${invoice.items.length}, Net Total: ₹${invoice.netTotal.toFixed(2)}, Customer: ${invoice.customerName || 'CASH'}`);
 
     onUpdateDatabase({
       ...database,

@@ -3,6 +3,21 @@ import { ArrowLeft, Search, Calendar, DollarSign, RefreshCw, Printer, FileSpread
 import { exportToCSV } from '../utils/csv';
 
 export default function SalesHistory({ database, onUpdateDatabase, onBack, onPrintReceipt, isPrintModalOpen }) {
+  const logInfo = (msg) => {
+    if (window.electronAPI && window.electronAPI.logMessage) {
+      window.electronAPI.logMessage('info', msg);
+    }
+  };
+  const logError = (msg) => {
+    if (window.electronAPI && window.electronAPI.logMessage) {
+      window.electronAPI.logMessage('error', msg);
+    }
+  };
+
+  useEffect(() => {
+    logInfo('SalesHistory mounted');
+  }, []);
+
   const getTodayDateString = () => {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -200,6 +215,8 @@ export default function SalesHistory({ database, onUpdateDatabase, onBack, onPri
 
       const updatedTransactions = transactions.filter(t => t.invoiceNo !== invoiceNo);
 
+      logInfo(`Deleting transaction Bill No: #${invoiceNo}, netTotal: ₹${txToDelete.netTotal.toFixed(2)}`);
+
       onUpdateDatabase({
         ...database,
         products: updatedProducts,
@@ -209,6 +226,7 @@ export default function SalesHistory({ database, onUpdateDatabase, onBack, onPri
   };
 
   const handleExportCSV = () => {
+    logInfo(`Exporting ${filteredTransactions.length} transactions to CSV`);
     const headers = [
       'Invoice No', 'Timestamp', 'Year', 'Month', 'Day', 'Date', 'Time',
       'Customer Name', 'Mobile', 'Address', 'Gross Total', 'Discount',
@@ -289,7 +307,7 @@ export default function SalesHistory({ database, onUpdateDatabase, onBack, onPri
           <h2 style={{ fontSize: '24px', fontWeight: 'bold' }}>விற்பனை சரித்திரம் / Sales Transaction Logs</h2>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button className="btn-success" style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold' }} onClick={() => setIsVisualizerOpen(true)}>
+          <button className="btn-success" style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold' }} onClick={() => { logInfo('Opened Sales Trend Visualizer'); setIsVisualizerOpen(true); }}>
             <BarChart2 size={16} /> வரைபடம் / Visualize Sales
           </button>
           <button className="btn-secondary" style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={handleExportCSV}>
@@ -546,6 +564,7 @@ export default function SalesHistory({ database, onUpdateDatabase, onBack, onPri
                       transition: 'all 0.2s'
                     }}
                     onClick={() => {
+                      logInfo(`Sales Visualizer tab switched to: ${tab.key}`);
                       setVisualizerTab(tab.key);
                       setHoveredIndex(null);
                     }}

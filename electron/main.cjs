@@ -14,6 +14,32 @@ let mainWindow;
 // Define storage paths
 const userDataPath = app.getPath('userData');
 const dbFilePath = path.join(userDataPath, 'database.json');
+const logFilePath = path.join(userDataPath, 'app.log');
+
+// Production logging system with 1MB auto-rotation (total cap: 2MB)
+function writeLog(level, message) {
+  try {
+    const timestamp = new Date().toISOString();
+    const logLine = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
+    
+    // Auto-rotation
+    if (fs.existsSync(logFilePath)) {
+      const stats = fs.statSync(logFilePath);
+      if (stats.size > 1024 * 1024) { // 1 MB cap
+        const oldLog = logFilePath + '.old';
+        if (fs.existsSync(oldLog)) {
+          try { fs.unlinkSync(oldLog); } catch (e) {}
+        }
+        try { fs.renameSync(logFilePath, oldLog); } catch (e) {}
+      }
+    }
+    
+    fs.appendFileSync(logFilePath, logLine, 'utf-8');
+    console.log(logLine.trim());
+  } catch (err) {
+    console.error('Failed writing to log file:', err);
+  }
+}
 
 // Default Seed Data
 const defaultDatabase = {
@@ -410,11 +436,13 @@ const defaultDatabase = {
 };
 
 function readDatabaseFile() {
+  const startTime = Date.now();
   try {
     if (fs.existsSync(dbFilePath)) {
       const raw = fs.readFileSync(dbFilePath, 'utf-8');
       const parsed = JSON.parse(raw);
       if (parsed && parsed.products && Array.isArray(parsed.products)) {
+        writeLog('info', `Database loaded successfully in ${Date.now() - startTime}ms. Products: ${parsed.products.length}, Transactions: ${parsed.transactions ? parsed.transactions.length : 0}`);
         return parsed;
       }
     } else {
@@ -424,7 +452,7 @@ function readDatabaseFile() {
         seedPath = path.join(app.getAppPath(), 'electron/seed_database.json');
       }
       if (fs.existsSync(seedPath)) {
-        console.log('Seeding database from bundled file:', seedPath);
+        writeLog('info', `First run: Seeding database from bundled file: ${seedPath}`);
         const seedRaw = fs.readFileSync(seedPath, 'utf-8');
         const seedParsed = JSON.parse(seedRaw);
         if (seedParsed && seedParsed.products && Array.isArray(seedParsed.products)) {
@@ -434,49 +462,65 @@ function readDatabaseFile() {
       }
     }
   } catch (err) {
-    console.error('Failed to read/seed database.json:', err);
+    writeLog('error', `Failed to read/seed database.json: ${err.message}\nStack: ${err.stack}`);
   }
+  writeLog('warn', 'Database file empty or corrupt. Loading defaultDatabase fallback.');
   writeDatabaseFile(defaultDatabase);
   return defaultDatabase;
 }
 
 function writeDatabaseFile(data) {
+  const startTime = Date.now();
   try {
     const tempPath = dbFilePath + '.tmp';
     fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf-8');
     fs.renameSync(tempPath, dbFilePath);
+    writeLog('info', `Database saved successfully in ${Date.now() - startTime}ms. Products: ${data.products.length}, Transactions: ${data.transactions ? data.transactions.length : 0}`);
     return { success: true };
   } catch (err) {
-    console.error('Failed to write database.json:', err);
+    writeLog('error', `Failed to write database.json: ${err.message}\nStack: ${err.stack}`);
     return { success: false, error: err.message };
   }
 }
 
 // IPC Handlers for database read/write using pure JavaScript JSON storage
 ipcMain.handle('db-read', async () => {
+  writeLog('info', 'IPC db-read requested');
   return readDatabaseFile();
 });
 
 ipcMain.handle('db-write', async (event, data) => {
+  writeLog('info', 'IPC db-write requested');
   return writeDatabaseFile(data);
 });
 
 ipcMain.handle('print-silent', async () => {
+  writeLog('info', 'IPC print-silent requested');
   if (mainWindow) {
+    const startTime = Date.now();
     mainWindow.webContents.print({
       silent: true,
       printBackground: true
     }, (success, errorType) => {
-      if (!success) {
-        console.error('Silent print failed:', errorType);
+      if (success) {
+        writeLog('info', `Silent printing job completed successfully in ${Date.now() - startTime}ms`);
+      } else {
+        writeLog('error', `Silent printing job failed with reason: ${errorType}`);
       }
     });
     return { success: true };
   }
+  writeLog('error', 'IPC print-silent failed: Main window was not available');
   return { success: false, error: 'Main window not available' };
 });
 
+ipcMain.handle('log-message', async (event, level, message) => {
+  writeLog(level, `[Renderer] ${message}`);
+  return { success: true };
+});
+
 ipcMain.handle('window-login', () => {
+  writeLog('info', 'IPC window-login requested: Maximizing window');
   if (mainWindow) {
     mainWindow.setResizable(true);
     mainWindow.setMaximizable(true);
@@ -486,6 +530,7 @@ ipcMain.handle('window-login', () => {
 });
 
 ipcMain.handle('window-logout', () => {
+  writeLog('info', 'IPC window-logout requested: Resizing to default login window size');
   if (mainWindow) {
     mainWindow.unmaximize();
     mainWindow.setResizable(false);
@@ -524,16 +569,14 @@ function createWindow() {
   });
 
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
-    const logStr = `[FAIL LOAD] Code: ${errorCode}, Desc: ${errorDescription}, URL: ${validatedURL}\n`;
-    console.error(logStr);
-    try { fs.appendFileSync(path.join(userDataPath, 'electron-error.log'), logStr); } catch (e) {}
+    writeLog('error', `webContents fail-load: Code: ${errorCode}, Desc: ${errorDescription}, URL: ${validatedURL}`);
   });
 
   mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
-    if (level >= 2) {
-      const logStr = `[CONSOLE ERR] ${message} (${sourceId}:${line})\n`;
-      console.error(logStr);
-      try { fs.appendFileSync(path.join(userDataPath, 'electron-error.log'), logStr); } catch (e) {}
+    const levelNames = ['debug', 'info', 'warn', 'error'];
+    const levelStr = levelNames[level] || 'info';
+    if (level >= 2) { // Log warnings and errors to keep it clean and lightweight
+      writeLog(levelStr, `Console message: ${message} (Source: ${sourceId}:${line})`);
     }
   });
 
@@ -547,9 +590,7 @@ function createWindow() {
     }
     console.log('Loading index.html from:', indexPath);
     mainWindow.loadFile(indexPath).catch((err) => {
-      const logStr = `[LOADFILE ERR] ${err.stack || err.message}\n`;
-      console.error(logStr);
-      try { fs.appendFileSync(path.join(userDataPath, 'electron-error.log'), logStr); } catch (e) {}
+      writeLog('error', `Failed to load index.html: ${err.message}\nStack: ${err.stack}`);
     });
   };
 
@@ -572,21 +613,28 @@ function createWindow() {
 }
 
 process.on('uncaughtException', (err) => {
-  const logStr = `[UNCAUGHT] ${err.stack || err.message}\n`;
-  console.error(logStr);
-  try { fs.appendFileSync(path.join(userDataPath, 'electron-error.log'), logStr); } catch (e) {}
+  writeLog('error', `Uncaught exception in main process: ${err.message}\nStack: ${err.stack}`);
 });
 
 app.whenReady().then(() => {
+  writeLog('info', '==================================================');
+  writeLog('info', 'Application starting...');
+  writeLog('info', `Platform: ${process.platform}, Arch: ${process.arch}, Node Version: ${process.version}`);
+  writeLog('info', `User Data Path: ${userDataPath}`);
+  
   readDatabaseFile();
   createWindow();
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    writeLog('info', 'Application activated');
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
   });
 });
 
 app.on('window-all-closed', () => {
+  writeLog('info', 'All windows closed: Exiting application');
   if (process.platform !== 'darwin') {
     app.quit();
   }
