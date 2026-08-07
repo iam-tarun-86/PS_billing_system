@@ -2110,7 +2110,7 @@ export default function BillingDashboard({
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid var(--border-color)', paddingBottom: '12px', marginBottom: '20px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary)' }}>
-                ⚙️ அமைப்புகள் & மேலாண்மை / Settings & Management
+                ⚙️ Settings & Database Management
               </h3>
               <button 
                 onClick={() => setIsSettingsOpen(false)}
@@ -2123,12 +2123,12 @@ export default function BillingDashboard({
             {/* Section 1: Shop details configuration */}
             <div style={{ marginBottom: '24px' }}>
               <h4 style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--primary)', marginBottom: '12px', letterSpacing: '0.05em' }}>
-                கடையின் விவரங்கள் / Shop Details
+                Shop Details
               </h4>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>கடையின் பெயர் / Shop Name</label>
+                  <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Shop Name</label>
                   <input 
                     type="text" 
                     value={shopNameInput}
@@ -2146,7 +2146,7 @@ export default function BillingDashboard({
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>தலைப்பு முழக்கம் / Header Slogan</label>
+                  <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Header Slogan (Tamil / English)</label>
                   <input 
                     type="text" 
                     value={headerSloganInput}
@@ -2164,7 +2164,7 @@ export default function BillingDashboard({
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>தொலைபேசி எண் / Phone Numbers</label>
+                    <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Phone Numbers</label>
                     <input 
                       type="text" 
                       value={phoneNumbersInput}
@@ -2182,7 +2182,7 @@ export default function BillingDashboard({
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>விற்பனையாளர் குறியீடு / Default Operator</label>
+                    <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Default Operator Code</label>
                     <input 
                       type="text" 
                       maxLength={5}
@@ -2207,19 +2207,17 @@ export default function BillingDashboard({
             {/* Section 2: Database cleaning triggers */}
             <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px', marginBottom: '24px' }}>
               <h4 style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--error)', marginBottom: '12px', letterSpacing: '0.05em' }}>
-                தரவுத்தள மேலாண்மை / Database Maintenance
+                Database Maintenance
               </h4>
               <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '14px' }}>
-                பயன்பாட்டை வேறு ஒரு கடைக்கு மாற்றும்போது பழைய தரவுகளை எளிதாக நீக்க இந்த வசதிகள் உதவும்.
-                <br />
-                These tools allow resetting/cleaning data when setting up this software for a new shop.
+                Wipe old transaction/product data when setting up this software for a new shop.
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(239, 68, 68, 0.05)', padding: '10px 14px', borderRadius: '8px', border: '1px dashed rgba(239, 68, 68, 0.25)' }}>
                   <div>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>அனைத்து பில்களையும் நீக்குக</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Wipe all transactions history (Reset serial count)</div>
+                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Delete All Bills</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Wipe all transaction history and reset invoice number to 1</div>
                   </div>
                   <button 
                     onClick={handleClearTransactions}
@@ -2232,8 +2230,8 @@ export default function BillingDashboard({
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(239, 68, 68, 0.05)', padding: '10px 14px', borderRadius: '8px', border: '1px dashed rgba(239, 68, 68, 0.25)' }}>
                   <div>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>அனைத்து பொருட்களையும் நீக்குக</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Wipe all products in inventory database</div>
+                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Delete All Products</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Wipe all products from the inventory catalog</div>
                   </div>
                   <button 
                     onClick={handleClearProducts}
@@ -2246,8 +2244,8 @@ export default function BillingDashboard({
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(59, 130, 246, 0.05)', padding: '10px 14px', borderRadius: '8px', border: '1px dashed rgba(59, 130, 246, 0.25)' }}>
                   <div>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>புதிய கடைக்கு தரவுத்தளத்தை மீட்டமைக்க</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Initialize a blank template database for a new shop</div>
+                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Initialize Blank Database</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Reset settings and wipe all data for a clean new shop template</div>
                   </div>
                   <button 
                     onClick={handleResetToCleanState}
@@ -2266,14 +2264,14 @@ export default function BillingDashboard({
                 className="btn-secondary" 
                 style={{ padding: '8px 16px', borderRadius: '6px', fontSize: '13px' }}
               >
-                ரத்து செய் / Cancel
+                Cancel
               </button>
               <button 
                 onClick={handleSaveSettings}
                 className="btn-success" 
                 style={{ padding: '8px 24px', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold' }}
               >
-                சேமி / Save changes
+                Save Changes
               </button>
             </div>
           </div>
