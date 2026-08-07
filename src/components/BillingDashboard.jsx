@@ -24,6 +24,13 @@ export default function BillingDashboard({
   const [billItems, setBillItems] = useState([createEmptyRow()]);
   const [activeRowIndex, setActiveRowIndex] = useState(0);
   const [activeColumn, setActiveColumn] = useState('code'); // 'code' | 'qty' | 'rate'
+  const [duplicateState, setDuplicateState] = useState({
+    isOpen: false,
+    product: null,
+    rowIndex: null,
+    existingRowIndex: null,
+    selectedOption: 0
+  });
 
   useEffect(() => {
     logInfo('BillingDashboard mounted');
@@ -171,7 +178,7 @@ export default function BillingDashboard({
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
-      if (isPrintModalOpen) return;
+      if (isPrintModalOpen || duplicateState.isOpen) return;
 
       // Avoid shortcuts when typing in search overlay query
       if (showSearchOverlay) {
@@ -279,7 +286,7 @@ export default function BillingDashboard({
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [billItems, activeRowIndex, activeColumn, showSearchOverlay, customerName, customerMobile, discount, rent, coolie, advance, viewingTxIndex, draftBill, isPrintModalOpen, activeBottomBtnIndex, isEditingSavedBill]);
+  }, [billItems, activeRowIndex, activeColumn, showSearchOverlay, customerName, customerMobile, discount, rent, coolie, advance, viewingTxIndex, draftBill, isPrintModalOpen, activeBottomBtnIndex, isEditingSavedBill, duplicateState.isOpen]);
 
   // Close menus on click outside
   useEffect(() => {
@@ -295,7 +302,7 @@ export default function BillingDashboard({
   // Including it caused .select() to fire on every keystroke (since typing updates billItems),
   // which selected all text so each new character replaced what was typed before.
   useEffect(() => {
-    if (isPrintModalOpen) return;
+    if (isPrintModalOpen || duplicateState.isOpen) return;
 
     if (showSearchOverlay) {
       if (searchInputRef.current) searchInputRef.current.focus();
@@ -317,7 +324,7 @@ export default function BillingDashboard({
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [activeRowIndex, activeColumn, showSearchOverlay, isPrintModalOpen]);
+  }, [activeRowIndex, activeColumn, showSearchOverlay, isPrintModalOpen, duplicateState.isOpen]);
 
   function createEmptyRow() {
     return {
@@ -354,8 +361,88 @@ export default function BillingDashboard({
     return product.sellingPrice; // Default fallback
   };
 
-  // Add Item to Bill row
-  const addProductToRow = (product, rowIndex) => {
+  // Keyboard listener for duplicate item selection modal
+  useEffect(() => {
+    if (!duplicateState.isOpen) return;
+
+    const handleDuplicateKeyDown = (e) => {
+      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setDuplicateState(prev => ({
+          ...prev,
+          selectedOption: prev.selectedOption === 0 ? 1 : 0
+        }));
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        setDuplicateState(prev => ({
+          ...prev,
+          selectedOption: prev.selectedOption === 0 ? 1 : 0
+        }));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        handleSelectDuplicateOption();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        handleCancelDuplicate();
+      }
+    };
+
+    window.addEventListener('keydown', handleDuplicateKeyDown, true);
+    return () => window.removeEventListener('keydown', handleDuplicateKeyDown, true);
+  }, [duplicateState]);
+
+  const handleSelectDuplicateOption = () => {
+    const { product, rowIndex, existingRowIndex, selectedOption } = duplicateState;
+    if (!product) return;
+
+    if (selectedOption === 0) {
+      // Option 0: Edit Existing Item
+      // 1. Focus the existing row's quantity column
+      setActiveRowIndex(existingRowIndex);
+      setActiveColumn('qty');
+      
+      // 2. Clear the current typing row's partial code input if it's the row we just entered it in
+      setBillItems(prev => {
+        const updated = [...prev];
+        if (updated[rowIndex] && updated[rowIndex].code === product.code && !updated[rowIndex].name) {
+          updated[rowIndex] = createEmptyRow();
+        }
+        return updated;
+      });
+      
+      if (window.electronAPI && window.electronAPI.logMessage) {
+        window.electronAPI.logMessage('info', `Duplicate product choice: Edit existing row at index ${existingRowIndex} for code ${product.code}`);
+      }
+    } else {
+      // Option 1: Add as New Item (proceed with execution)
+      executeAddProductToRow(product, rowIndex);
+      
+      if (window.electronAPI && window.electronAPI.logMessage) {
+        window.electronAPI.logMessage('info', `Duplicate product choice: Add new line at index ${rowIndex} for code ${product.code}`);
+      }
+    }
+
+    setDuplicateState({
+      isOpen: false,
+      product: null,
+      rowIndex: null,
+      existingRowIndex: null,
+      selectedOption: 0
+    });
+  };
+
+  const handleCancelDuplicate = () => {
+    setDuplicateState({
+      isOpen: false,
+      product: null,
+      rowIndex: null,
+      existingRowIndex: null,
+      selectedOption: 0
+    });
+  };
+
+  // Add Item to Bill row - actual execution
+  const executeAddProductToRow = (product, rowIndex) => {
     const updated = [...billItems];
     const defaultQty = product.priceType === 'Quantity' ? 1.000 : 1;
     const price = getCalculatedPrice(product, defaultQty);
@@ -380,6 +467,32 @@ export default function BillingDashboard({
     setActiveRowIndex(rowIndex);
     setActiveColumn('qty');
     closeSearch();
+  };
+
+  // Add Item to Bill row - with duplicate verification check
+  const addProductToRow = (product, rowIndex) => {
+    // Check if the product code already exists in another row in the bill items
+    const existingRowIndex = billItems.findIndex((item, idx) => 
+      idx !== rowIndex && 
+      item.code && 
+      item.code.trim().toUpperCase() === product.code.trim().toUpperCase()
+    );
+
+    if (existingRowIndex !== -1) {
+      // Show the duplicate options dialog
+      setDuplicateState({
+        isOpen: true,
+        product: product,
+        rowIndex: rowIndex,
+        existingRowIndex: existingRowIndex,
+        selectedOption: 0
+      });
+      if (window.electronAPI && window.electronAPI.logMessage) {
+        window.electronAPI.logMessage('info', `Duplicate item detected for code ${product.code} at row ${rowIndex} compared to existing row ${existingRowIndex}. Opening options modal.`);
+      }
+    } else {
+      executeAddProductToRow(product, rowIndex);
+    }
   };
 
   // Handle cell inputs
@@ -416,7 +529,7 @@ export default function BillingDashboard({
 
   // Keyboard navigation on billing table cells
   const handleCellKeyDown = (e, rowIndex, column) => {
-    if (isPrintModalOpen) return;
+    if (isPrintModalOpen || duplicateState.isOpen) return;
 
     // Alt + D: Delete current active row
     if (e.altKey && e.key.toLowerCase() === 'd') {
@@ -1704,6 +1817,175 @@ export default function BillingDashboard({
         </div>
 
       </div>
+
+      {/* Duplicate Product Alert Dialog Modal */}
+      {duplicateState.isOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            background: 'var(--card-bg)',
+            border: '2px solid var(--primary)',
+            borderRadius: '12px',
+            width: '460px',
+            padding: '24px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.15)',
+            color: 'var(--text-primary)',
+            fontFamily: 'var(--font-sans)'
+          }}>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: 'bold',
+              marginBottom: '10px',
+              color: 'var(--error)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              ⚠️ நகல் பொருள் / Duplicate Item
+            </h3>
+            
+            <p style={{
+              fontSize: '13.5px',
+              lineHeight: '1.5',
+              marginBottom: '20px',
+              color: 'var(--text-secondary)'
+            }}>
+              <strong>{duplicateState.product?.name} ({duplicateState.product?.code})</strong> ஏற்கனவே இந்த பில்லில் சேர்க்கப்பட்டுள்ளது!
+              <br />
+              already exists in this bill! Please select an option:
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+              {/* Option 0: Edit Existing */}
+              <div 
+                onClick={() => setDuplicateState(prev => ({ ...prev, selectedOption: 0 }))}
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  border: duplicateState.selectedOption === 0 
+                    ? '2px solid var(--primary)' 
+                    : '2px solid var(--border-color)',
+                  background: duplicateState.selectedOption === 0 
+                    ? 'var(--primary-glow)' 
+                    : 'transparent',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}
+              >
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  border: '2px solid ' + (duplicateState.selectedOption === 0 ? 'var(--primary)' : 'var(--border-color)'),
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                  background: duplicateState.selectedOption === 0 ? 'var(--primary)' : 'transparent'
+                }}>
+                  {duplicateState.selectedOption === 0 && '✓'}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '13.5px', color: duplicateState.selectedOption === 0 ? 'var(--primary)' : 'var(--text-primary)' }}>
+                    நிலவும் பொருளின் அளவை மாற்றவும் (பரிந்துரைக்கப்படுகிறது)
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Edit existing item quantity (Recommended)
+                  </div>
+                </div>
+              </div>
+
+              {/* Option 1: Add New Line */}
+              <div 
+                onClick={() => setDuplicateState(prev => ({ ...prev, selectedOption: 1 }))}
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  border: duplicateState.selectedOption === 1 
+                    ? '2px solid var(--primary)' 
+                    : '2px solid var(--border-color)',
+                  background: duplicateState.selectedOption === 1 
+                    ? 'var(--primary-glow)' 
+                    : 'transparent',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}
+              >
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  border: '2px solid ' + (duplicateState.selectedOption === 1 ? 'var(--primary)' : 'var(--border-color)'),
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                  background: duplicateState.selectedOption === 1 ? 'var(--primary)' : 'transparent'
+                }}>
+                  {duplicateState.selectedOption === 1 && '✓'}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '13.5px', color: duplicateState.selectedOption === 1 ? 'var(--primary)' : 'var(--text-primary)' }}>
+                    புதிய வரியாக சேர்க்கவும்
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Add as a new row (new weight/qty)
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button 
+                onClick={handleCancelDuplicate}
+                className="btn-secondary" 
+                style={{ padding: '8px 16px', borderRadius: '6px', fontSize: '13px' }}
+              >
+                ரத்து செய் / Cancel (Esc)
+              </button>
+              <button 
+                onClick={handleSelectDuplicateOption}
+                className="btn-primary" 
+                style={{ padding: '8px 20px', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold' }}
+              >
+                சரி / Confirm (Enter)
+              </button>
+            </div>
+            
+            <div style={{ 
+              marginTop: '15px', 
+              fontSize: '10px', 
+              color: 'var(--text-muted)', 
+              textAlign: 'center',
+              borderTop: '1px solid var(--border-color)',
+              paddingTop: '8px'
+            }}>
+              நகர ↑/↓ அம்புக்குறி விசைகளைப் பயன்படுத்தவும் / Use ↑/↓ Arrow Keys to navigate
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

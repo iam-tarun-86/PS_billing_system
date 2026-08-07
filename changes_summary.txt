@@ -94,7 +94,27 @@ production logging system:
     load failures, and warnings/errors originating in the React console (`console-message` handler).
 
 ------------------------------------------------------------------------
-6. MODIFIED FILES:
+6. DUPLICATE ITEM CHECK DIALOG (PREVENT DUPLICATIONS):
+------------------------------------------------------------------------
+To prevent accidental duplications when a cashier scans or enters the same item 
+code multiple times:
+
+- Duplicate Detection: When adding a product (either by typing code directly and 
+  pressing Enter, or selecting from the search overlay, or clicking search sidebar), 
+  the app verifies if that item code is already added in another row.
+- Choice Dialog Modal: If a duplicate is found, a dialog appears presenting 2 choices:
+  1. "நிலவும் பொருளின் அளவை மாற்றவும் / Edit existing item quantity (Recommended)"
+     Focuses the cursor onto the `qty` column of the existing product row so the 
+     cashier can immediately adjust the weight/quantity. Clears the temporary duplicate row.
+  2. "புதிய வரியாக சேர்க்கவும் / Add as a new row (new weight/qty)"
+     Proceeds to add a new line with the duplicate code (useful for multi-weight slabs).
+- Keyboard Navigation: The cashier can use the Arrow keys (Up/Down or Left/Right) to 
+  change selection, press Enter to confirm the selected action, or press Escape 
+  to dismiss/cancel.
+- Logged Event: The selection choice is written to the production log for audit tracking.
+
+------------------------------------------------------------------------
+7. MODIFIED FILES:
 ------------------------------------------------------------------------
 1. `src/components/PrintReceiptModal.jsx`
    - Added class `className="receipt-shop-name"` to the shop name <div>.
@@ -114,10 +134,12 @@ production logging system:
    - Embedded `SalesVisualizerModal` rendering code.
    - Logged CSV exports, deletions, and visualizer tab changes.
 6. `src/components/BillingDashboard.jsx`
+   - Added duplicate prevention dialog with keyboard support.
+   - Implemented focus management and navigation bypasses.
    - Logged component mounting, saves of bill edits, and saves of new bills.
 
 ------------------------------------------------------------------------
-7. REFERENCE CSS CODE BLOCK (from src/index.css):
+8. REFERENCE CSS CODE BLOCK (from src/index.css):
 ------------------------------------------------------------------------
 /* Print CSS Styles */
 @media print {
