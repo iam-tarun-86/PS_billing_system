@@ -218,5 +218,5 @@ to ~35MB), we initiated a Tauri subproject inside the `tari/` folder:
   - `print_silent`: Spools standard printing via native system handlers.
 - JS Adapter (`tauriBridge.js`): Maps window control, logging, and database operations.
 - Dynamic Resolution: Resolves window maximize triggers automatically on boot and success states, accommodating his father's target 1360*768 screen resolution.
-- Compilation: Uses MSVC toolchain, requiring VS Community + Windows SDK. Compile command: `npm run build` inside `tari/`.
+- Compilation: Built successfully using the MSVC toolchain and Windows SDK. Standalone executable: `tari/src-tauri/target/release/app.exe`. NSIS Installer: `tari/src-tauri/target/release/bundle/nsis/ps-billing-system_0.1.0_x64-setup.exe`. MSI Installer: `tari/src-tauri/target/release/bundle/msi/ps-billing-system_0.1.0_x64_en-US.msi`.
 ========================================================================
