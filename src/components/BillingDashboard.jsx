@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Search, Save, Trash2, Moon, Sun, ShoppingCart, User, Key, Database, Archive, Folder, LogOut } from 'lucide-react';
+import { Search, Save, Trash2, Moon, Sun, ShoppingCart, User, Key, Database, Archive, Folder, LogOut, X } from 'lucide-react';
 
 export default function BillingDashboard({ 
   database, 

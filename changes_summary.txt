@@ -158,6 +158,7 @@ and database management console:
    - Added database maintenance buttons (clear sales, clear products, initialize blank).
    - Added duplicate prevention dialog with keyboard support.
    - Implemented focus management and navigation bypasses.
+   - Fixed unimported `X` icon reference crash on Settings open by importing it from `lucide-react`.
    - Logged component mounting, saves of bill edits, and saves of new bills.
 
 ------------------------------------------------------------------------
