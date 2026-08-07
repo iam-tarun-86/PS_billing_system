@@ -217,4 +217,6 @@ to ~35MB), we initiated a Tauri subproject inside the `tari/` folder:
   - `log_message`: Appends frontend logs to `app.log` with 1MB rotation.
   - `print_silent`: Spools standard printing via native system handlers.
 - JS Adapter (`tauriBridge.js`): Maps window control, logging, and database operations.
+- Dynamic Resolution: Resolves window maximize triggers automatically on boot and success states, accommodating his father's target 1360*768 screen resolution.
+- Compilation: Uses MSVC toolchain, requiring VS Community + Windows SDK. Compile command: `npm run build` inside `tari/`.
 ========================================================================
