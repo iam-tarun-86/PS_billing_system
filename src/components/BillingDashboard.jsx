@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Search, Save, Trash2, Moon, Sun, ShoppingCart, User, Key, Database, Archive, Folder, LogOut, X } from 'lucide-react';
+import { Search, Save, Trash2, Moon, Sun, ShoppingCart, User, Key, Database, Archive, Folder, LogOut } from 'lucide-react';
 
 export default function BillingDashboard({ 
   database, 
@@ -31,82 +31,6 @@ export default function BillingDashboard({
     existingRowIndex: null,
     selectedOption: 0
   });
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [shopNameInput, setShopNameInput] = useState('');
-  const [headerSloganInput, setHeaderSloganInput] = useState('');
-  const [phoneNumbersInput, setPhoneNumbersInput] = useState('');
-  const [defaultOperatorInput, setDefaultOperatorInput] = useState('');
-
-  // Sync inputs when settings modal is opened
-  useEffect(() => {
-    if (isSettingsOpen && database && database.settings) {
-      setShopNameInput(database.settings.shopName || '');
-      setHeaderSloganInput(database.settings.headerSlogan || '');
-      setPhoneNumbersInput(database.settings.phoneNumbers || '');
-      setDefaultOperatorInput(database.settings.defaultOperator || 'T');
-    }
-  }, [isSettingsOpen, database]);
-
-  const handleSaveSettings = () => {
-    if (!shopNameInput.trim()) {
-      alert('கடையின் பெயர் தேவை! / Shop Name is required!');
-      return;
-    }
-    onUpdateDatabase({
-      ...database,
-      settings: {
-        ...database.settings,
-        shopName: shopNameInput.trim(),
-        headerSlogan: headerSloganInput.trim(),
-        phoneNumbers: phoneNumbersInput.trim(),
-        defaultOperator: defaultOperatorInput.trim().toUpperCase()
-      }
-    });
-    alert('அமைப்புகள் சேமிக்கப்பட்டன! / Settings saved successfully!');
-    logInfo(`Shop settings updated: ${shopNameInput}, Operator: ${defaultOperatorInput}`);
-    setIsSettingsOpen(false);
-  };
-
-  const handleClearTransactions = () => {
-    if (confirm('எச்சரிக்கை! அனைத்து விற்பனை விபரங்களும் நிரந்தரமாக நீக்கப்படும். தொடர வேண்டுமா?\nWARNING! All transaction history will be permanently deleted. Do you want to continue?')) {
-      onUpdateDatabase({
-        ...database,
-        transactions: []
-      });
-      alert('விற்பனை விபரங்கள் நீக்கப்பட்டன! / Transactions cleared successfully!');
-      logInfo('Database wiped: cleared all transactions');
-    }
-  };
-
-  const handleClearProducts = () => {
-    if (confirm('எச்சரிக்கை! அனைத்து பொருட்களின் பட்டியலும் நிரந்தரமாக நீக்கப்படும். தொடர வேண்டுமா?\nWARNING! All products list will be permanently deleted. Do you want to continue?')) {
-      onUpdateDatabase({
-        ...database,
-        products: []
-      });
-      alert('பொருட்களின் விபரங்கள் நீக்கப்பட்டன! / Products list cleared successfully!');
-      logInfo('Database wiped: cleared all products');
-    }
-  };
-
-  const handleResetToCleanState = () => {
-    if (confirm('எச்சரிக்கை! அனைத்து விபரங்களும் நீக்கப்பட்டு புதிய தரவுத்தளம் உருவாக்கப்படும். தொடர வேண்டுமா?\nWARNING! Create a clean empty database with empty products and transactions? All current details will be lost.')) {
-      onUpdateDatabase({
-        products: [],
-        transactions: [],
-        settings: {
-          shopName: 'MY NEW SHOP',
-          headerSlogan: 'வரவேற்கிறோம் / Welcome',
-          phoneNumbers: '0000000000',
-          defaultOperator: 'A',
-          theme: 'light'
-        }
-      });
-      alert('புதிய தரவுத்தளம் அமைக்கப்பட்டது! / Clean empty database initialized successfully!');
-      logInfo('Database reset to clean empty state');
-      setIsSettingsOpen(false);
-    }
-  };
 
   useEffect(() => {
     logInfo('BillingDashboard mounted');
@@ -254,7 +178,7 @@ export default function BillingDashboard({
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
-      if (isPrintModalOpen || duplicateState.isOpen || isSettingsOpen) return;
+      if (isPrintModalOpen || duplicateState.isOpen) return;
 
       // Avoid shortcuts when typing in search overlay query
       if (showSearchOverlay) {
@@ -362,7 +286,7 @@ export default function BillingDashboard({
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [billItems, activeRowIndex, activeColumn, showSearchOverlay, customerName, customerMobile, discount, rent, coolie, advance, viewingTxIndex, draftBill, isPrintModalOpen, activeBottomBtnIndex, isEditingSavedBill, duplicateState.isOpen, isSettingsOpen]);
+  }, [billItems, activeRowIndex, activeColumn, showSearchOverlay, customerName, customerMobile, discount, rent, coolie, advance, viewingTxIndex, draftBill, isPrintModalOpen, activeBottomBtnIndex, isEditingSavedBill, duplicateState.isOpen]);
 
   // Close menus on click outside
   useEffect(() => {
@@ -378,7 +302,7 @@ export default function BillingDashboard({
   // Including it caused .select() to fire on every keystroke (since typing updates billItems),
   // which selected all text so each new character replaced what was typed before.
   useEffect(() => {
-    if (isPrintModalOpen || duplicateState.isOpen || isSettingsOpen) return;
+    if (isPrintModalOpen || duplicateState.isOpen) return;
 
     if (showSearchOverlay) {
       if (searchInputRef.current) searchInputRef.current.focus();
@@ -400,7 +324,7 @@ export default function BillingDashboard({
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [activeRowIndex, activeColumn, showSearchOverlay, isPrintModalOpen, duplicateState.isOpen, isSettingsOpen]);
+  }, [activeRowIndex, activeColumn, showSearchOverlay, isPrintModalOpen, duplicateState.isOpen]);
 
   function createEmptyRow() {
     return {
@@ -436,21 +360,6 @@ export default function BillingDashboard({
     
     return product.sellingPrice; // Default fallback
   };
-
-  // Keyboard listener for Settings close on Escape
-  useEffect(() => {
-    if (!isSettingsOpen) return;
-
-    const handleSettingsKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        setIsSettingsOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleSettingsKeyDown);
-    return () => window.removeEventListener('keydown', handleSettingsKeyDown);
-  }, [isSettingsOpen]);
 
   // Keyboard listener for duplicate item selection modal
   useEffect(() => {
@@ -620,7 +529,7 @@ export default function BillingDashboard({
 
   // Keyboard navigation on billing table cells
   const handleCellKeyDown = (e, rowIndex, column) => {
-    if (isPrintModalOpen || duplicateState.isOpen || isSettingsOpen) return;
+    if (isPrintModalOpen || duplicateState.isOpen) return;
 
     // Alt + D: Delete current active row
     if (e.altKey && e.key.toLowerCase() === 'd') {
@@ -1295,9 +1204,6 @@ export default function BillingDashboard({
             </button>
             <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={onNavigateToHistory}>
               <Archive size={13} /> History
-            </button>
-            <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px', background: 'var(--primary-glow)', color: 'var(--primary)', border: '1px solid var(--primary)', fontWeight: 'bold' }} onClick={() => setIsSettingsOpen(true)}>
-              <Folder size={13} /> Settings
             </button>
             <button className="btn-error" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={onLogOut}>
               Exit
@@ -2076,203 +1982,6 @@ export default function BillingDashboard({
               paddingTop: '8px'
             }}>
               நகர ↑/↓ அம்புக்குறி விசைகளைப் பயன்படுத்தவும் / Use ↑/↓ Arrow Keys to navigate
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Settings Panel Modal */}
-      {isSettingsOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.65)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 9998
-        }}>
-          <div style={{
-            background: 'var(--card-bg)',
-            border: '2px solid var(--primary)',
-            borderRadius: '12px',
-            width: '520px',
-            padding: '24px',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.15)',
-            color: 'var(--text-primary)',
-            fontFamily: 'var(--font-sans)',
-            maxHeight: '90vh',
-            overflowY: 'auto'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid var(--border-color)', paddingBottom: '12px', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary)' }}>
-                ⚙️ Settings & Database Management
-              </h3>
-              <button 
-                onClick={() => setIsSettingsOpen(false)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Section 1: Shop details configuration */}
-            <div style={{ marginBottom: '24px' }}>
-              <h4 style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--primary)', marginBottom: '12px', letterSpacing: '0.05em' }}>
-                Shop Details
-              </h4>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Shop Name</label>
-                  <input 
-                    type="text" 
-                    value={shopNameInput}
-                    onChange={(e) => setShopNameInput(e.target.value)}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'transparent',
-                      color: 'var(--text-primary)',
-                      fontSize: '13px',
-                      fontWeight: '600'
-                    }}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Header Slogan (Tamil / English)</label>
-                  <input 
-                    type="text" 
-                    value={headerSloganInput}
-                    onChange={(e) => setHeaderSloganInput(e.target.value)}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'transparent',
-                      color: 'var(--text-primary)',
-                      fontSize: '13px'
-                    }}
-                  />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Phone Numbers</label>
-                    <input 
-                      type="text" 
-                      value={phoneNumbersInput}
-                      onChange={(e) => setPhoneNumbersInput(e.target.value)}
-                      style={{
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        border: '1px solid var(--border-color)',
-                        background: 'transparent',
-                        color: 'var(--text-primary)',
-                        fontSize: '13px',
-                        fontFamily: 'var(--font-mono)'
-                      }}
-                    />
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Default Operator Code</label>
-                    <input 
-                      type="text" 
-                      maxLength={5}
-                      value={defaultOperatorInput}
-                      onChange={(e) => setDefaultOperatorInput(e.target.value)}
-                      style={{
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        border: '1px solid var(--border-color)',
-                        background: 'transparent',
-                        color: 'var(--text-primary)',
-                        fontSize: '13px',
-                        fontWeight: 'bold',
-                        textAlign: 'center'
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Section 2: Database cleaning triggers */}
-            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px', marginBottom: '24px' }}>
-              <h4 style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--error)', marginBottom: '12px', letterSpacing: '0.05em' }}>
-                Database Maintenance
-              </h4>
-              <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '14px' }}>
-                Wipe old transaction/product data when setting up this software for a new shop.
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(239, 68, 68, 0.05)', padding: '10px 14px', borderRadius: '8px', border: '1px dashed rgba(239, 68, 68, 0.25)' }}>
-                  <div>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Delete All Bills</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Wipe all transaction history and reset invoice number to 1</div>
-                  </div>
-                  <button 
-                    onClick={handleClearTransactions}
-                    className="btn-error" 
-                    style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 'bold' }}
-                  >
-                    Clear Sales
-                  </button>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(239, 68, 68, 0.05)', padding: '10px 14px', borderRadius: '8px', border: '1px dashed rgba(239, 68, 68, 0.25)' }}>
-                  <div>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Delete All Products</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Wipe all products from the inventory catalog</div>
-                  </div>
-                  <button 
-                    onClick={handleClearProducts}
-                    className="btn-error" 
-                    style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 'bold' }}
-                  >
-                    Clear Inventory
-                  </button>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(59, 130, 246, 0.05)', padding: '10px 14px', borderRadius: '8px', border: '1px dashed rgba(59, 130, 246, 0.25)' }}>
-                  <div>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Initialize Blank Database</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Reset settings and wipe all data for a clean new shop template</div>
-                  </div>
-                  <button 
-                    onClick={handleResetToCleanState}
-                    className="btn-secondary" 
-                    style={{ padding: '6px 12px', fontSize: '11px', border: '1px solid var(--primary)', color: 'var(--primary)', fontWeight: 'bold' }}
-                  >
-                    Reset blank
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-              <button 
-                onClick={() => setIsSettingsOpen(false)}
-                className="btn-secondary" 
-                style={{ padding: '8px 16px', borderRadius: '6px', fontSize: '13px' }}
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleSaveSettings}
-                className="btn-success" 
-                style={{ padding: '8px 24px', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold' }}
-              >
-                Save Changes
-              </button>
             </div>
           </div>
         </div>

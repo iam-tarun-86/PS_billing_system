@@ -116,22 +116,17 @@ code multiple times:
 ------------------------------------------------------------------------
 7. CUSTOM SETTINGS & MANAGEMENT PANEL (FUTURE-PROOFING FOR OTHER SHOPS):
 ------------------------------------------------------------------------
-To allow reusing the POS system for other shops, we added a complete settings 
-and database management console:
+To allow reusing the POS system for other shops, we implemented a complete settings 
+and database management console (allowing customization of Shop Name, slogan, phone 
+numbers, operator and options to wipe sales/products).
 
-- Header Shortcut: Added a blue "Settings" button in the billing dashboard header.
-- Custom Shop Details: Allows live editing of:
-  - Shop Name
-  - Slogan / Sub-header
-  - Phone Numbers
-  - Operator Code / Initials
-- Database Tools: Includes 3 options to safely reset and configure for a new client:
-  - Clear Sales: Wipes all transaction history, resetting serial number counts to 1.
-  - Clear Inventory: Empties the product catalog.
-  - Initialize blank database: Resets settings to generic placeholders and wipes 
-    all products and transactions, creating a blank canvas database.
-- Keyboard Handling: Automatically closes on Escape. All background key events 
-  and focuses are blocked while the settings modal is active.
+- Father's App Safety: To eliminate any risk of accidental database wipes or settings 
+  misconfigurations by cashiers in your father's active system, the Settings panel 
+  has been removed from the primary workspace.
+- PS_BILLING Template Clone: The full settings-enabled codebase has been cloned 
+  to the `PS_BILLING/` directory in the root of the project.
+- Future Shop Setup: If you want to configure and package the app for another shop, 
+  simply use and modify the project inside the `PS_BILLING/` folder.
 
 ------------------------------------------------------------------------
 8. MODIFIED FILES:
@@ -154,12 +149,10 @@ and database management console:
    - Embedded `SalesVisualizerModal` rendering code.
    - Logged CSV exports, deletions, and visualizer tab changes.
 6. `src/components/BillingDashboard.jsx`
-   - Added Settings overlay modal to dynamically edit shop details and operator.
-   - Added database maintenance buttons (clear sales, clear products, initialize blank).
    - Added duplicate prevention dialog with keyboard support.
    - Implemented focus management and navigation bypasses.
-   - Fixed unimported `X` icon reference crash on Settings open by importing it from `lucide-react`.
    - Logged component mounting, saves of bill edits, and saves of new bills.
+   - Note: Customizable Settings panel additions were cloned to `PS_BILLING/` and reverted here for active safety.
 
 ------------------------------------------------------------------------
 9. REFERENCE CSS CODE BLOCK (from src/index.css):
