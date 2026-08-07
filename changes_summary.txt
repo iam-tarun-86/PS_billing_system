@@ -114,7 +114,27 @@ code multiple times:
 - Logged Event: The selection choice is written to the production log for audit tracking.
 
 ------------------------------------------------------------------------
-7. MODIFIED FILES:
+7. CUSTOM SETTINGS & MANAGEMENT PANEL (FUTURE-PROOFING FOR OTHER SHOPS):
+------------------------------------------------------------------------
+To allow reusing the POS system for other shops, we added a complete settings 
+and database management console:
+
+- Header Shortcut: Added a blue "Settings" button in the billing dashboard header.
+- Custom Shop Details: Allows live editing of:
+  - Shop Name
+  - Slogan / Sub-header
+  - Phone Numbers
+  - Operator Code / Initials
+- Database Tools: Includes 3 options to safely reset and configure for a new client:
+  - Clear Sales: Wipes all transaction history, resetting serial number counts to 1.
+  - Clear Inventory: Empties the product catalog.
+  - Initialize blank database: Resets settings to generic placeholders and wipes 
+    all products and transactions, creating a blank canvas database.
+- Keyboard Handling: Automatically closes on Escape. All background key events 
+  and focuses are blocked while the settings modal is active.
+
+------------------------------------------------------------------------
+8. MODIFIED FILES:
 ------------------------------------------------------------------------
 1. `src/components/PrintReceiptModal.jsx`
    - Added class `className="receipt-shop-name"` to the shop name <div>.
@@ -134,12 +154,14 @@ code multiple times:
    - Embedded `SalesVisualizerModal` rendering code.
    - Logged CSV exports, deletions, and visualizer tab changes.
 6. `src/components/BillingDashboard.jsx`
+   - Added Settings overlay modal to dynamically edit shop details and operator.
+   - Added database maintenance buttons (clear sales, clear products, initialize blank).
    - Added duplicate prevention dialog with keyboard support.
    - Implemented focus management and navigation bypasses.
    - Logged component mounting, saves of bill edits, and saves of new bills.
 
 ------------------------------------------------------------------------
-8. REFERENCE CSS CODE BLOCK (from src/index.css):
+9. REFERENCE CSS CODE BLOCK (from src/index.css):
 ------------------------------------------------------------------------
 /* Print CSS Styles */
 @media print {
