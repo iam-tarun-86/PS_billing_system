@@ -219,4 +219,6 @@ to ~35MB), we initiated a Tauri subproject inside the `tari/` folder:
 - JS Adapter (`tauriBridge.js`): Maps window control, logging, and database operations.
 - Dynamic Resolution: Resolves window maximize triggers automatically on boot and success states, accommodating his father's target 1360*768 screen resolution.
 - Compilation: Built successfully using the MSVC toolchain and Windows SDK. Standalone executable: `tari/src-tauri/target/release/app.exe`. NSIS Installer: `tari/src-tauri/target/release/bundle/nsis/ps-billing-system_0.1.0_x64-setup.exe`. MSI Installer: `tari/src-tauri/target/release/bundle/msi/ps-billing-system_0.1.0_x64_en-US.msi`.
+- Cleanup: Removed root `electron/` directory and stripped Electron builders, package configs, dependencies, and build configurations from root `package.json`.
 ========================================================================
+
