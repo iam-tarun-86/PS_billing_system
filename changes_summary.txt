@@ -203,4 +203,18 @@ numbers, operator and options to wipe sales/products).
   }
 }
 ------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+10. TAURI RUST MIGRATION SUBPROJECT (tari/):
+------------------------------------------------------------------------
+To optimize packaging size (from ~85MB to ~5MB) and RAM footprint (from ~220MB 
+to ~35MB), we initiated a Tauri subproject inside the `tari/` folder:
+
+- Folder Location: `tari/` (configured to be ignored in the root git repo to prevent commits bloat).
+- Tech Stack: Vite + React on frontend, Rust on backend (`src-tauri/`).
+- Rust Commands (`src-tauri/src/lib.rs`):
+  - `db_read` / `db_write`: Fast standard library file I/O for `database.json`.
+  - `log_message`: Appends frontend logs to `app.log` with 1MB rotation.
+  - `print_silent`: Spools standard printing via native system handlers.
+- JS Adapter (`tauriBridge.js`): Maps window control, logging, and database operations.
 ========================================================================
