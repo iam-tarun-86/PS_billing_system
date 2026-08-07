@@ -124,7 +124,7 @@ numbers, operator and options to wipe sales/products).
   misconfigurations by cashiers in your father's active system, the Settings panel 
   has been removed from the primary workspace.
 - PS_BILLING Template Clone: The full settings-enabled codebase has been cloned 
-  to the `PS_BILLING/` directory in the root of the project.
+  to the `PS_BILLING/` directory in the main projects folder (alongside the `ps/` repository).
 - Future Shop Setup: If you want to configure and package the app for another shop, 
   simply use and modify the project inside the `PS_BILLING/` folder.
 
@@ -152,7 +152,7 @@ numbers, operator and options to wipe sales/products).
    - Added duplicate prevention dialog with keyboard support.
    - Implemented focus management and navigation bypasses.
    - Logged component mounting, saves of bill edits, and saves of new bills.
-   - Note: Customizable Settings panel additions were cloned to `PS_BILLING/` and reverted here for active safety.
+   - Note: Customizable Settings panel additions were cloned to the parent folder `PS_BILLING/` and reverted here for active safety.
 
 ------------------------------------------------------------------------
 9. REFERENCE CSS CODE BLOCK (from src/index.css):
