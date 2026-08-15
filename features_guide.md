@@ -50,7 +50,7 @@ Handles accidental double additions of the same product code in a single bill:
 
 ---
 
-## 🔍 4. Item Search Modal (F2)
+## 🔍 4. Item Search Modal
 A fuzzy lookup overlay to find items without knowing their codes:
 * **Query Matcher:** Search query filters the database by **Product Code**, **English Name**, **Tamil Name**, or **Category Group** dynamically.
 * **Full Data Grid:** Results show Code, Product Name, Cost Price, Retail Price, and current Stock levels.
