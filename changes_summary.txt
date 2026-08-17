@@ -225,8 +225,10 @@ to ~35MB), we initiated a Tauri subproject inside the `tari/` folder:
 - Silent Printing: Configured `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` environment variable with `"--kiosk-printing"` inside `lib.rs`'s `run()` hook on Windows, forcing WebView2 to print silently to the default printer without displaying print options or dialogs. Rewrote `PrintReceiptModal.jsx` to render the printable receipt layout strictly off-screen and trigger the print immediately on mount, completely bypassing the bill preview window/screen overlay. Updated F11 & F12 keydown listeners in `BillingDashboard.jsx`'s read-only viewing mode to directly trigger Tamil/English reprint, avoiding stock and database edits.
 - History Detail Modal: Added a new "பார்க்க / View" button in `SalesHistory.jsx` that opens a modal displaying the complete bill details (customer metadata, itemized tables, pricing totals) and options to print directly in Tamil or English.
 - Dynamic Date Sync: Updated the date display inside the Billing Dashboard metadata card to dynamically show the actual date of the saved bill being inspected when viewing past invoices.
-- Project Documentation: Rewrote root `README.md` to display professional badges, architecture flow diagrams, window-by-window details, and compilation workflows.
+- Keybinding Refactor: Removed redundant `F2` keybinding from `BillingDashboard.jsx` and `features_guide.md`, standardizing on the instant `Enter` key trigger on empty code cells for mouse-free fuzzy item searches.
+- Slab Pricing Investigation & Auto-Import Prep:
+  - Researched legacy FoxPro database tables in `Old_sms/SMS/data/IM012026.DBF` and `Old_sms/Sms3/Data/IM012026.DBF`. Located item slab quantities (`SQ1..SQ4`) and rate offset adjustment fields (`SRATE1..SRATE4`).
+  - Verified database timelines: `Old_sms/SMS` was the live store database actively billing up to July 05, 2026 (Bill #505), whereas `Sms3` was a test/upgrade folder untouched after April 20, 2026.
+  - Confirmed that `ProductManager.jsx` auto-generates the 4 standard weight tiers (50g, 100g, 250g, 500g) on all `Quantity` items, requiring operators only to adjust the offset value when packet price differences exist.
+  - Prepared import pipeline to ingest the latest August 2026 `IM012026.DBF` from the father's shop computer into `database.json`.
 ========================================================================
-
-
-
