@@ -48,7 +48,7 @@ A lightning-fast, 100% keyboard-driven desktop POS application designed specific
 ### 🔒 6. Robust Offline Storage & Safety
 - **Atomic File Persistence:** Rust-managed atomic file writes with .json.tmp staging to eliminate any risk of database corruption.
 - **Automated Backups:** Automatic timestamped backups created in %APPDATA%\com.perumalstores.psbilling\ and project root.
-- **Log Rotation:** In-app production logging with automatic 1MB rotation limits (pp.log).
+- **Log Rotation:** In-app production logging with automatic 1MB rotation limits (app.log).
 
 ---
 
@@ -74,7 +74,7 @@ A lightning-fast, 100% keyboard-driven desktop POS application designed specific
 
 ## 🏗️ Project Architecture
 
-`
+```
 ps/
 ├── Old_sms/Sms3/Data/       # Original FoxPro DBF source database
 ├── tari/                    # Tauri v2 Desktop Application
@@ -87,6 +87,9 @@ ps/
 │   │   │   └── PrintReceiptModal.jsx  # Thermal receipt layout & printer spooler
 │   │   ├── utils/
 │   │   │   ├── db.js                  # Database abstractions & seed fallbacks
+│   │   │   ├── normalize.js           # Canonical bill/line-item shape, read-time repair
+│   │   │   ├── units.js               # Unit vocabulary & unresolved-unit labelling
+│   │   │   ├── csv.js                 # UTF-8 BOM CSV export (Tamil-safe in Excel)
 │   │   │   └── tauriBridge.js         # Tauri IPC invocation bridge
 │   │   ├── App.jsx                    # Root state router & session manager
 │   │   ├── main.jsx                   # ErrorBoundary & app entrypoint
@@ -97,12 +100,14 @@ ps/
 │   │   │   └── main.rs                # Windows desktop entrypoint
 │   │   ├── tauri.conf.json            # Desktop bundle configuration
 │   │   └── Cargo.toml                 # Rust dependencies
+│   ├── scripts/
+│   │   └── migrate_database.mjs       # One-time, idempotent database repair
 │   ├── database.json                  # Synchronized product & sales database
 │   └── package.json                   # Frontend dependencies & scripts
 ├── context.txt                        # Complete project development log & context
 ├── database_backup_2026_08_18.json    # Safety database backup
 └── ps-billing-system_latest_setup.exe # Production Windows installer
-`
+```
 
 ---
 
@@ -110,12 +115,11 @@ ps/
 
 ### Prerequisites
 - **Node.js**: v18+ or v20+
-- **Rust**: 
-ustc / cargo v1.80+
+- **Rust**: rustc / cargo v1.80+
 - **WebView2**: Standard Windows 10/11 runtime
 
 ### Development Setup
-`ash
+```bash
 # 1. Navigate to tari directory
 cd tari
 
@@ -124,16 +128,62 @@ npm install
 
 # 3. Start local development server
 npm run dev
-`
+```
 
 ### Production Build
-`ash
+```bash
 # Build standalone Windows binary and installer
 npm run build
-`
+```
 Output files are generated at:
-- **Standalone Binary:** 	ari/src-tauri/target/release/app.exe
-- **Setup Installer:** 	ari/src-tauri/target/release/bundle/nsis/ps-billing-system_0.1.0_x64-setup.exe (and ps-billing-system_latest_setup.exe in project root)
+- **Standalone Binary:** tari/src-tauri/target/release/app.exe
+- **Setup Installer:** tari/src-tauri/target/release/bundle/nsis/ps-billing-system_0.1.0_x64-setup.exe (and ps-billing-system_latest_setup.exe in project root)
+
+---
+
+## 🛡️ Data Safety & Recovery
+
+The shop's entire history lives in one file. Everything below exists so that no single
+mistake, crash or power cut can take it.
+
+**Where the data lives**
+
+```
+%APPDATA%/com.perumalstores.psbilling/
+├── database.json                    # live data
+├── backups/
+│   ├── database-YYYY-MM-DD.json     # refreshed after every successful save, last 7 kept
+│   └── database-monthly-YYYY-MM.json# first save of each month, kept indefinitely
+└── app.log                          # rotates at 1 MB
+```
+
+**How a save works.** The file is written to a uniquely named temporary file, flushed to
+the disk platter with `sync_all()`, and only then renamed over the live file. A power cut
+therefore leaves either the whole old file or the whole new one, never a half-written one.
+Concurrent saves are serialised behind a mutex. If a save fails, the operator is told —
+it is never swallowed.
+
+**If the live file is ever unreadable**, the app recovers from the newest backup that
+still parses, moves the damaged file aside as `database.corrupt.<timestamp>.json`, and
+records both in `app.log`. It will not seed a blank database over live data.
+
+**Repairing an older database**
+
+```bash
+cd tari
+node scripts/migrate_database.mjs --dry-run   # report only, writes nothing
+node scripts/migrate_database.mjs             # apply
+```
+
+Idempotent, backs up before writing, and aborts if its integrity checks fail — including
+a check that the sum of all recorded sales is unchanged to the paisa.
+
+**Bill identity.** Every bill carries an immutable `id`; deleting and editing match on it.
+`invoiceNo` is the number printed on paper, restarts at 1 each morning, and is issued from
+a stored counter so a deleted bill's number is never given to another customer.
+
+**Rounding.** Bills are settled in whole rupees, as the shop has always done. The
+difference is stored as `roundOff` and shown on the receipt.
 
 ---
 
@@ -142,7 +192,7 @@ Output files are generated at:
 | Username | Password | Role | Access Level |
 | :---: | :---: | :---: | :--- |
 | T | T | Cashier / Operator | Billing, Search, Printing |
-| dmin | password123 | Store Admin | Full Master & Settings Access |
+| admin | password123 | Store Admin | Full Master & Settings Access |
 
 ---
 

@@ -295,3 +295,87 @@ pub fn run() {
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  fn scratch(name: &str) -> PathBuf {
+    let dir = std::env::temp_dir().join(format!("ps_billing_test_{}_{}", name, std::process::id()));
+    let _ = fs::remove_dir_all(&dir);
+    fs::create_dir_all(&dir).unwrap();
+    dir
+  }
+
+  #[test]
+  fn atomic_write_replaces_the_file_and_leaves_no_temp_behind() {
+    let dir = scratch("atomic");
+    let target = dir.join("database.json");
+
+    write_file_atomic(&target, "{\"v\":1}").unwrap();
+    assert_eq!(fs::read_to_string(&target).unwrap(), "{\"v\":1}");
+
+    write_file_atomic(&target, "{\"v\":2}").unwrap();
+    assert_eq!(fs::read_to_string(&target).unwrap(), "{\"v\":2}");
+
+    // A failed or half-finished write must not leave scratch files in the data folder.
+    let leftovers: Vec<_> = fs::read_dir(&dir)
+      .unwrap()
+      .filter_map(|e| e.ok())
+      .filter(|e| e.file_name().to_string_lossy().contains("tmp"))
+      .collect();
+    assert!(leftovers.is_empty(), "temp files left behind: {:?}", leftovers);
+
+    let _ = fs::remove_dir_all(&dir);
+  }
+
+  #[test]
+  fn pruning_keeps_the_newest_week_and_never_touches_the_monthlies() {
+    let dir = scratch("prune");
+    let log = dir.join("app.log");
+
+    // Twelve days of daily backups, plus two monthly ones that must survive.
+    for day in 1..=12 {
+      fs::write(dir.join(format!("database-2026-08-{:02}.json", day)), "{}").unwrap();
+    }
+    fs::write(dir.join("database-monthly-2026-07.json"), "{}").unwrap();
+    fs::write(dir.join("database-monthly-2026-08.json"), "{}").unwrap();
+
+    prune_daily_backups(&dir, &log);
+
+    let mut remaining: Vec<String> = fs::read_dir(&dir)
+      .unwrap()
+      .filter_map(|e| e.ok())
+      .map(|e| e.file_name().to_string_lossy().to_string())
+      .filter(|n| n.ends_with(".json"))
+      .collect();
+    remaining.sort();
+
+    let dailies: Vec<&String> = remaining.iter().filter(|n| !n.contains("monthly")).collect();
+    assert_eq!(dailies.len(), DAILY_BACKUPS_TO_KEEP, "kept {:?}", dailies);
+    // The seven kept must be the seven most recent, 06 through 12.
+    assert_eq!(*dailies[0], "database-2026-08-06.json".to_string());
+    assert_eq!(*dailies[6], "database-2026-08-12.json".to_string());
+
+    assert!(remaining.iter().any(|n| n == "database-monthly-2026-07.json"));
+    assert!(remaining.iter().any(|n| n == "database-monthly-2026-08.json"));
+
+    let _ = fs::remove_dir_all(&dir);
+  }
+
+  #[test]
+  fn pruning_does_nothing_when_under_the_limit() {
+    let dir = scratch("under");
+    let log = dir.join("app.log");
+    for day in 1..=3 {
+      fs::write(dir.join(format!("database-2026-08-{:02}.json", day)), "{}").unwrap();
+    }
+
+    prune_daily_backups(&dir, &log);
+
+    let count = fs::read_dir(&dir).unwrap().filter_map(|e| e.ok()).count();
+    assert_eq!(count, 3);
+
+    let _ = fs::remove_dir_all(&dir);
+  }
+}
