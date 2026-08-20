@@ -477,4 +477,62 @@ the running app. Branch: `durability-fixes` (4 commits).
      of its own history. Splitting history per financial year is the next step,
      and `archive_history.mjs --before=` already supports doing it by hand.
 
+9. SLAB OFFSET SIGN CORRECTION (found after the audit, same day):
+
+   SYMPTOM: JEERA (M47) at 50g billed Rs13.50. The old software bills Rs24.50.
+
+   CAUSE: the old system stores its slab differential in `IM012026.DBF` as
+   WQ1..WQ4 (quantities) and WRATE1..WRATE4 (differentials), and applies it as
+
+       effectiveRate = SRATE - WRATE
+
+   M47 has SRATE 380 and WRATE1 -110, so the shop charges 380 - (-110) = 490/kg
+   and 50g costs Rs24.50. The Aug 18 slab ingestion copied WRATE straight into
+   `offset`, but the app applies
+
+       effectiveRate = sellingPrice + offset
+
+   giving 380 + (-110) = 270/kg and Rs13.50 - undercharging by Rs11 on every
+   50g sale of an expensive spice. Some products were worse: AACHIKULAMBU50GM
+   (116) computed a NEGATIVE rate of -Rs2/kg.
+
+   NOTE: the slab values are in the W-series (WQ/WRATE), not the S-series
+   (SQ/SRATE) that section 12 above refers to. On M47 the S-series is all
+   zeros. Anything re-importing slabs must read WQ1..WQ4 / WRATE1..WRATE4 and
+   NEGATE the rate, because the app adds the offset where FoxPro subtracts it.
+
+   `tari/import_old_data.py` in this repo is NOT the culprit - it always writes
+   `"slabs": []`. The script that ingested the slabs on Aug 18 is not in the
+   repo. If it resurfaces, this is the line to fix.
+
+   EVIDENCE: checked against the 1,850 real bills, which record what customers
+   were actually charged. Of the 287 slab bands with sales history:
+
+     - 57 were wrong before and are correct after the negation
+     - 0 were broken by the negation
+     - 120 were already correct (offset 0, unaffected)
+     - 110 match neither, because the base selling price has changed since
+       those July sales - not a slab problem
+
+   M47 after the fix, against the old software: 50g Rs24.50, 100g Rs49.00,
+   250g Rs95.00, 500g Rs190.00, 1kg Rs380.00 - every band matches.
+
+   FIX APPLIED: `tari/scripts/fix_slab_offsets.mjs` negates the offsets of the
+   75 affected products. It only touches slabs that still match the FoxPro
+   source exactly, so any slab edited by hand in the app since the import is
+   left alone (0 such products at the time it ran). It backs up first, and
+   aborts if the correction does not improve agreement with real sales.
+
+       node tari/scripts/fix_slab_offsets.mjs --dry-run
+       node tari/scripts/fix_slab_offsets.mjs
+
+   The app code was NOT changed. `sellingPrice + offset` stays the convention,
+   because that is what the Product Manager screen shows and what a shopkeeper
+   typing a new slab by hand would expect. Only the imported data was wrong.
+
+   CONSEQUENCE FOR PRICES: 75 products now charge MORE at small quantities than
+   the app was charging before this fix - which is what the shop has always
+   charged. Worth spot-checking a few against the old software before a busy
+   day.
+
 ========================================================================
