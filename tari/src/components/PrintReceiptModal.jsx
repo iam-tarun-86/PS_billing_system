@@ -84,10 +84,8 @@ export default function PrintReceiptModal({ invoice, settings = {}, printLanguag
   const colQty = isTamil ? 'அளவு' : 'Qty';
   const colTotal = isTamil ? 'மதிப்பு' : 'Amount';
 
-  const labelGross = isTamil ? 'மொத்தம் / Gross :' : 'Gross Total :';
   const labelDiscount = isTamil ? 'வாபஸ் / Discount :' : 'Discount :';
   const labelCharges = isTamil ? 'கூடுதல் கட்டணம் / Charges :' : 'Charges :';
-  const labelNet = isTamil ? 'பில் தொகை / Net :' : 'Net Amount :';
   const labelReceived = isTamil ? 'கொடுத்தது / Received :' : 'Received :';
   const labelRoundOff = isTamil ? 'ரவுண்ட் ஆஃப் / Round Off :' : 'Round Off :';
 
@@ -206,16 +204,6 @@ export default function PrintReceiptModal({ invoice, settings = {}, printLanguag
           ))}
         </div>
 
-        {/* Empty buffer space for handwritten extra items */}
-        <div style={{ 
-          minHeight: '44px', 
-          borderTop: '1px dotted #a1a1aa',
-          margin: '6px 0 4px 0',
-          position: 'relative'
-        }}>
-          <div style={{ borderBottom: '1px dotted #e5e7eb', height: '22px' }}></div>
-        </div>
-
         <div style={{ borderTop: '1px dashed #000000', margin: '6px 0' }}></div>
 
         {/* Calculations block - Single Total Display */}
@@ -262,6 +250,14 @@ export default function PrintReceiptModal({ invoice, settings = {}, printLanguag
             </div>
           )}
 
+        </div>
+
+        {/* Ruled space below the total, for items added by hand after the bill is
+            printed and for a corrected total written underneath them. */}
+        <div style={{ marginTop: '8px' }}>
+          <div style={{ height: '24px', borderBottom: '1px dotted #000000' }}></div>
+          <div style={{ height: '24px', borderBottom: '1px dotted #000000' }}></div>
+          <div style={{ height: '24px', borderBottom: '1px dotted #000000' }}></div>
         </div>
 
         <div style={{ borderTop: '1px dashed #000000', margin: '6px 0' }}></div>
