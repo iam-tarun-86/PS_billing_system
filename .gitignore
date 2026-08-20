@@ -36,6 +36,9 @@ dist-installer
 # Packaged installers
 *.exe
 
+# Local editor and assistant config, not part of the app
+.claude/
+
 # Video recordings
 *.mp4
 
