@@ -279,4 +279,202 @@ Successfully imported the live store database from `Old_sms/Sms3/Data/` into the
    - Total Sales Invoices Ingested: **1,850 bills** spanning from July 05, 2026 up to **August 18, 2026 12:06 PM (Bill #523)**.
    - Itemized Rows Ingested: **14,011 individual line items** mapped with quantities, rates, amounts, and Tamil product references.
    - Sales History & Trend Charts: Fully populated with accurate real-world revenue and product velocity data.
+
+------------------------------------------------------------------------
+13. DATA DURABILITY AUDIT & REPAIR (AUGUST 20, 2026):
+------------------------------------------------------------------------
+An audit of the Tauri app in `tari/` against the live shop database found the
+billing flow sound but almost nothing protecting the money already recorded.
+Six defects could destroy or corrupt saved bills through ordinary keystrokes.
+All were fixed, verified against the real 1,850-bill database, and exercised in
+the running app. Branch: `durability-fixes` (4 commits).
+
+1. DEFECTS FOUND AND FIXED:
+
+   a) Deleting one bill deleted up to 120 (`SalesHistory.jsx`)
+      - Delete matched on `invoiceNo`, which is NOT unique. The 1,850 imported
+        bills share only 138 distinct numbers; 1,817 of them (98.2%, Rs11,24,864)
+        sat on a duplicated number. Deleting #504 removed 120 bills at once and
+        restored stock for only one of them.
+      - FIX: every bill now carries an immutable `id`. `handleDeleteTransaction`
+        takes the transaction object and matches on `id`. Verified: a sweep over
+        all 1,850 bills removes exactly one, every time.
+
+   b) Invoice numbers collided by design (`BillingDashboard.jsx`)
+      - `getNextBillNumber()` returned `todayTx.length + 1`. Deleting a bill
+        handed its live number to the next customer.
+      - FIX: numbers come from `settings.billCounter = { date, next }`, which is
+        written in the SAME `onUpdateDatabase` call as the bill. Daily reset is
+        preserved (#1 each morning) but a number is never reissued. If the
+        counter is missing or stale it falls back to max(today invoiceNo) + 1,
+        so a number already on a printed bill is never handed out twice.
+
+   c) Every historical bill reprinted as "Rs NaN" (`PrintReceiptModal.jsx`)
+      - The August import wrote line items as { rate, amount, total }; the app
+        reads { overridePrice, totalPrice, priceType }. All 1,850 bills were
+        affected - every line printed RsNaN, only the footer total was right.
+        Legacy items also had no `priceType`, so weighed goods hit the
+        `parseInt` branch and a 0.5 kg line printed as quantity 0.
+      - FIX: new `src/utils/normalize.js` converts either shape to one canonical
+        shape, applied inside `readDatabase()`. PrintReceiptModal coerces every
+        figure through a `money()` helper so a malformed item prints 0.00.
+
+   d) Viewing an old bill and pressing F10 zeroed it (`BillingDashboard.jsx`)
+      - F11/F12 guarded against read-only view mode; F10 did not. PageUp then
+        F10 rewrote the totals from the missing `totalPrice`, turning Rs276.00
+        into Rs0.00 with no confirmation.
+      - FIX: F10 now carries the same guard. Also added `e.repeat` rejection on
+        F10/F11/F12 and an `isSavingRef` in-flight lock, so a held or
+        double-tapped key cannot commit two bills.
+
+   e) No backups, and a power cut could truncate the only copy (`lib.rs`)
+      - `db_write` used temp+rename (correct shape) but never flushed before the
+        rename, used a fixed `database.json.tmp` shared by concurrent commands,
+        and no copy of the database existed anywhere.
+      - FIX: `write_file_atomic()` calls `sync_all()` before the rename and uses
+        a temp name carrying pid + nanosecond stamp. A `DbLock(Mutex)` in Tauri
+        state serialises writes. `refresh_backups()` keeps
+        `backups/database-YYYY-MM-DD.json` for 7 days plus
+        `database-monthly-YYYY-MM.json` kept indefinitely. `db_read` no longer
+        seeds over a corrupt live file - it recovers from the newest parseable
+        backup, renames the bad file to `database.corrupt.<stamp>.json`, and
+        errors rather than seeding if no backup is usable.
+
+   f) The shipping app was not in version control
+      - `.gitignore` ended with `tari/`; `git ls-files tari` returned nothing.
+        Only the stale Electron copy in `src/` was tracked, diverged by 1,296
+        lines. (This is also why `oxlint` reported "No files found to lint" when
+        run inside `tari/`.)
+      - FIX: `tari/` is committed. `.gitignore` now excludes only build output
+        (`tari/src-tauri/target/`, 1.4 GB) and live shop data, and explicitly
+        re-includes the app artwork (`!tari/public/*.png`,
+        `!tari/src-tauri/icons/**`) which the blanket `*.png` / `*.ico` rules
+        had been silently excluding - without those a fresh clone cannot build.
+        The superseded `src/`, `dist-desktop/` and `dist-installer/` copies were
+        deleted in a separate commit.
+
+2. WHOLE-RUPEE ROUND-OFF (BEHAVIOUR RESTORED):
+
+   Discovered while verifying the edit path: netTotal = round(gross - discount
+   + rent + coolie) reproduces ALL 1,850 legacy bills exactly, and the old
+   FoxPro export carries a non-zero `roundOff` field on exactly 752 of them.
+   The shop has always billed in whole rupees; the new app was producing paise
+   totals, and re-saving an old bill drifted it by up to 50 paise.
+
+   - `calculateRawNetTotal()` holds the unrounded figure; `calculateNetTotal()`
+     returns `Math.round()` of it; `calculateRoundOff()` is stored on the bill.
+   - The receipt prints a Round Off line when it is non-zero.
+   - Money is rounded to paise via `round2()` on save, so values like
+     130.00000000000003 can no longer reach the database.
+
+3. UNIT / PRICE-TYPE REPAIR:
+
+   726 of 1,803 products in `IM012026.DBF` point at a unit row that no longer
+   exists in `UN012026.DBF` (623 dangling codes + 103 blank). Those unit rows
+   were deleted from the FoxPro unit master years ago while products kept
+   referencing them - this is a hole in the source data, NOT an import bug. The
+   11 missing codes appear in none of the three legacy installs (SMS, SMS1,
+   Sms3), and the product master weight flags (`IWEIGHT`, `WF`, `WGTAA`, `RBW`,
+   `MINWEIGHT`) are uniformly unset on every product, so nothing can recover
+   them.
+
+   `import_old_data.py` fell back to `units_map.get(code, "piece")` and
+   `priceType = "Quantity" if unit in (kg, litre) else "Fixed"`, so 620 became
+   Fixed - meaning `Math.round()` on quantity, and no slab pricing. Real
+   consequence: 2.5 kg of IDLY RICE became 3 kg at the counter.
+
+   - REPAIRED: 29 products the sales history PROVES were sold in fractions were
+     set to `priceType: 'Quantity'`. Where the unit was also an unresolved code,
+     it became `kg` (17 products); where it already read as a real unit, the
+     unit was left alone (12 products).
+   - NOT GUESSED: the "unit is kg/litre implies Quantity" rule was rejected -
+     64 products are labelled `litre` including rice and flour sold by the bag,
+     so the unit column itself cannot be trusted as evidence.
+   - The remaining unresolved units are now VISIBLE rather than silently wrong:
+     new `src/utils/units.js` renders them as "not set" in ProductManager and
+     "?" in the billing grid. The unit dropdown carries a synthetic option so
+     the current value is never invisible, and picking kg/litre now sets
+     `priceType: 'Quantity'` automatically.
+
+4. NEW FILES:
+
+   - `tari/src/utils/normalize.js`  - canonical transaction/line-item shape,
+     `round2()`, `indexProducts()`, `normalizeDatabase()`. `unit` and
+     `priceType` are read from the product master first, so repairing a product
+     also repairs how its old bills read.
+   - `tari/src/utils/units.js`      - `UNIT_OPTIONS`, `isUnresolvedUnit()`,
+     `unitLabel()`, `billingUnitLabel()`.
+   - `tari/scripts/migrate_database.mjs` - one-time database repair (below).
+   - `tari/scripts/archive_history.mjs`  - reversible history archive (below).
+
+5. SCRIPTS (both idempotent, both back up before writing):
+
+   # repair the database - ids, line-item shape, drop dead `bills`, seed the
+   # counter, fix price types. --dry-run reports without writing.
+   cd tari && node scripts/migrate_database.mjs --dry-run
+   cd tari && node scripts/migrate_database.mjs
+
+   # move imported history out of the live database into an archive file
+   cd tari && node scripts/archive_history.mjs --dry-run
+   cd tari && node scripts/archive_history.mjs
+   cd tari && node scripts/archive_history.mjs --restore
+   cd tari && node scripts/archive_history.mjs --before=01/09/2026
+
+   IMPORTANT ORDERING inside migrate_database.mjs: products are repaired FIRST,
+   then transactions are normalised against the REPAIRED master. Doing it the
+   other way bakes the old, wrong `priceType` into all 14,011 line items.
+
+   Both scripts abort before writing if integrity checks fail - transaction
+   count changed, a bill has no id, duplicate ids, a non-numeric line total, or
+   the recorded rupee total changed by even a paisa.
+
+6. APPLIED TO THE LIVE DATABASE (%APPDATA%\com.perumalstores.psbilling\):
+
+   - Migration: 1,850 ids added, 14,011 line items converted, the dead `bills`
+     array dropped (a byte-identical duplicate of `transactions` that nothing in
+     the app reads), counter seeded, 29 products retyped.
+     Size 9.73 MB -> 4.37 MB. Recorded sales unchanged at Rs11,58,415.00.
+   - History archive: all 1,850 bills (05/07/2026 - 18/08/2026) moved to
+     `history_archive_2026-08-20.json`. The old FoxPro software remains the
+     record for that period; holding the same bills in two places invited
+     someone to correct one and not the other.
+     Size 4.37 MB -> 548 KB. Products, prices, slabs and the counter untouched.
+     A restore was verified to return exactly 1,850 bills and the same total.
+
+   NOTE: the 29 unit/price-type repairs were DERIVED from the sales history but
+   are written onto the products, so they survive the archive.
+
+7. VERIFICATION PERFORMED:
+
+   - `cargo test --lib` - 3 tests pass: atomic write replaces the file and
+     leaves no temp behind; pruning keeps the newest 7 dailies and never touches
+     the monthlies; pruning is a no-op under the limit.
+   - Logic replay over all 1,850 real bills: 0 NaN lines, 0 zero-quantity lines,
+     0 bills zeroed on re-save, 0 totals drifting, every delete removes exactly
+     one, no duplicate ids, rupee total preserved.
+   - Driven in the running app (vite dev + browser): PageUp shows real amounts;
+     three F10 presses on a saved bill leave storage byte-identical; 2.5 kg of
+     IDLY RICE stores as 2.500 and prices at Rs125.00; gross Rs134.50 bills as
+     Rs135.00 with `roundOff` 0.50; two F10 presses create exactly one bill and
+     advance the counter once.
+   - Re-run with an empty ledger: billing screen, PageUp, Sales History and all
+     four trend charts (Daily/Weekly/Monthly/Yearly) render with no NaN,
+     undefined or Infinity, and no console errors.
+
+8. STILL OUTSTANDING:
+
+   - The build must be INSTALLED before the shop uses it. The database is
+     already repaired, but the installed binary is still the old one with the
+     F10 defect. Installer:
+     `tari/src-tauri/target/release/bundle/nsis/ps-billing-system_0.1.0_x64-setup.exe`
+   - `backups/` will not exist until the new build saves a bill for the first
+     time. Its appearance is the proof the backup system is live.
+   - Branch `durability-fixes` is not yet merged to `main`.
+   - Not addressed: login is still hardcoded T/T and every bill records
+     `operator: 'PS'`, so the ledger cannot attribute a sale to a person. Fine
+     for a single till; revisit if a second person works the counter.
+   - Not addressed: at ~44 bills/day the file will reach roughly 40 MB per year
+     of its own history. Splitting history per financial year is the next step,
+     and `archive_history.mjs --before=` already supports doing it by hand.
+
 ========================================================================
