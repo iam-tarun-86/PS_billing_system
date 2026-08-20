@@ -33,22 +33,16 @@ dist-installer
 *.png
 *.ico
 
-# Packaged installers
-*.exe
+# ...but the app's own artwork has to be in git, or a fresh clone cannot build it
+!public/*.png
+!public/*.jpeg
+!src/assets/*.png
+!src-tauri/icons/**
 
 # Video recordings
 *.mp4
 
 # Old SMS Legacy Data Folder
 Old_sms/
-
-# Rust build output for the Tauri app (1.4 GB)
-tari/src-tauri/target/
-tari/src-tauri/gen/schemas/
-
-# Live shop data and its backups - never in git, see the app's rolling backups instead
-database.json
-database_backup_*.json
-safety_backups/
 
 

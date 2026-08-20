@@ -1,0 +1,206 @@
+========================================================================
+             PS BILLING SYSTEM - THERMAL PRINTING & PRODUCTION LOGS
+========================================================================
+
+If you start a new chat with an AI assistant, share this file so the assistant 
+understands how thermal receipt printing, silent printing, sales visualizations, 
+and production logging are configured in this codebase.
+
+------------------------------------------------------------------------
+1. PROBLEM DESCRIPTION (PRINT DITHERING / FAINTNESS):
+------------------------------------------------------------------------
+When printing receipts to a monochrome 1-bit thermal printer (like TVS RP 3160 STAR) 
+via Electron's `window.print()`:
+- Small fonts (like 10px-11px JetBrains Mono) have thin stems.
+- Chromium applies anti-aliasing (gray pixels) at the edges of the font.
+- The thermal printer driver converts these gray pixels into a dotted dither 
+  pattern to simulate gray, making the letters look faint or invisible.
+- Colors like gray (#4b5563) used on slogan/operator details get heavily 
+  dithered and print as faint, unreadable dot clusters.
+
+------------------------------------------------------------------------
+2. SOLUTION DETAILS (PRINT DITHERING FIX):
+------------------------------------------------------------------------
+We updated the `@media print` queries in `src/index.css` with the following 
+optimizations specifically designed for 80mm/72mm thermal rolls:
+
+- Solid Pure Black: Forced `color: #000000 !important;` on `.print-receipt-area` 
+  and all nested elements (`.print-receipt-area *`). This prevents the browser 
+  from outputting any gray shades, eliminating dithering on slogans/headers/footers.
+- Bold Text: Forced `font-weight: 700 !important;` on all receipt text elements. 
+  Bolder text increases the width of the printed stems.
+- Stroke Thickness: Added `-webkit-text-stroke: 0.25px #000000 !important;` to 
+  thicken text outlines slightly, ensuring the thermal print head burns solid lines.
+- System Sans-Serif: Changed `font-family` during printing to standard system 
+  sans-serif (`system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial`) 
+  which has simpler, cleaner, and thicker stems than JetBrains Mono at small sizes, 
+  significantly enhancing Tamil and English legibility.
+- Minimum Size: Forced a minimum highly readable print font-size of `12px` 
+  via `.print-receipt-area * { font-size: 12px !important; }`, while preserving 
+  the main shop title at `18px` via a helper class `.receipt-shop-name`.
+
+------------------------------------------------------------------------
+3. DIRECT SILENT PRINTING (NO DIALOG POPUP):
+------------------------------------------------------------------------
+To match the old software and print directly to the default printer without popping 
+up the Electron/Chromium print settings preview window:
+
+- IPC print handler: Added a `print-silent` handler in `electron/main.cjs` that calls 
+  `webContents.print({ silent: true, printBackground: true })` on the main window.
+- Preload Context Bridge: Exposed `printSilent` to the frontend via `electron/preload.cjs`.
+- React Print Trigger: Modified `handlePrint` in `src/components/PrintReceiptModal.jsx` 
+  to invoke the silent print IPC call and automatically close the modal 500ms after the 
+  print job is queued (giving Chromium enough time to capture the print frame).
+
+------------------------------------------------------------------------
+4. SALES TREND VISUALIZATION MODAL:
+------------------------------------------------------------------------
+Added an interactive sales trend visualizer inside the Sales History page:
+
+- Trigger Button: Added a green "வரைபடம் / Visualize Sales" button inside 
+  `src/components/SalesHistory.jsx` next to the "Export CSV" button.
+- Aggregations: Dynamic filters summarizing transaction history by:
+  - Daily Trend (last 7 days)
+  - Weekly Trend (last 4 weeks)
+  - Monthly Trend (last 6 months)
+  - Yearly Trend (last 3 years)
+- SVG Interactive Charts: Custom render system using responsive vector shapes (<rect>), 
+  gradients, gridlines, hover listener nodes, and absolute HTML tooltips displaying 
+  exact value popups (e.g. ₹338.00) on cursor hover.
+- Summary Stats: Displays Total Sales, Average Sales, Peak (Max) Sales, and growth comparison.
+- Keyboard Close Handler: Pressing `Escape` while the chart visualizer is open will 
+  close the visualizer modal. Pressing `Escape` again will navigate back to the 
+  billing dashboard.
+
+------------------------------------------------------------------------
+5. PRODUCTION LOGGING SYSTEM (app.log WITH AUTO-ROTATION):
+------------------------------------------------------------------------
+To aid in remote debugging without cluttering the UI, we implemented a full 
+production logging system:
+
+- Log Storage Path: Saved to `app.log` in the application's root user data folder 
+  (the same folder containing `database.json`, accessible in the OS filesystem at 
+  `AppData\Roaming\PS Billing System\`). It cannot be accessed from the application UI.
+- Lightweight Auto-rotation: Includes a strict limit check. If `app.log` exceeds **1 MB**, 
+  it is renamed to `app.log.old` (replacing the previous `.old` file). This caps the 
+  total log storage strictly at **2 MB** max, ensuring the app remains light and manageable.
+- Recorded Events:
+  - System Lifecycle: App start, startup platform metadata, user data folder paths, window loads.
+  - IPC Operations: Window login/logout calls, database reads/writes (along with performance/speed 
+    durations and data summary metrics), and silent print triggers.
+  - Renderer User Actions: Exposes a `logMessage` bridge API. React components log logins, logout, 
+    bill saves, bill deletions, visualizer open/close events, and CSV export triggers.
+  - Crashes & Errors: Intercepts `uncaughtException` in the main process, `did-fail-load` window 
+    load failures, and warnings/errors originating in the React console (`console-message` handler).
+
+------------------------------------------------------------------------
+6. DUPLICATE ITEM CHECK DIALOG (PREVENT DUPLICATIONS):
+------------------------------------------------------------------------
+To prevent accidental duplications when a cashier scans or enters the same item 
+code multiple times:
+
+- Duplicate Detection: When adding a product (either by typing code directly and 
+  pressing Enter, or selecting from the search overlay, or clicking search sidebar), 
+  the app verifies if that item code is already added in another row.
+- Choice Dialog Modal: If a duplicate is found, a dialog appears presenting 2 choices:
+  1. "நிலவும் பொருளின் அளவை மாற்றவும் / Edit existing item quantity (Recommended)"
+     Focuses the cursor onto the `qty` column of the existing product row so the 
+     cashier can immediately adjust the weight/quantity. Clears the temporary duplicate row.
+  2. "புதிய வரியாக சேர்க்கவும் / Add as a new row (new weight/qty)"
+     Proceeds to add a new line with the duplicate code (useful for multi-weight slabs).
+- Keyboard Navigation: The cashier can use the Arrow keys (Up/Down or Left/Right) to 
+  change selection, press Enter to confirm the selected action, or press Escape 
+  to dismiss/cancel.
+- Logged Event: The selection choice is written to the production log for audit tracking.
+
+------------------------------------------------------------------------
+7. CUSTOM SETTINGS & MANAGEMENT PANEL (FUTURE-PROOFING FOR OTHER SHOPS):
+------------------------------------------------------------------------
+To allow reusing the POS system for other shops, we implemented a complete settings 
+and database management console (allowing customization of Shop Name, slogan, phone 
+numbers, operator and options to wipe sales/products).
+
+- Father's App Safety: To eliminate any risk of accidental database wipes or settings 
+  misconfigurations by cashiers in your father's active system, the Settings panel 
+  has been removed from the primary workspace.
+- PS_BILLING Template Clone: The full settings-enabled codebase has been cloned 
+  to the `PS_BILLING/` directory in the main projects folder (alongside the `ps/` repository).
+- Future Shop Setup: If you want to configure and package the app for another shop, 
+  simply use and modify the project inside the `PS_BILLING/` folder.
+
+------------------------------------------------------------------------
+8. MODIFIED FILES:
+------------------------------------------------------------------------
+1. `src/components/PrintReceiptModal.jsx`
+   - Added class `className="receipt-shop-name"` to the shop name <div>.
+   - Updated `handlePrint` to call `window.electronAPI.printSilent()`, log actions, and auto-close.
+2. `src/index.css`
+   - Completely replaced the `@media print` block with optimized thermal printing styles.
+3. `electron/preload.cjs`
+   - Exposed `printSilent` and `logMessage` to `window.electronAPI`.
+4. `electron/main.cjs`
+   - Implemented `writeLog` logging system with 1MB file rotation.
+   - Added IPC handlers for `print-silent` and `log-message`.
+   - Logged database reads/writes, window changes, lifecycles, and exceptions.
+5. `src/components/SalesHistory.jsx`
+   - Added imports, visualization states, helper data calculation functions.
+   - Inserted "Visualize Sales" trigger button in the header.
+   - Updated `Escape` key event listener.
+   - Embedded `SalesVisualizerModal` rendering code.
+   - Logged CSV exports, deletions, and visualizer tab changes.
+6. `src/components/BillingDashboard.jsx`
+   - Added duplicate prevention dialog with keyboard support.
+   - Implemented focus management and navigation bypasses.
+   - Logged component mounting, saves of bill edits, and saves of new bills.
+   - Note: Customizable Settings panel additions were cloned to the parent folder `PS_BILLING/` and reverted here for active safety.
+
+------------------------------------------------------------------------
+9. REFERENCE CSS CODE BLOCK (from src/index.css):
+------------------------------------------------------------------------
+/* Print CSS Styles */
+@media print {
+  @page {
+    margin: 0 !important;
+  }
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .print-receipt-area, .print-receipt-area * {
+    visibility: visible !important;
+    color: #000000 !important;
+    background: transparent !important;
+    font-weight: 700 !important; /* Force bold/thick text for clear thermal print */
+    -webkit-text-stroke: 0.25px #000000 !important; /* Thicken text outlines slightly to prevent faint print */
+    text-shadow: none !important;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  }
+  .print-receipt-area * {
+    font-size: 12px !important; /* Force minimum highly readable font size for all print contents */
+  }
+  .print-receipt-area .receipt-shop-name {
+    font-size: 18px !important; /* Keep the shop name large and prominent */
+  }
+  .print-receipt-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 72mm !important; /* Fits perfectly on standard 80mm thermal rolls */
+    padding: 4mm 4mm 12mm 4mm !important; /* Safe margins and bottom tear-off space */
+    font-size: 12px !important;
+    line-height: 1.3 !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+  }
+  .print-receipt-area th, .print-receipt-area td {
+    border: none !important;
+    padding: 2px 0 !important;
+    color: #000000 !important;
+  }
+}
+------------------------------------------------------------------------
+========================================================================
