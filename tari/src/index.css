@@ -483,6 +483,14 @@ input::placeholder {
   .print-receipt-area .receipt-shop-name {
     font-size: 18px !important; /* Keep the shop name large and prominent */
   }
+  .print-receipt-area .receipt-phone {
+    /* The blanket 12px rule above was shrinking this to body-text size. The customer
+       keeps the slip and thermal print fades, so the number stays large and centred. */
+    font-size: 17px !important;
+    text-align: center !important;
+    letter-spacing: 0.06em !important;
+    -webkit-text-stroke: 0.4px #000000 !important; /* extra weight so it survives fading */
+  }
   .print-receipt-area {
     position: absolute;
     left: 0;

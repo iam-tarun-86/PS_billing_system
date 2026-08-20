@@ -137,15 +137,16 @@ export default function PrintReceiptModal({ invoice, settings = {}, printLanguag
           {shopName}
         </div>
 
-        {/* Big Phone Number at Top */}
+        {/* Phone number, kept large and centred: the customer keeps this slip and
+            thermal print fades, so it has to stay readable months later. */}
         {phones && (
-          <div style={{ 
+          <div className="receipt-phone" style={{ 
             textAlign: 'center', 
-            fontSize: '13px', 
+            fontSize: '17px', 
             fontWeight: 'bold', 
-            letterSpacing: '0.04em', 
+            letterSpacing: '0.06em', 
             color: '#000000',
-            marginBottom: '6px'
+            marginBottom: '7px'
           }}>
             📞 {phones}
           </div>
