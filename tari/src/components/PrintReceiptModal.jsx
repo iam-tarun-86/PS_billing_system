@@ -90,7 +90,7 @@ export default function PrintReceiptModal({ invoice, settings = {}, printLanguag
   const labelRoundOff = isTamil ? 'ரவுண்ட் ஆஃப் / Round Off :' : 'Round Off :';
 
   return (
-    <div style={{
+    <div className="print-receipt-host" style={{
       position: 'fixed',
       left: '-9999px',
       top: '-9999px',

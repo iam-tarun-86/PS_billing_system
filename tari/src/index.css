@@ -491,6 +491,19 @@ input::placeholder {
     letter-spacing: 0.06em !important;
     -webkit-text-stroke: 0.4px #000000 !important; /* extra weight so it survives fading */
   }
+  .print-receipt-host {
+    /* On screen this host parks the receipt off-canvas in a clipped 1x1 box. Printing
+       must undo all of it: .print-receipt-area below is positioned absolutely, which
+       resolves against this host, so while it stayed fixed at -9999px with
+       overflow:hidden the receipt was pushed off the page AND clipped away - the page
+       came out blank. */
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
   .print-receipt-area {
     position: absolute;
     left: 0;
