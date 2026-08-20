@@ -226,9 +226,57 @@ to ~35MB), we initiated a Tauri subproject inside the `tari/` folder:
 - History Detail Modal: Added a new "பார்க்க / View" button in `SalesHistory.jsx` that opens a modal displaying the complete bill details (customer metadata, itemized tables, pricing totals) and options to print directly in Tamil or English.
 - Dynamic Date Sync: Updated the date display inside the Billing Dashboard metadata card to dynamically show the actual date of the saved bill being inspected when viewing past invoices.
 - Keybinding Refactor: Removed redundant `F2` keybinding from `BillingDashboard.jsx` and `features_guide.md`, standardizing on the instant `Enter` key trigger on empty code cells for mouse-free fuzzy item searches.
-- Slab Pricing Investigation & Auto-Import Prep:
-  - Researched legacy FoxPro database tables in `Old_sms/SMS/data/IM012026.DBF` and `Old_sms/Sms3/Data/IM012026.DBF`. Located item slab quantities (`SQ1..SQ4`) and rate offset adjustment fields (`SRATE1..SRATE4`).
-  - Verified database timelines: `Old_sms/SMS` was the live store database actively billing up to July 05, 2026 (Bill #505), whereas `Sms3` was a test/upgrade folder untouched after April 20, 2026.
-  - Confirmed that `ProductManager.jsx` auto-generates the 4 standard weight tiers (50g, 100g, 250g, 500g) on all `Quantity` items, requiring operators only to adjust the offset value when packet price differences exist.
-  - Prepared import pipeline to ingest the latest August 2026 `IM012026.DBF` from the father's shop computer into `database.json`.
+- Slab Pricing Investigation & August Database Discovery:
+  - Discovered that the shop computer was upgraded to `Sms3` and actively running right up to August 18, 2026.
+  - Copied and verified `Old_sms/Sms3/Data` containing 1,803 products with up-to-date August prices and 1,850 bills up to Bill #523 on August 18, 2026 at 12:06 PM.
+
+------------------------------------------------------------------------
+11. STORE USABILITY, RECEIPT LAYOUT & NAVIGATION REFINEMENTS (AUGUST 2026):
+------------------------------------------------------------------------
+Following store usage feedback from the operator/father, the following 3 key enhancements were implemented across the app:
+
+1. Thermal Receipt Layout Refinement (`tari/src/components/PrintReceiptModal.jsx`):
+   - Prominent Top Phone Number: Relocated phone number (`📞 9629708861`) right below the store name at the top in large, bold text.
+   - Clean Single Total Display: Replaced separate Gross and Net lines with a single, clear `மொத்தம் / Total : ₹...` line.
+   - Handwritten Notes Buffer: Added an empty buffer space with guide lines between the items list and totals so extra items can be added by hand if necessary.
+
+2. Billing Search Overlay & High-Contrast Navigation (`tari/src/components/BillingDashboard.jsx` & `tari/src/index.css`):
+   - Green Header: Styled search table header in vibrant Green (`#15803d` / `#166534`) with crisp white typography.
+   - Reordered Columns: `குறியீடு / Code`, `தமிழ் பெயர் / Tamil Name` (1st name col), `பொருள் / Product Name (Eng)`, `Unit` (centered), `விலை / Rate` (compact). Removed redundant `Price Type` column.
+   - Solid Dark Blue Active Highlighter: Selected row is styled with a Solid Dark Blue (`#1d4ed8`) background and pure white (`#ffffff`) text for immediate, crystal-clear differentiation.
+   - Stable List Navigation: The search table remains visually stable while the selection cursor moves row-by-row on ArrowUp/ArrowDown, scrolling smoothly via `scrollIntoView({ block: 'nearest' })`.
+
+3. Product Management Master Table & Slab Keyboard Traversal (`tari/src/components/ProductManager.jsx` & `tari/src/index.css`):
+   - Matched Table Layout: Styled the main product list with the exact same Green header (`#15803d` / `#166534`), column order (`Code`, `Tamil Name`, `English Name`, `Unit`, `Rate`, `Actions`), compact widths, and Solid Dark Blue highlighter (`#1d4ed8`) as the Billing search table.
+   - Stable Product List Scrolling: Integrated `scrollIntoView({ block: 'nearest' })` on Arrow keys, eliminating jarring viewport jumping.
+   - Removed Stock Fields: Removed `முன் இருப்பு / Opening Stock` and `தற்போதைய இருப்பு / Current Stock` completely from the edit form.
+   - Unlocked Numeric Arrow Traversal: Removed text-selection constraints on numeric inputs (`sellingPrice`, `netPrice`, `mrp`, `costPrice`, `slabQty_i`, `slabOffset_i`), enabling instantaneous 4-way arrow key movement.
+   - 100% Keyboard & Arrow-Key Navigation into Slabs:
+     - `ArrowDown` from `Cost Price` / `MRP` moves into `+ சேர்க்க / Add` and each `Slab Grams` & `Offset` input, and then down to `Save`/`Cancel`.
+     - `ArrowRight` from `Grams` jumps to `Offset`; `ArrowRight` from `Offset` jumps to `Delete`; `ArrowLeft` returns.
+     - `Enter` traverses each field sequentially and deletes a row when pressed on the Delete button.
+   - `+ சேர்க்க / Add` Button Styling: Styled with clean White background by default, turning into **Solid Blue (`#2563eb`)** with a bright focus ring when active/focused.
+   - `🗑️ நீக்கு / Delete` Button Format: Replaced the small icon with a solid labeled button (`.btn-slab-delete`). Appears in soft red (`#fef2f2`) by default, turning into **Solid Red (`#dc2626`) with bright white text and focus ring (`#1d4ed8`)** when navigated to via keyboard.
+   - `சேமி / Save` & `ரத்து செய் / Cancel` Focus Styling: Both action buttons feature high-contrast blue focus states (`#2563eb`) so the active button is unmistakably clear.
+
+------------------------------------------------------------------------
+12. AUGUST 2026 DATABASE & SLAB PRICING IMPORT (AUGUST 18, 2026):
+------------------------------------------------------------------------
+Successfully imported the live store database from `Old_sms/Sms3/Data/` into the POS application's active `database.json`:
+
+1. Backup Protocol:
+   - Full backup created before changes: `database_backup_2026_08_18.json` in both `%APPDATA%\com.perumalstores.psbilling\` and the project root.
+
+2. Products & Live Pricing (`IM012026.DBF` & `UN012026.DBF`):
+   - Total Products Ingested: **1,803 products** with up-to-date August selling rates, MRPs, cost prices, and category groups.
+   - Unit Master Resolution: Decoded 33 unit codes (`_0L10SVN9Y` -> `KG`, `_1RC0RV002` -> `NO`, `_S7P0VC78V` -> `PKT`, etc.) to map proper POS units (`kg`, `piece`, `packet`, `litre`).
+   - 100% Tamil Names Preserved: All custom Tamil product names previously entered in the app were merged and retained intact.
+   - Slab Pricing Ingestion:
+     - 4 Products with custom FoxPro DBF slab offsets (`SOUNF`, `OMUM`, `T.V.S.GROW.OIL`, etc.) imported with their exact weight limits and offset values (`SQ1..SQ4`, `SRATE1..SRATE4`).
+     - 155 Weight-based (`kg`) products automatically initialized with the standard 4 weight tiers (50g, 100g, 250g, 500g with `offset: 0`).
+
+3. Historical Invoices & Itemized Lines (`ET012026.DBF` & `ED012026.DBF`):
+   - Total Sales Invoices Ingested: **1,850 bills** spanning from July 05, 2026 up to **August 18, 2026 12:06 PM (Bill #523)**.
+   - Itemized Rows Ingested: **14,011 individual line items** mapped with quantities, rates, amounts, and Tamil product references.
+   - Sales History & Trend Charts: Fully populated with accurate real-world revenue and product velocity data.
 ========================================================================

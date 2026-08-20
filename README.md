@@ -1,109 +1,150 @@
-# ⚡ PS Billing System
+# 🏪 PS Cash Memo - Point of Sale (POS) & Retail System
 
-[![Tauri Version](https://img.shields.io/badge/Tauri-2.0-blue?style=for-the-badge&logo=tauri)](https://tauri.app/)
-[![Rust Core](https://img.shields.io/badge/Rust-1.97%2B-orange?style=for-the-badge&logo=rust)](https://www.rust-lang.org/)
-[![React UI](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react)](https://react.dev/)
-[![Offline First](https://img.shields.io/badge/Database-Offline--First-success?style=for-the-badge&logo=sqlite)](https://github.com/)
+> **ஸ்ரீ முருகன் துணை**  
+> **SRI PERUMAL STORES (பெருமாள் ஸ்டோர்ஸ்)**  
+> *Express Retail & Wholesale Billing System*
 
-> **Offline POS Billing at the Speed of Thought — Rebuilt in Rust with Tauri.**
+[![Built With Tauri v2](https://img.shields.io/badge/Tauri-v2.0-24C8D5?logo=tauri&logoColor=white)](https://tauri.app)
+[![React](https://img.shields.io/badge/React-v19.2-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-v8.2-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
+[![Rust](https://img.shields.io/badge/Rust-v1.85+-DEA584?logo=rust&logoColor=white)](https://www.rust-lang.org)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20x64-0078D6?logo=windows&logoColor=white)]()
 
-An offline-first, high-performance retail POS (Point of Sale) billing application designed for quick keyboard-only operations. Originally written in Electron, it has been completely replatformed into a **Tauri 2.0 + Rust** desktop architecture, delivering unmatched speed, zero-lag rendering, and robust printer integrations.
-
----
-
-## 🚀 Performance Replatforming Metrics
-
-| Metric | Electron (Legacy) | Tauri + Rust (Current) | Change |
-| :--- | :--- | :--- | :--- |
-| **Installer Size** | ~107 MB | **~3 MB** | **-97.2%** |
-| **RAM Footprint** | ~220 MB | **~35 MB** | **-84.1%** |
-| **Boot Time** | ~2.4 seconds | **~0.3 seconds** | **-87.5%** |
-| **Database I/O** | JS Filesystem | **Atomic Rust Commands** | **Instant & Corrupt-proof** |
+A lightning-fast, 100% keyboard-driven desktop POS application designed specifically for high-throughput Indian grocery and retail stores. Built with **Tauri v2 + Rust** and **React 19**, offering instantaneous startup, zero lag, and full offline persistence.
 
 ---
 
-## 🌟 Application Windows & Detailed Functionalities
+## 🌟 Key Features
 
-```mermaid
-graph TD
-    A[Login Screen] -->|Authenticate| B[Billing Dashboard]
-    B -->|F2| C[Item Search Modal]
-    B -->|F1 / Ctrl+S| D[Receipt Print / Silent Spooler]
-    B -->|Products Button| E[Product Master]
-    B -->|History Button| F[Sales History]
-    E -->|Save| B
-    F -->|Return| B
-```
+### ⚡ 1. 100% Keyboard-Driven & Mouse-Free Workflow
+- **Instant Product Search:** Press Enter on an empty code cell to open the fuzzy search overlay across Tamil and English catalog names.
+- **Stable List Navigation:** Arrow keys glide cleanly across products and slabs while table viewports remain visually locked in place.
+- **Auto-Advancing Cursor:** Type code -> Enter -> Qty -> Enter -> Rate -> Enter -> next item automatically.
+- **Rapid Navigation:** Full 4-way arrow key and Enter traversal across all form inputs, slab tables, and action buttons.
 
-### 1. 🔑 Login Window
-* **Fullscreen Startup:** The window launches automatically maximized and resizable from boot, fitting standard POS display resolutions (including target `1360*768` screens).
-* **Local Authentication:** Simple keyboard-focused login flow using operator codes.
-* **Store Slogan Banner:** Dynamically renders the shop name and header slogan directly from the local database settings.
+### 🏷️ 2. Comprehensive Catalog & Bilingual Support
+- **1,803 Ingested Products:** Complete store catalog loaded with live retail selling prices, MRPs, cost rates, units (kg, piece, packet, litre), and category groups.
+- **Tamil-First Display:** Tamil names prominently displayed as the first primary column, followed by English names.
+- **Unit Normalization:** Correctly resolves FoxPro unit master codes (KG, NO, PKT, LITER, BAG, BOX, TIN, etc.).
 
-### 2. 🛒 Billing Dashboard
-The core workspace, optimized for **100% mouse-free keyboard traversal**:
-* **Traversal Flow:** Type Code ➔ `Enter` (autofills item details) ➔ Type Qty ➔ `Enter` (applies slab pricing) ➔ Type Rate/Price override ➔ `Enter` (spins up a new row and resets focus to the Code field).
-* **Duplicate Detection Dialog:** If an item is added twice, a warning popup prompts the operator to select:
-  1. **Edit Existing:** Modify the quantity of the already listed item.
-  2. **Add New Row:** List it again with a different weight/price override.
-  * *Operators navigate options with Arrow keys and confirm with `Enter`.*
-* **Alt + D:** Deletes the active row and automatically refocuses the preceding row.
-* **F10 Hold Bin:** Parks the current invoice to serve a different customer and restores it later with a single keystroke.
-* **Large Cash Card:** Color-coded summaries showing Gross, Discount (Red), Labor/Coolie (Blue), Rent (Purple), and a giant Net Total display.
+### ⚖️ 3. Intelligent Multi-Tier Slab Pricing (Grams -> KG)
+- **Automatic Weight Fractioning:** For weight-based items (kg), the system automatically calculates standard fractional rates (50g, 100g, 250g, 500g, 1kg).
+- **Custom Offset Pricing:** Ingested **75+ custom DBF slab offsets** (e.g., சீரகம் -110, மிளகு -200, வெந்தயம் -60, துவரம் பருப்பு -8 / -4).
+- **Live Calculation Formula:**
+  \text{Packet Price} = (\text{Base Price} + \text{Offset}) \times \left(\frac{\text{Grams}}{1000}\right)
 
-### 3. 🔍 Product Search Overlay (F2)
-* **Fuzzy Filtering:** Instantly filters products by Code, English Name, Group, or Tamil Name.
-* **Instant Insertion:** Navigating the results using `ArrowUp` / `ArrowDown` and pressing `Enter` inserts the selected item directly into the active billing row.
-* **Press Esc:** Instantly closes the overlay and returns focus to the billing table.
+### 🧾 4. Optimized Thermal Receipt Printing (3-Inch / 80mm Roll)
+- **Prominent Header:** Store contact number (📞 9629708861) in large bold text directly under the shop name.
+- **Simplified Totals:** Clean single மொத்தம் / Total : ₹... line.
+- **Handwritten Extra Items Buffer:** Ample guide line spacing after the items table for adding manual notations.
+- **Silent Printing:** Off-screen spooling to Windows default thermal printer without browser dialog interruptions.
+- **Bilingual Output:** Print or reprint receipts in either **Tamil (F6 / F11)** or **English (F7 / F12)**.
 
-### 4. 📦 Product Master (Inventory Manager)
-* **Full Database Ledger:** Grid viewing stock levels, Cost Price, MRP, and active item status.
-* **Custom Slab Configurations:** Allows owners to set custom weight-based offsets (e.g. `+10` or `-110` applied to 1kg base rate) for fractional items (sugar, spices, flour) to automate custom wholesale margins.
+### 📊 5. Sales History & Business Analytics
+- **1,850+ Historical Invoices:** Full chronological history with **14,011 itemized rows** mapped via voucher foreign key (VNO).
+- **Sales Analytics:** Interactive daily turnover summaries, transaction counts, and trend visualizations.
+- **Bill Inspection & Reprint:** Dedicated modal to inspect historical bills and trigger reprints instantly.
 
-### 5. 📜 Sales History (Transactions Ledger)
-* **Invoices Database:** Chronological ledger of all saved billing records.
-* **Search Filters:** Filters records instantly by Bill Number, Date Ranges, Customer Name, or Phone.
-* **Data Exporter:** Exports sales records to a standard `.csv` spreadsheet with a single click.
-* **Daily Metrics:** Displays total sales count and cumulative revenue summaries.
-
-### 6. 🖨️ Thermal Print Spooler (Silent Print)
-* **Edge WebView2 Kiosk Integration:** Configured with `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS="--kiosk-printing"` in the Rust core, completely bypassing the default Windows print confirmation windows.
-* **Click-free Print:** Pressing `F1` or `Ctrl + S` instantly triggers the thermal print command, spooling directly to the default POS roll printer and closing the modal automatically after 500ms.
-* **Contrast Filter:** Receipt stylesheet features crisp borders, monochrome branding text, and no dithering to prevent print faintness on standard 80mm rolls.
+### 🔒 6. Robust Offline Storage & Safety
+- **Atomic File Persistence:** Rust-managed atomic file writes with .json.tmp staging to eliminate any risk of database corruption.
+- **Automated Backups:** Automatic timestamped backups created in %APPDATA%\com.perumalstores.psbilling\ and project root.
+- **Log Rotation:** In-app production logging with automatic 1MB rotation limits (pp.log).
 
 ---
 
-## 🛠️ Tech Stack & Engineering
-* **Frontend:** React 19, Vite, Vanilla CSS.
-* **Backend:** Rust 1.97 (Tauri 2.0 App Runtime).
-  * *Fast File I/O:* Rust atomic buffer writer (`.json.tmp` rename pattern) prevents database corruption.
-  * *Rotation Logs:* Internal logger appends messages to `app.log` with a strict `1MB` file cap.
-* **Target Platforms:** Windows (x64 architectures).
+## ⌨️ Keyboard Shortcuts Cheat Sheet
+
+| Key / Shortcut | Screen / Context | Action |
+| :--- | :--- | :--- |
+| Enter (on empty code) | Billing Grid | Open Product Search Overlay |
+| ArrowUp / ArrowDown | Search / Table | Move row selection smoothly |
+| Enter | Search Overlay | Select highlighted product and focus Qty |
+| F5 or Ctrl + S | Billing Dashboard | Save current bill |
+| F6 or Ctrl + P | Billing Dashboard | Save & Print Receipt in **Tamil** |
+| F7 | Billing Dashboard | Save & Print Receipt in **English** |
+| F8 | Billing Dashboard | View Previous Saved Bill (Backwards) |
+| F9 | Billing Dashboard | View Next Saved Bill (Forward) |
+| F10 | Billing Dashboard | Clear Screen & Start New Bill |
+| F11 | View Past Bill Mode | Reprint Bill in **Tamil** |
+| F12 | View Past Bill Mode | Reprint Bill in **English** |
+| Delete | Billing Grid | Remove currently active row |
+| Escape | Global | Close overlay / modal / Exit to previous screen |
 
 ---
 
-## 🚀 Getting Started
+## 🏗️ Project Architecture
+
+`
+ps/
+├── Old_sms/Sms3/Data/       # Original FoxPro DBF source database
+├── tari/                    # Tauri v2 Desktop Application
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── BillingDashboard.jsx   # Core POS cash memo billing screen
+│   │   │   ├── LoginScreen.jsx        # Lock screen & animated loading screen
+│   │   │   ├── ProductManager.jsx     # Product master & slab pricing editor
+│   │   │   ├── SalesHistory.jsx       # Historical invoices & analytics
+│   │   │   └── PrintReceiptModal.jsx  # Thermal receipt layout & printer spooler
+│   │   ├── utils/
+│   │   │   ├── db.js                  # Database abstractions & seed fallbacks
+│   │   │   └── tauriBridge.js         # Tauri IPC invocation bridge
+│   │   ├── App.jsx                    # Root state router & session manager
+│   │   ├── main.jsx                   # ErrorBoundary & app entrypoint
+│   │   └── index.css                  # Green header POS theme & dark mode styles
+│   ├── src-tauri/
+│   │   ├── src/
+│   │   │   ├── lib.rs                 # Rust IPC commands (db_read, db_write, print_silent)
+│   │   │   └── main.rs                # Windows desktop entrypoint
+│   │   ├── tauri.conf.json            # Desktop bundle configuration
+│   │   └── Cargo.toml                 # Rust dependencies
+│   ├── database.json                  # Synchronized product & sales database
+│   └── package.json                   # Frontend dependencies & scripts
+├── context.txt                        # Complete project development log & context
+├── database_backup_2026_08_18.json    # Safety database backup
+└── ps-billing-system_latest_setup.exe # Production Windows installer
+`
+
+---
+
+## 🚀 Getting Started & Installation
 
 ### Prerequisites
-* [Node.js](https://nodejs.org/) (v20+)
-* [Rust & Cargo](https://www.rust-lang.org/) (MSVC Compiler + Windows 11 SDK via VS Community)
+- **Node.js**: v18+ or v20+
+- **Rust**: 
+ustc / cargo v1.80+
+- **WebView2**: Standard Windows 10/11 runtime
 
-### Development
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/iam-tarun-86/PS_billing_system.git
-   cd PS_billing_system
-   ```
-2. Build the Tauri wrapper project:
-   ```bash
-   cd tari
-   npm install
-   npm run dev
-   ```
+### Development Setup
+`ash
+# 1. Navigate to tari directory
+cd tari
 
-### Packaging the Desktop App
-To build the standalone `.exe` and the NSIS Setup Installer:
-1. Double-click the helper script: [`tari/build_tauri.bat`](file:///c:/Users/tarun/Downloads/COLLEGE/projects/ps/tari/build_tauri.bat).
-2. The setup packages will be generated inside:
-   * **NSIS Installer:** `tari/src-tauri/target/release/bundle/nsis/`
-   * **Standalone Exe:** `tari/src-tauri/target/release/app.exe`
+# 2. Install dependencies
+npm install
+
+# 3. Start local development server
+npm run dev
+`
+
+### Production Build
+`ash
+# Build standalone Windows binary and installer
+npm run build
+`
+Output files are generated at:
+- **Standalone Binary:** 	ari/src-tauri/target/release/app.exe
+- **Setup Installer:** 	ari/src-tauri/target/release/bundle/nsis/ps-billing-system_0.1.0_x64-setup.exe (and ps-billing-system_latest_setup.exe in project root)
+
+---
+
+## 👥 Default Credentials
+
+| Username | Password | Role | Access Level |
+| :---: | :---: | :---: | :--- |
+| T | T | Cashier / Operator | Billing, Search, Printing |
+| dmin | password123 | Store Admin | Full Master & Settings Access |
+
+---
+
+## 📄 License & Ownership
+Created and developed for **Sri Perumal Stores** by **Tarun & Team**. All rights reserved.
