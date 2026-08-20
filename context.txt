@@ -407,7 +407,7 @@ the running app. Branch: `durability-fixes` (4 commits).
    - `tari/scripts/migrate_database.mjs` - one-time database repair (below).
    - `tari/scripts/archive_history.mjs`  - reversible history archive (below).
 
-5. SCRIPTS (both idempotent, both back up before writing):
+5. SCRIPTS (all idempotent, all back up before writing):
 
    # repair the database - ids, line-item shape, drop dead `bills`, seed the
    # counter, fix price types. --dry-run reports without writing.
@@ -420,11 +420,18 @@ the running app. Branch: `durability-fixes` (4 commits).
    cd tari && node scripts/archive_history.mjs --restore
    cd tari && node scripts/archive_history.mjs --before=01/09/2026
 
+   # correct the sign of slab offsets imported from FoxPro (see item 9)
+   node tari/scripts/fix_slab_offsets.mjs --dry-run
+   node tari/scripts/fix_slab_offsets.mjs
+
+   All three accept --db=<path> so they can target another machine copy of the
+   database rather than the live one.
+
    IMPORTANT ORDERING inside migrate_database.mjs: products are repaired FIRST,
    then transactions are normalised against the REPAIRED master. Doing it the
    other way bakes the old, wrong `priceType` into all 14,011 line items.
 
-   Both scripts abort before writing if integrity checks fail - transaction
+   The scripts abort before writing if integrity checks fail - transaction
    count changed, a bill has no id, duplicate ids, a non-numeric line total, or
    the recorded rupee total changed by even a paisa.
 
@@ -463,13 +470,23 @@ the running app. Branch: `durability-fixes` (4 commits).
 
 8. STILL OUTSTANDING:
 
-   - The build must be INSTALLED before the shop uses it. The database is
-     already repaired, but the installed binary is still the old one with the
-     F10 defect. Installer:
-     `tari/src-tauri/target/release/bundle/nsis/ps-billing-system_0.1.0_x64-setup.exe`
-   - `backups/` will not exist until the new build saves a bill for the first
-     time. Its appearance is the proof the backup system is live.
-   - Branch `durability-fixes` is not yet merged to `main`.
+   RESOLVED SINCE THIS SECTION WAS FIRST WRITTEN:
+   - The branch was merged and pushed; everything is on `main`.
+   - `backups/` was created on the first real save (20 Aug 16:56), holding both
+     database-2026-08-20.json and database-monthly-2026-08.json. The backup
+     system is confirmed working end to end.
+   - The installer has been rebuilt and carries every fix. See item 12 below
+     for how to deploy it.
+
+   STILL OPEN:
+   - PRINTING HAS NEVER BEEN TESTED ON THE THERMAL PRINTER. Everything else was
+     verified by replaying real data or by driving the app, but no receipt has
+     been printed since the layout changed. Print one and check: phone number
+     clearly larger than the item rows, one total only, three ruled lines below
+     it, jeera 50g at Rs24.50.
+   - 464 of the 1,803 products have no selling price and none are flagged
+     disabled, so they add a Rs0.00 line silently. Left exactly as SMS holds
+     them, at the shopkeeper request. The usable catalogue is 1,339 products.
    - Not addressed: login is still hardcoded T/T and every bill records
      `operator: 'PS'`, so the ledger cannot attribute a sale to a person. Fine
      for a single till; revisit if a second person works the counter.
@@ -534,5 +551,104 @@ the running app. Branch: `durability-fixes` (4 commits).
    the app was charging before this fix - which is what the shop has always
    charged. Worth spot-checking a few against the old software before a busy
    day.
+
+10. BUNDLED SEED REBUILT FOR FRESH INSTALLS:
+
+    `tari/src-tauri/seed_database.json` is compiled into the binary with
+    `include_str!` and written to AppData by `db_read` ONLY when no database
+    exists yet (`if !db_path.exists()`). An install over an existing database
+    never touches it.
+
+    The old seed carried slabs on 1 of its 1,803 products, and that single entry
+    used a value the shop does not charge. A clean install would therefore have
+    billed every weighed item at its flat base rate - jeera 50g at Rs19.00
+    instead of Rs24.50.
+
+    Regenerated from the live database after the offset sign correction:
+
+      products                    1,803  (all with English + Tamil names)
+      with a selling price        1,339
+      with slab pricing              75  (was 1)
+      weighed, Quantity type        198
+      product groups                 11
+      transactions                    0  (empty by design)
+      settings                    shop name, slogan, phone numbers
+                                  billCounter dropped, so a fresh install
+                                  starts its own numbering
+
+    Verified the rebuilt binary embeds `"offset": 110` and no longer contains
+    `"offset": -110`.
+
+    NOTE: the seed is a snapshot. Prices edited in the app afterwards do not
+    flow back into it; it only matters for a fresh install on a clean machine.
+
+11. RECEIPT LAYOUT (to the shopkeeper's specification):
+
+    Three requirements were given: phone number at the top and large, exactly
+    one total, and blank space so items can be added by hand after printing.
+
+    a) Phone number was printing at body-text size
+       `src/index.css` forces `.print-receipt-area * { font-size: 12px
+       !important }` for thermal legibility, and only `.receipt-shop-name` was
+       exempted at 18px. The inline 13px on the phone line therefore never
+       applied - it printed at 12px, the same size as the item rows.
+
+       The phone line now carries a `receipt-phone` class with its own print
+       rule at 17px, centred, letter-spaced, and with a heavier
+       `-webkit-text-stroke` so it survives thermal fading. Two classes beat the
+       single-class blanket rule on specificity, exactly as the shop name
+       already does.
+
+       This matters because the customer keeps the slip and thermal print fades
+       over months - the number has to stay readable.
+
+    b) Hand-writing space moved BELOW the total
+       The 44px gap sat between the last item and the total, so an item written
+       there left the printed total underneath it wrong and needing to be struck
+       out. It is now three ruled lines after the total, giving room for the
+       extra items and a corrected figure beneath them.
+
+    c) One total only
+       Already true before these changes - the receipt shows a single
+       `மொத்தம் / Total :` line. The Gross and Net pair seen on receipts printed
+       before 20 Aug came from the older build. `labelGross` and `labelNet` were
+       left over unused and have been removed.
+
+    The 📞 symbol was kept, at the shopkeeper's request, matching the receipts
+    the shop already issues.
+
+    Printed order, captured from the rendered component:
+
+       ஸ்ரீ முருகன் துணை
+       SRI PERUMAL STORES
+       📞 9629708861                     <- 17px, centred
+       BILL NO / DATE / CUSTOMER / TIME
+       item rows
+       [Discount / Charges / Round Off, each only when non-zero]
+       மொத்தம் / Total :
+       [three ruled lines for hand-written items]
+       ITEMS / thank-you / operator
+
+12. HOW TO DEPLOY TO THE SHOP MACHINE:
+
+    The installer carries the app and the seed. It does NOT carry the live
+    database, and it will not repair one that already exists.
+
+    - Fresh machine, no database: install, launch, done. The seed provides all
+      1,803 products with prices and slab pricing.
+    - Machine that already ran an earlier build: uninstall FIRST and tick
+      "Delete the application data" on the uninstaller's confirm page. That
+      checkbox is what runs `RmDir /r "$APPDATA\com.perumalstores.psbilling"`.
+      Leave it unticked and the old, unrepaired database survives the reinstall.
+      Note the generated NSIS script skips the deletion entirely when
+      `$UpdateMode = 1`, so installing over an existing copy never clears data.
+    - To carry a repaired database to another machine instead, copy
+      `%APPDATA%\com.perumalstores.psbilling\database.json` across after
+      installing and launching once.
+
+    Installer (both paths are the same file):
+
+      ps-billing-system_latest_setup.exe
+      tari/src-tauri/target/release/bundle/nsis/ps-billing-system_0.1.0_x64-setup.exe
 
 ========================================================================
