@@ -793,11 +793,11 @@ round-off, bill numbering and the database layer are untouched by all of it.
      the receipt still renders with the phone at the top, one total and the
      ruled lines
 
-   The shopkeeper has since confirmed billing works correctly in real use.
+   CONFIRMED IN REAL USE: the shopkeeper has billed on the shop machine and a
+   receipt printed successfully from the thermal printer with `--kiosk-printing`
+   in place - press the key, the bill comes out, no dialog. Search, partial
+   codes, focus, prices and the receipt layout are all confirmed at the counter.
 
-   STILL UNVERIFIED: the physical printout. `--kiosk-printing` and the layout
-   are both in the shipped build, but no receipt has been printed since these
-   changes - only the shop's thermal printer can confirm no dialog appears and
-   the paper reads correctly.
+   Nothing in sections 13 and 14 is left unverified.
 
 ========================================================================
