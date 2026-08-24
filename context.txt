@@ -651,4 +651,153 @@ the running app. Branch: `durability-fixes` (4 commits).
       ps-billing-system_latest_setup.exe
       tari/src-tauri/target/release/bundle/nsis/ps-billing-system_0.1.0_x64-setup.exe
 
+------------------------------------------------------------------------
+14. PRINTING FIXES & COUNTER USABILITY (AUGUST 20-24, 2026):
+------------------------------------------------------------------------
+Found by the shopkeeper in real use after section 13 shipped. Two printing
+faults and four things that slowed him down at the counter. Prices, slabs,
+round-off, bill numbering and the database layer are untouched by all of it.
+
+1. PRINTING PRODUCED A BLANK SHEET:
+
+   The receipt is rendered inside a host div held off-canvas so it never shows
+   on screen:
+
+       position: fixed; left: -9999px; top: -9999px;
+       width: 1px; height: 1px; overflow: hidden
+
+   The print stylesheet gives `.print-receipt-area` `position: absolute` with
+   `left: 0; top: 0`. Absolute positioning resolves against the nearest
+   positioned ancestor - that host - so "0" meant -9999px, and the host's 1x1
+   overflow box clipped whatever was left. The page came out blank.
+
+   FIX: the host now carries a `print-receipt-host` class that the print
+   stylesheet resets to `position: static; left/top/width/height: auto;
+   overflow: visible`, so the receipt lays out on the page instead.
+
+   Measured by applying the @media print rules as screen rules:
+
+       without the fix   left -9999, top -9999, clipped by the host
+       with the fix      left 0, top 0, 272 x 448 px, not clipped
+
+   NOTE FOR ANYONE EDITING THE RECEIPT: this off-canvas host is load-bearing on
+   screen and hostile to printing. Any new print rule has to survive it.
+
+2. THE WINDOWS PRINT DIALOG APPEARED ON EVERY BILL:
+
+   `WebviewWindow::print()` looks like a native silent print, but wry
+   implements it as `eval("window.print()")` - it is just Chromium's print
+   path, so the preview dialog always opened. Nothing in the Rust command could
+   suppress it, and no earlier build ever printed silently either.
+
+   FIX: Chromium prints straight to the default printer when started with
+   `--kiosk-printing`, so the flag is passed through the window config in
+   `tauri.conf.json`:
+
+     "additionalBrowserArgs":
+       "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --kiosk-printing"
+
+   Tauri's own defaults are repeated there on purpose: supplying
+   `additionalBrowserArgs` REPLACES the default string outright rather than
+   adding to it, and dropping them brings back the WebView mini menu and the
+   SmartScreen prompts.
+
+   CONSEQUENCE: kiosk printing always uses the Windows DEFAULT printer. If the
+   thermal printer is not the default, bills go silently to whatever is.
+
+3. SEARCH DID NOT RANK BY CODE:
+
+   Typing `M` matched 926 of 1,796 products and 808 of those matched only
+   because a name or group contained the letter, so PUTTU MAAVU (K20) sat above
+   M01. New `src/utils/productSearch.js` exports `rankProducts(products, query)`
+   ordering matches:
+
+       tier 0  code exactly equals the query
+       tier 1  code starts with the query
+       tier 2  code contains the query
+       tier 3  English or Tamil name starts with the query
+       tier 4  English or Tamil name contains the query
+       tier 5  group contains the query
+
+   Callers pass a list already sorted by code and Array.prototype.sort is
+   stable, so code order survives inside each tier without a second comparator.
+   An empty query returns the input untouched.
+
+   Used by both `ProductManager.jsx` (replacing a flat `includes` filter) and
+   `BillingDashboard.jsx`.
+
+4. THE BILLING OVERLAY NEVER FILTERED, ONLY SCROLLED:
+
+   It rendered all 1,796 products in code order and merely moved the highlight
+   to the first match, so searching EGG highlighted row 129 with Fish Fry and
+   Chilly Gopi still visible around it. It now lists the ranked matches, with an
+   empty-state row for a query that finds nothing.
+
+   An empty query still opens the full catalogue positioned on the first
+   numeric code >= 100 - deliberately unchanged, that is how he opens the
+   browse list.
+
+   Four call sites index this list and must always move together, or the
+   highlight points at the wrong row: the highlight effect, the ArrowDown
+   bound, the Enter handler, and the table render.
+
+5. A PARTIAL CODE SILENTLY BILLED THE WRONG ITEM:
+
+   The code cell checked for an exact match, then fell through to a
+   `startsWith` match and ADDED it. Typing `12` and pressing Enter put
+   `120 MUTTON MASALA 100G` on the bill.
+
+   FIX: only an exact code adds an item. Anything shorter opens the search
+   overlay pre-filled with what was typed, filtered by item 4 above, so
+   ArrowDown + Enter picks the right one.
+
+   NOTE ON THE CODE DATA: 211 codes exist in both a plain and a dotted form
+   (`M02` and `M02.`), and 203 codes are a strict prefix of another. Exact-match
+   -first means typing `M02` always adds the plain one and never offers `M02.`;
+   the dot has to be typed. That was true before this change as well.
+
+6. FOCUS WAS LOST RETURNING FROM A PAST BILL:
+
+   Page Up parks the current bill in `draftBill` and Page Down restores every
+   field, but neither `viewNextBill` nor `restoreDraft` called `.focus()`, so
+   the cursor landed nowhere and the next keystroke went into the void - the
+   shopkeeper had to reach for the mouse to carry on typing.
+
+   The draft was never at risk; only the cursor was. `activeRowIndex` and
+   `activeColumn` are now stored with the draft and restored with it, focusing
+   that exact cell on the same `setTimeout(..., 50)` pattern `handleClearBill`
+   already used so the refs exist after the re-render. No popup, and nothing is
+   written to the database.
+
+7. FILES CHANGED:
+
+   - `src/utils/productSearch.js`        new, shared ranking
+   - `src/components/ProductManager.jsx` ranked filter
+   - `src/components/BillingDashboard.jsx` filtered overlay, exact-code rule,
+                                         focus restore
+   - `src/components/PrintReceiptModal.jsx` print-receipt-host class
+   - `src/index.css`                     print reset for the host
+   - `src-tauri/tauri.conf.json`         --kiosk-printing
+
+8. VERIFICATION:
+
+   Driven in the browser against the live catalogue, since the shop printer was
+   not to hand:
+
+   - `M` lists M-codes first; `EGG` returns 4 items instead of 4 scattered
+     through 1,796; a nonsense query shows the empty state
+   - `12` + Enter opens 92 matching codes and bills nothing; ArrowDown + Enter
+     adds the chosen item; `M47` + Enter adds jeera outright
+   - Page Up then Page Down returns the cursor to the same cell
+   - Regression each time: F10 saves exactly one bill, the counter advances, and
+     the receipt still renders with the phone at the top, one total and the
+     ruled lines
+
+   The shopkeeper has since confirmed billing works correctly in real use.
+
+   STILL UNVERIFIED: the physical printout. `--kiosk-printing` and the layout
+   are both in the shipped build, but no receipt has been printed since these
+   changes - only the shop's thermal printer can confirm no dialog appears and
+   the paper reads correctly.
+
 ========================================================================
