@@ -3,6 +3,7 @@ import { Search, Save, Trash2, Moon, Sun, ShoppingCart, User, Key, Database, Arc
 import { isTauri, tauriAPI } from '../utils/tauriBridge';
 import { round2 } from '../utils/normalize';
 import { billingUnitLabel, unitLabel } from '../utils/units';
+import { rankProducts } from '../utils/productSearch';
 
 export default function BillingDashboard({ 
   database, 
@@ -615,12 +616,13 @@ export default function BillingDashboard({
         if (!codeValue) {
           openSearch('');
         } else {
-          // 1. Check exact match
-          let match = database.products.find(p => p.code.toLowerCase() === codeValue.toLowerCase() && !p.disableItem);
-          // 2. Check prefix match (e.g. typing '2' matches '201')
-          if (!match) {
-            match = sortedActiveProducts.find(p => p.code.toLowerCase().startsWith(codeValue.toLowerCase()));
-          }
+          // Only a complete code bills an item outright. A partial one used to
+          // fall through to a startsWith match and add whatever it found first,
+          // so typing "12" put 120 MUTTON MASALA on the bill. Anything short of
+          // an exact code now opens the picker instead, pre-filled and filtered.
+          const match = database.products.find(
+            p => p.code.toLowerCase() === codeValue.toLowerCase() && !p.disableItem
+          );
 
           if (match) {
             addProductToRow(match, rowIndex);
@@ -697,47 +699,31 @@ export default function BillingDashboard({
     );
   }, [database.products]);
 
-  // Jump cursor to matching search position in master list
+  // What the overlay actually lists. The search used to leave all 1,796 products
+  // on screen and merely scroll the highlight, so a search for EGG still showed
+  // Fish Fry and Chilly Gopi either side of the one matching row.
+  const searchResults = useMemo(
+    () => rankProducts(sortedActiveProducts, searchQuery),
+    [sortedActiveProducts, searchQuery]
+  );
+
+  // Park the highlight on the best match.
   useEffect(() => {
     if (!showSearchOverlay || sortedActiveProducts.length === 0) return;
 
-    const query = searchQuery.trim().toLowerCase();
-
-    if (!query) {
-      // Default view: Find first item with numeric code >= 100
-      const idx100 = sortedActiveProducts.findIndex(p => {
-        const num = parseInt(p.code, 10);
-        return !isNaN(num) && num >= 100;
-      });
-      setHighlightedSearchIndex(idx100 !== -1 ? idx100 : 0);
-      return;
-    }
-
-    // 1. Code starts with query (or exact match)
-    const startMatchIdx = sortedActiveProducts.findIndex(p => p.code.toLowerCase().startsWith(query));
-    if (startMatchIdx !== -1) {
-      setHighlightedSearchIndex(startMatchIdx);
-      return;
-    }
-
-    // 2. Code includes query
-    const codeContainsIdx = sortedActiveProducts.findIndex(p => p.code.toLowerCase().includes(query));
-    if (codeContainsIdx !== -1) {
-      setHighlightedSearchIndex(codeContainsIdx);
-      return;
-    }
-
-    // 3. Name / TamilName / Group contains query
-    const nameMatchIdx = sortedActiveProducts.findIndex(p => 
-      p.name.toLowerCase().includes(query) || 
-      (p.tamilName || '').toLowerCase().includes(query) ||
-      (p.group || '').toLowerCase().includes(query)
-    );
-    if (nameMatchIdx !== -1) {
-      setHighlightedSearchIndex(nameMatchIdx);
-    } else {
+    // rankProducts has already put the best match first.
+    if (searchQuery.trim()) {
       setHighlightedSearchIndex(0);
+      return;
     }
+
+    // No query: keep the long-standing default of opening on the first numeric
+    // code >= 100, which is where the counter items start.
+    const idx100 = sortedActiveProducts.findIndex(p => {
+      const num = parseInt(p.code, 10);
+      return !isNaN(num) && num >= 100;
+    });
+    setHighlightedSearchIndex(idx100 !== -1 ? idx100 : 0);
   }, [searchQuery, showSearchOverlay, sortedActiveProducts]);
 
   // Scroll active search row smoothly into view without destabilizing list
@@ -752,13 +738,13 @@ export default function BillingDashboard({
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setHighlightedSearchIndex(prev => Math.min(sortedActiveProducts.length - 1, prev + 1));
+      setHighlightedSearchIndex(prev => Math.min(searchResults.length - 1, prev + 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setHighlightedSearchIndex(prev => Math.max(0, prev - 1));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      const selectedProduct = sortedActiveProducts[highlightedSearchIndex];
+      const selectedProduct = searchResults[highlightedSearchIndex];
       if (selectedProduct) {
         addProductToRow(selectedProduct, activeRowIndex);
       }
@@ -925,6 +911,8 @@ export default function BillingDashboard({
       // Backup current active screen draft
       setDraftBill({
         billItems,
+        activeRowIndex,
+        activeColumn,
         customerType,
         customerName,
         addressLine1,
@@ -968,7 +956,11 @@ export default function BillingDashboard({
         setAdvance(draftBill.advance);
         setRwMode(draftBill.rwMode);
         setPricingMode(draftBill.pricingMode);
+        const cursor = draftCursor(draftBill);
+        setActiveRowIndex(cursor.row);
+        setActiveColumn(cursor.column);
         setDraftBill(null);
+        focusBillCell(cursor.row, cursor.column);
       } else {
         handleClearBill();
       }
@@ -1010,6 +1002,31 @@ export default function BillingDashboard({
     }, 50);
   };
 
+  // Put the cursor back into a specific grid cell. Returning from a past bill
+  // restored every field but left focus on nothing, so the next keystroke went
+  // nowhere and the counter had to reach for the mouse. The 50ms delay matches
+  // handleClearBill: the refs only exist once the restored rows have rendered.
+  const focusBillCell = (rowIndex, column) => {
+    setTimeout(() => {
+      const refs = column === 'qty' ? qtyRefs : column === 'rate' ? rateRefs : codeRefs;
+      const el = refs.current[rowIndex];
+      if (el) {
+        el.focus();
+        if (typeof el.select === 'function') el.select();
+      }
+    }, 50);
+  };
+
+  // Where the cursor was when the draft was parked, clamped in case the row is
+  // no longer there.
+  const draftCursor = (draft) => {
+    const rows = Array.isArray(draft.billItems) ? draft.billItems.length : 0;
+    return {
+      row: Math.min(Math.max(0, draft.activeRowIndex ?? 0), Math.max(0, rows - 1)),
+      column: draft.activeColumn || 'code'
+    };
+  };
+
   // Helper: restore a saved draft back to the billing screen
   const restoreDraft = (draft) => {
     setViewingTxIndex(null);
@@ -1027,7 +1044,11 @@ export default function BillingDashboard({
     setAdvance(draft.advance);
     setRwMode(draft.rwMode);
     setPricingMode(draft.pricingMode);
+    const cursor = draftCursor(draft);
+    setActiveRowIndex(cursor.row);
+    setActiveColumn(cursor.column);
     setDraftBill(null);
+    focusBillCell(cursor.row, cursor.column);
   };
 
   // After draft-restore completes, fire the pending save+print action
@@ -1556,7 +1577,7 @@ export default function BillingDashboard({
                       </tr>
                     </thead>
                     <tbody>
-                      {sortedActiveProducts.map((p, pIdx) => {
+                      {searchResults.map((p, pIdx) => {
                         const isHighlighted = highlightedSearchIndex === pIdx;
                         return (
                           <tr 
@@ -1578,6 +1599,13 @@ export default function BillingDashboard({
                           </tr>
                         );
                       })}
+                      {searchResults.length === 0 && (
+                        <tr>
+                          <td colSpan={5} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-secondary)' }}>
+                            பொருள் எதுவும் கிடைக்கவில்லை / No matching item — check the code, or press Esc to close
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>

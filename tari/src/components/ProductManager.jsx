@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Plus, Search, Edit, Trash2, ArrowLeft, Layers, Percent, Box, Save, X, FileSpreadsheet } from 'lucide-react';
 import { exportToCSV } from '../utils/csv';
 import { UNIT_OPTIONS, isUnresolvedUnit, isMeasuredUnit, unitLabel } from '../utils/units';
+import { rankProducts } from '../utils/productSearch';
 
 export default function ProductManager({ database, onUpdateDatabase, onBack, isPrintModalOpen }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -483,16 +484,13 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
     return sortedProducts.filter(p => selectedGroup === 'All' || (p.group || 'General') === selectedGroup);
   }, [sortedProducts, selectedGroup]);
 
-  const filteredProducts = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    if (!q) return groupFilteredProducts;
-    return groupFilteredProducts.filter(p => 
-      p.code.toLowerCase().includes(q) ||
-      p.name.toLowerCase().includes(q) ||
-      (p.tamilName || '').toLowerCase().includes(q) ||
-      (p.group || 'General').toLowerCase().includes(q)
-    );
-  }, [groupFilteredProducts, searchTerm]);
+  // Ranked, not just filtered: a code hit has to beat a name hit. Typing "M"
+  // matches 926 products and 808 of those only because a name contains the
+  // letter, which is how PUTTU MAAVU ended up above M01.
+  const filteredProducts = useMemo(
+    () => rankProducts(groupFilteredProducts, searchTerm),
+    [groupFilteredProducts, searchTerm]
+  );
 
   // Reset visibleCount on search/group changes
   useEffect(() => {
