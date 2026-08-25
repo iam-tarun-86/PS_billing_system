@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Plus, Search, Edit, Trash2, ArrowLeft, Layers, Percent, Box, Save, X, FileSpreadsheet } from 'lucide-react';
 import { exportToCSV } from '../utils/csv';
 import { UNIT_OPTIONS, isUnresolvedUnit, isMeasuredUnit, unitLabel } from '../utils/units';
-import { rankProducts } from '../utils/productSearch';
+import { searchProducts } from '../utils/productSearch';
 
 export default function ProductManager({ database, onUpdateDatabase, onBack, isPrintModalOpen }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -484,13 +484,14 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
     return sortedProducts.filter(p => selectedGroup === 'All' || (p.group || 'General') === selectedGroup);
   }, [sortedProducts, selectedGroup]);
 
-  // Ranked, not just filtered: a code hit has to beat a name hit. Typing "M"
-  // matches 926 products and 808 of those only because a name contains the
-  // letter, which is how PUTTU MAAVU ended up above M01.
-  const filteredProducts = useMemo(
-    () => rankProducts(groupFilteredProducts, searchTerm),
+  // Same rule as the billing screen: a code query jumps within the full list so
+  // neighbouring codes stay reachable, a name query filters. Keeping the two
+  // screens identical means one habit works everywhere.
+  const search = useMemo(
+    () => searchProducts(groupFilteredProducts, searchTerm),
     [groupFilteredProducts, searchTerm]
   );
+  const filteredProducts = search.list;
 
   // Reset visibleCount on search/group changes
   useEffect(() => {
@@ -531,21 +532,21 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
 
   // Sync highlightedIndex on search query changes
   useEffect(() => {
-    const q = searchTerm.trim().toLowerCase();
-    if (!q) {
+    if (search.mode === 'browse' || filteredProducts.length === 0) {
       setHighlightedIndex(-1);
       setIsTableFocused(false);
       return;
     }
 
-    if (filteredProducts.length > 0) {
-      setHighlightedIndex(0);
-      setIsTableFocused(true);
-    } else {
-      setHighlightedIndex(-1);
-      setIsTableFocused(false);
-    }
-  }, [searchTerm, selectedGroup, filteredProducts]);
+    const idx = search.index >= 0 ? search.index : 0;
+    setHighlightedIndex(idx);
+    setIsTableFocused(true);
+
+    // A code jump can land far down the catalogue - M.77 sits at index 1,059 -
+    // well past the 100 rows rendered by default, so widen the window or the
+    // highlighted row would not exist to scroll to.
+    setVisibleCount(vc => Math.max(vc, idx + 50));
+  }, [search, selectedGroup, filteredProducts]);
 
   // Focus search input on mount
   useEffect(() => {

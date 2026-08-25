@@ -3,7 +3,7 @@ import { Search, Save, Trash2, Moon, Sun, ShoppingCart, User, Key, Database, Arc
 import { isTauri, tauriAPI } from '../utils/tauriBridge';
 import { round2 } from '../utils/normalize';
 import { billingUnitLabel, unitLabel } from '../utils/units';
-import { rankProducts } from '../utils/productSearch';
+import { searchProducts } from '../utils/productSearch';
 
 export default function BillingDashboard({ 
   database, 
@@ -625,7 +625,22 @@ export default function BillingDashboard({
           );
 
           if (match) {
-            addProductToRow(match, rowIndex);
+            // If the row already holds this product, Enter is the operator
+            // stepping back through a line he has already filled in - move him
+            // on to the quantity and touch nothing else. Reloading the product
+            // here reset qty to 1 and threw away the slab rate, so a 50g jeera
+            // line at Rs24.50 silently became 1kg at Rs380.
+            const current = billItems[rowIndex];
+            const alreadyLoaded =
+              current &&
+              current.name &&
+              String(current.code).toLowerCase() === String(match.code).toLowerCase();
+
+            if (alreadyLoaded) {
+              setActiveColumn('qty');
+            } else {
+              addProductToRow(match, rowIndex);
+            }
           } else {
             openSearch(codeValue);
           }
@@ -699,32 +714,31 @@ export default function BillingDashboard({
     );
   }, [database.products]);
 
-  // What the overlay actually lists. The search used to leave all 1,796 products
-  // on screen and merely scroll the highlight, so a search for EGG still showed
-  // Fish Fry and Chilly Gopi either side of the one matching row.
-  const searchResults = useMemo(
-    () => rankProducts(sortedActiveProducts, searchQuery),
+  // A code query jumps within the whole catalogue so the neighbouring codes stay
+  // reachable; a name query filters. See utils/productSearch.js.
+  const search = useMemo(
+    () => searchProducts(sortedActiveProducts, searchQuery),
     [sortedActiveProducts, searchQuery]
   );
+  const searchResults = search.list;
 
-  // Park the highlight on the best match.
+  // Park the highlight where the search says it belongs.
   useEffect(() => {
     if (!showSearchOverlay || sortedActiveProducts.length === 0) return;
 
-    // rankProducts has already put the best match first.
-    if (searchQuery.trim()) {
-      setHighlightedSearchIndex(0);
+    if (search.mode !== 'browse') {
+      setHighlightedSearchIndex(search.index);
       return;
     }
 
-    // No query: keep the long-standing default of opening on the first numeric
-    // code >= 100, which is where the counter items start.
+    // Nothing typed: keep the long-standing default of opening on the first
+    // numeric code >= 100, which is where the counter items start.
     const idx100 = sortedActiveProducts.findIndex(p => {
       const num = parseInt(p.code, 10);
       return !isNaN(num) && num >= 100;
     });
     setHighlightedSearchIndex(idx100 !== -1 ? idx100 : 0);
-  }, [searchQuery, showSearchOverlay, sortedActiveProducts]);
+  }, [search, showSearchOverlay, sortedActiveProducts]);
 
   // Scroll active search row smoothly into view without destabilizing list
   useEffect(() => {
@@ -1556,7 +1570,7 @@ export default function BillingDashboard({
                       className="pos-input" 
                       style={{ paddingLeft: '32px', height: '32px' }}
                       value={searchQuery}
-                      onChange={(e) => { setSearchQuery(e.target.value.toUpperCase()); setHighlightedSearchIndex(0); }}
+                      onChange={(e) => setSearchQuery(e.target.value.toUpperCase())}
                       onKeyDown={handleSearchOverlayKeyDown}
                     />
                   </div>
