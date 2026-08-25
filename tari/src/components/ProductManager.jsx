@@ -468,6 +468,14 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
   const groups = useMemo(() => {
     return ['All', ...new Set(database.products.map(p => p.group || 'General'))];
   }, [database.products]);
+
+  // The groups a product can be filed under, for the edit form. 'General' is
+  // always offered because a new product starts there.
+  const groupOptions = useMemo(() => {
+    const set = new Set(database.products.map(p => p.group || 'General'));
+    set.add('General');
+    return [...set].sort((a, b) => a.localeCompare(b));
+  }, [database.products]);
   
   const units = UNIT_OPTIONS;
 
@@ -522,6 +530,10 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
       ];
     }
     
+    // Remembered so a renamed code can still find the row it belongs to, and so
+    // the duplicate check knows which product to exclude from the comparison.
+    cloned.originalCode = product.code;
+
     setEditingProduct(cloned);
     setIsAddingNew(false);
     setEditOpenId(prev => prev + 1); // triggers the initial-focus effect exactly once
@@ -529,6 +541,11 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
 
   // Ref to track the highlighted row for auto-scrolling
   const activeRowRef = useRef(null);
+  // Holds the row index a query change is aiming at, so the scroll below can tell
+  // a jump from an arrow key. Same approach as the billing overlay: it stores the
+  // target rather than a flag, because the scroll effect also fires on the render
+  // before the highlight has moved.
+  const pendingJumpScrollRef = useRef(null);
 
   // Sync highlightedIndex on search query changes
   useEffect(() => {
@@ -539,6 +556,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
     }
 
     const idx = search.index >= 0 ? search.index : 0;
+    pendingJumpScrollRef.current = idx;
     setHighlightedIndex(idx);
     setIsTableFocused(true);
 
@@ -585,6 +603,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
       if (isTableFocused && filteredProducts.length > 0) {
         if (e.key === 'ArrowDown') {
           e.preventDefault();
+          pendingJumpScrollRef.current = null;
           setHighlightedIndex(prev => {
             const nextIdx = Math.min(filteredProducts.length - 1, prev + 1);
             if (nextIdx >= visibleCount - 10) {
@@ -594,6 +613,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
           });
         } else if (e.key === 'ArrowUp') {
           e.preventDefault();
+          pendingJumpScrollRef.current = null;
           setHighlightedIndex(prev => Math.max(0, prev - 1));
         } else if (e.key === 'Enter') {
           e.preventDefault();
@@ -610,11 +630,42 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [isTableFocused, filteredProducts, highlightedIndex, editingProduct, onBack, isPrintModalOpen, visibleCount]);
 
-  // Scroll active row smoothly into view without destabilizing list
+  // Scroll the highlighted row into view.
+  //
+  // A jump - the query just changed - puts the match at the top of the table so
+  // the rest of its code family fills the screen below it. Arrowing afterwards
+  // stays on 'nearest', or the cursor would be re-pinned to the top on every
+  // keypress and the rows above it could never be seen.
   useEffect(() => {
-    if (activeRowRef.current) {
-      activeRowRef.current.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (!activeRowRef.current) return;
+
+    const isJump = pendingJumpScrollRef.current === highlightedIndex;
+    if (isJump) pendingJumpScrollRef.current = null;
+
+    // The header is sticky, so a row scrolled to the start lands underneath it.
+    // Measure how far down content must begin to clear it - from the top of the
+    // scrolling box to the bottom of the header cell, which is a few pixels more
+    // than the header's own height because of the table borders - and hand that
+    // to the CSS. It changes with the window, so it cannot be a constant.
+    const table = activeRowRef.current.closest('table');
+    const headerCell = table && table.querySelector('thead th');
+    let scrollBox = activeRowRef.current.parentElement;
+    while (scrollBox && scrollBox.scrollHeight <= scrollBox.clientHeight + 2) {
+      scrollBox = scrollBox.parentElement;
     }
+    if (table && headerCell && scrollBox) {
+      const clearance = Math.round(
+        headerCell.getBoundingClientRect().bottom - scrollBox.getBoundingClientRect().top
+      );
+      if (clearance > 0) {
+        table.style.setProperty('--search-header-height', clearance + 'px');
+      }
+    }
+
+    activeRowRef.current.scrollIntoView({
+      block: isJump ? 'start' : 'nearest',
+      inline: 'nearest'
+    });
   }, [highlightedIndex]);
 
   const handleAddNewClick = () => {
@@ -769,18 +820,33 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
       sanitizedProduct.slabs = sanitizedSlabs;
     }
 
-    let updatedProducts = [...database.products];
-    
-    if (isAddingNew) {
-      // Check for duplicate code
-      if (database.products.some(p => p.code.toLowerCase() === sanitizedProduct.code.toLowerCase())) {
-        alert('இந்த குறியீடு ஏற்கனவே உள்ளது! / This item code already exists!');
-        return;
-      }
-      updatedProducts.push(sanitizedProduct);
-    } else {
-      updatedProducts = updatedProducts.map(p => p.code === sanitizedProduct.code ? sanitizedProduct : p);
+    // Codes can be edited, so the duplicate check has to cover renaming as well
+    // as adding. The product being edited is excluded by its ORIGINAL code, so
+    // saving without changing the code is not treated as a clash with itself.
+    const newCode = String(sanitizedProduct.code).trim();
+    const originalCode = sanitizedProduct.originalCode;
+
+    const clashes = database.products.some(
+      p => p.code.toLowerCase() === newCode.toLowerCase() && p.code !== originalCode
+    );
+
+    if (clashes) {
+      alert('⚠️ இந்த குறியீடு ஏற்கனவே உள்ளது! / This item code already exists!');
+      setTimeout(() => {
+        if (formRefs.code.current) {
+          formRefs.code.current.focus();
+          if (formRefs.code.current.select) formRefs.code.current.select();
+        }
+      }, 0);
+      return; // modal stays open, nothing is written
     }
+
+    // originalCode is bookkeeping for the form, not part of the product record.
+    const { originalCode: _originalCode, ...productToSave } = sanitizedProduct;
+
+    const updatedProducts = isAddingNew
+      ? [...database.products, productToSave]
+      : database.products.map(p => (p.code === originalCode ? productToSave : p));
 
     onUpdateDatabase({
       ...database,
@@ -890,7 +956,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
 
           {/* Table Container */}
           <div ref={tableContainerRef} className="table-container" style={{ flex: 1 }} onScroll={handleScroll}>
-            <table className="pos-table">
+            <table className="pos-table product-list-table">
               <thead>
                 <tr style={{ background: 'linear-gradient(180deg, #15803d 0%, #166534 100%)' }}>
                   <th style={{ width: '80px', background: '#15803d', color: '#ffffff' }}>குறியீடு / Code</th>
@@ -992,7 +1058,6 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
                   <input 
                     type="text" 
                     className="pos-input mono" 
-                    disabled={!isAddingNew}
                     ref={formRefs.code}
                     value={editingProduct.code}
                     style={{ textTransform: 'uppercase' }}
@@ -1000,14 +1065,37 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
                   />
                 </div>
                 <div className="input-group">
-                  <span className="input-label">பிரிவு / Group</span>
-                  <input 
-                    type="text" 
+                  <span className="input-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>பிரிவு / Group</span>
+                    {dropdownEditMode && document.activeElement === formRefs.group.current && (
+                      <span style={{ fontSize: '10px', color: 'var(--primary)', fontWeight: 'bold', background: 'rgba(37,99,235,0.1)', padding: '1px 6px', borderRadius: '4px' }}>↑↓ select · ↵ confirm</span>
+                    )}
+                    {!dropdownEditMode && document.activeElement === formRefs.group.current && (
+                      <span style={{ fontSize: '10px', color: 'var(--text-secondary)', background: 'var(--border-color)', padding: '1px 6px', borderRadius: '4px' }}>↵ to edit</span>
+                    )}
+                  </span>
+                  <select 
                     className="pos-input" 
                     ref={formRefs.group}
-                    value={editingProduct.group}
+                    value={editingProduct.group || 'General'}
                     onChange={(e) => handleInputChange('group', e.target.value)}
-                  />
+                    onFocus={() => setDropdownEditMode(false)}
+                    onBlur={() => setDropdownEditMode(false)}
+                    style={{
+                      outline: dropdownEditMode && document.activeElement === formRefs.group.current
+                        ? '2px solid var(--primary)' : undefined,
+                      pointerEvents: dropdownEditMode && document.activeElement === formRefs.group.current ? 'auto' : 'none'
+                    }}
+                  >
+                    {/* Keep an unknown group selectable rather than silently
+                        switching the product to something else. */}
+                    {editingProduct.group && !groupOptions.includes(editingProduct.group) && (
+                      <option value={editingProduct.group}>{editingProduct.group}</option>
+                    )}
+                    {groupOptions.map(g => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
