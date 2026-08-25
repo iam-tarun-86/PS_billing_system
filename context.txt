@@ -658,6 +658,10 @@ Found by the shopkeeper in real use after section 13 shipped. Two printing
 faults and four things that slowed him down at the counter. Prices, slabs,
 round-off, bill numbering and the database layer are untouched by all of it.
 
+*** ITEMS 3 AND 4 BELOW WERE REVISED ON 25 AUG - SEE SECTION 15. Filtering was
+    right for name searches but wrong for code searches, which now jump within
+    the full list instead. ***
+
 1. PRINTING PRODUCED A BLANK SHEET:
 
    The receipt is rendered inside a host div held off-canvas so it never shows
@@ -799,5 +803,101 @@ round-off, bill numbering and the database layer are untouched by all of it.
    codes, focus, prices and the receipt layout are all confirmed at the counter.
 
    Nothing in sections 13 and 14 is left unverified.
+
+------------------------------------------------------------------------
+15. SEARCH BEHAVIOUR SPLIT & THE ENTER MONEY BUG (AUGUST 25, 2026):
+------------------------------------------------------------------------
+Two faults the shopkeeper found using the section 14 build at the counter. The
+first REVISES items 3 and 4 of section 14 - read this before acting on those.
+
+1. FILTERING CODE SEARCHES BROKE HOW THE SHOP NAVIGATES:
+
+   Section 14 made the billing overlay filter every query. That was right for
+   names and wrong for codes.
+
+   Item codes are grouped by family: M1x, M2x and M3x sit next to each other and
+   neighbouring codes are related goods. Typing `M2` and getting only `M2*`
+   throws away the very ordering the shopkeeper browses by - he could no longer
+   arrow up from M20 into the M1 range, because the M1 rows were gone.
+
+   This is what he reported as "I can move down but I cannot move up". It was
+   never a keyboard fault: ArrowUp was tested with real key presses in both
+   screens and works. There was simply nothing above the match to move to.
+
+   THE RULE NOW (`src/utils/productSearch.js`, `searchProducts`):
+
+       if any product code STARTS WITH the query   -> JUMP
+          the full catalogue stays on screen and the cursor moves to the first
+          matching code, so the neighbours stay reachable either side
+       otherwise                                    -> FILTER
+          the ranked matches from item 3 of section 14, which still applies to
+          name searches
+
+   Which branch applies is decided from the data, not guessed from the shape of
+   the text. Checked against the live catalogue:
+
+       "M" "M2" "M4" "12" "Z1" "K" "B1"        -> jump   (M2 lands on M20)
+       "EGG" "MILK" "SOAP" "RICE" "JEERA"      -> filter (EGG -> 4 items)
+
+   A code that matches nothing - `M99` - falls through to the filter, finds no
+   name either, and shows the empty state. That is intended.
+
+   BOTH SCREENS use the same rule so one habit works everywhere. In Product
+   Manager the lazily rendered window (`visibleCount`, 100 rows) is widened to
+   cover the jump target, because a code can land far down the list - M.77 sits
+   at index 1,059 - and the highlighted row has to exist before it can be
+   scrolled to.
+
+2. ENTER ON A FILLED ROW WIPED THE QUANTITY AND THE SLAB RATE:
+
+   Pressing Enter on the code cell of a row that was already filled in called
+   `addProductToRow` -> `executeAddProductToRow`, which reloads the product from
+   the master: it hardcodes `defaultQty` and recomputes `overridePrice`. So
+   stepping back to check a line and pressing Enter reset it.
+
+   Reproduced:
+
+       M47  0.050 kg  Rs490.00     ->  bill Rs24.50
+       press Enter on the code again
+       M47  1         Rs380.00     ->  bill Rs380.00
+
+   It discarded the slab rate as well as the quantity, so a 50g jeera line
+   became 1kg at the base rate. Silent, and real money.
+
+   FIX: in `handleCellKeyDown` on the code column, if the row already holds that
+   product (same code, and a name present) Enter now only advances to the
+   quantity - `setActiveColumn('qty')` - and touches nothing else. Focus follows
+   through the existing effect keyed on `[activeRowIndex, activeColumn]`, so no
+   new focus handling was needed. A different code still loads the new product;
+   an empty row still gets defaults.
+
+3. FILES CHANGED:
+
+   - `src/utils/productSearch.js`          `searchProducts`, `findCodeMatchIndex`
+   - `src/components/BillingDashboard.jsx` overlay uses the split; Enter on an
+                                           unchanged code no longer reloads
+   - `src/components/ProductManager.jsx`   same split, window widened for jumps
+
+4. VERIFICATION:
+
+   Driven in the browser against the live catalogue:
+
+   - `M2` jumps to M20 with M16/M18/M19 above and M21/M21./M22 below, and three
+     ArrowUps walk back to M16 HORSE GRAM - the M1 range he wanted
+   - `EGG` filters to 4 items, `MILK` to 14, `M99` shows the empty state
+   - Product Manager behaves identically on the same queries
+   - Re-entering M47 keeps 0.050 at Rs490.00 and moves focus to the quantity
+   - Regression: F10 saves one bill, the counter advances, and a 50g jeera bill
+     still comes to Rs24.50 gross, Rs0.50 round-off, Rs25.00 net, with the
+     receipt printing phone-at-top, the round-off line and a single total
+
+   No console errors; lint and build clean.
+
+5. NOTE FOR NEXT TIME:
+
+   Two bug reports in a row turned out to have the wrong cause attached - the
+   "ArrowUp is broken" report was really "do not filter my code searches", and
+   an earlier "printing worked before your changes" was a path that had never
+   worked. Reproducing before fixing caught both. Worth doing again.
 
 ========================================================================
