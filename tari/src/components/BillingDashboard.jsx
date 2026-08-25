@@ -143,6 +143,12 @@ export default function BillingDashboard({
   const rateRefs = useRef([]);
   const searchInputRef = useRef(null);
   const activeSearchRowRef = useRef(null);
+  // Holds the row index a query change is aiming at, so the scroll below can tell
+  // a jump from an arrow key. It stores the target rather than a plain flag
+  // because the scroll effect also fires on the render before the highlight has
+  // moved; keying on the index means only the scroll that actually lands on the
+  // target is treated as the jump.
+  const pendingJumpScrollRef = useRef(null);
   const overlayTableContainerRef = useRef(null);
   // Used to trigger a save+print after async draft-restore completes
   const pendingPrintRef = useRef(null);
@@ -727,6 +733,7 @@ export default function BillingDashboard({
     if (!showSearchOverlay || sortedActiveProducts.length === 0) return;
 
     if (search.mode !== 'browse') {
+      pendingJumpScrollRef.current = search.index;
       setHighlightedSearchIndex(search.index);
       return;
     }
@@ -737,14 +744,31 @@ export default function BillingDashboard({
       const num = parseInt(p.code, 10);
       return !isNaN(num) && num >= 100;
     });
-    setHighlightedSearchIndex(idx100 !== -1 ? idx100 : 0);
+    const browseTarget = idx100 !== -1 ? idx100 : 0;
+    pendingJumpScrollRef.current = browseTarget;
+    setHighlightedSearchIndex(browseTarget);
   }, [search, showSearchOverlay, sortedActiveProducts]);
 
-  // Scroll active search row smoothly into view without destabilizing list
+  // Scroll the highlighted row into view.
+  //
+  // A jump - the query just changed - puts the match at the TOP of the table so
+  // the rest of its code family fills the screen below it. 'nearest' scrolled
+  // only far enough to reveal the row, which left it pinned to the bottom edge
+  // with unrelated codes above and nothing of its own series in sight.
+  //
+  // Arrowing afterwards stays on 'nearest' deliberately: 'start' would re-pin
+  // the cursor to the top on every keypress, so he could never see the rows
+  // above it while moving up.
   useEffect(() => {
-    if (showSearchOverlay && activeSearchRowRef.current) {
-      activeSearchRowRef.current.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    }
+    if (!showSearchOverlay || !activeSearchRowRef.current) return;
+
+    const isJump = pendingJumpScrollRef.current === highlightedSearchIndex;
+    if (isJump) pendingJumpScrollRef.current = null;
+
+    activeSearchRowRef.current.scrollIntoView({
+      block: isJump ? 'start' : 'nearest',
+      inline: 'nearest'
+    });
   }, [highlightedSearchIndex, showSearchOverlay]);
 
   const handleSearchOverlayKeyDown = (e) => {
@@ -752,9 +776,11 @@ export default function BillingDashboard({
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
+      pendingJumpScrollRef.current = null;
       setHighlightedSearchIndex(prev => Math.min(searchResults.length - 1, prev + 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
+      pendingJumpScrollRef.current = null;
       setHighlightedSearchIndex(prev => Math.max(0, prev - 1));
     } else if (e.key === 'Enter') {
       e.preventDefault();
