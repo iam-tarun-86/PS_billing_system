@@ -3,8 +3,17 @@ import { Plus, Search, Edit, Trash2, ArrowLeft, Layers, Percent, Box, Save, X, F
 import { exportToCSV } from '../utils/csv';
 import { UNIT_OPTIONS, isUnresolvedUnit, isMeasuredUnit, unitLabel } from '../utils/units';
 import { searchProducts } from '../utils/productSearch';
+import { isTauri, tauriAPI } from '../utils/tauriBridge';
 
 export default function ProductManager({ database, onUpdateDatabase, onBack, isPrintModalOpen }) {
+  const logInfo = (msg) => {
+    if (isTauri()) {
+      tauriAPI.logMessage('info', msg);
+    } else if (window.electronAPI && window.electronAPI.logMessage) {
+      window.electronAPI.logMessage('info', msg);
+    }
+  };
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('All');
   const [editingProduct, setEditingProduct] = useState(null);
@@ -50,13 +59,13 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
   useEffect(() => {
     if (editOpenId === 0) return; // skip initial mount
     setTimeout(() => {
-      if (isAddingNew && formRefs.code.current) {
-        formRefs.code.current.focus();
-        formRefs.code.current.select();
-      } else if (formRefs.group.current) {
-        formRefs.group.current.focus();
-        formRefs.group.current.select();
-      }
+      // The code is the first field either way now. Editing used to skip to the
+      // group because the code was locked; it no longer is.
+      const target = formRefs.code.current || formRefs.group.current;
+      if (!target) return;
+      target.focus();
+      // A <select> has no select(); only text inputs do, and group is a dropdown.
+      if (typeof target.select === 'function') target.select();
     }, 100);
   }, [editOpenId]);
 
@@ -835,7 +844,9 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
       setTimeout(() => {
         if (formRefs.code.current) {
           formRefs.code.current.focus();
-          if (formRefs.code.current.select) formRefs.code.current.select();
+          if (typeof formRefs.code.current.select === 'function') {
+            formRefs.code.current.select();
+          }
         }
       }, 0);
       return; // modal stays open, nothing is written
@@ -848,9 +859,43 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
       ? [...database.products, productToSave]
       : database.products.map(p => (p.code === originalCode ? productToSave : p));
 
+    // Bills store the item code, not a reference to the product, so renaming a
+    // code would leave every bill that used it pointing at something that no
+    // longer exists - reprints would lose the unit and price type, and deleting
+    // such a bill would silently fail to put the stock back. Carry the rename
+    // through the saved bills so the two stay in step.
+    const isRename = !isAddingNew && originalCode && originalCode !== newCode;
+    let updatedTransactions = database.transactions;
+    let renamedLines = 0;
+
+    if (isRename) {
+      const matchesOld = (item) =>
+        String((item && item.code) || '').toLowerCase() === String(originalCode).toLowerCase();
+
+      updatedTransactions = (database.transactions || []).map(tx => {
+        if (!Array.isArray(tx.items) || !tx.items.some(matchesOld)) return tx;
+        return {
+          ...tx,
+          items: tx.items.map(item => {
+            if (!matchesOld(item)) return item;
+            renamedLines++;
+            return { ...item, code: newCode };
+          })
+        };
+      });
+
+      logInfo(
+        `Product code renamed ${originalCode} -> ${newCode}. ` +
+        `Updated ${renamedLines} line item(s) across saved bills.`
+      );
+    }
+
     onUpdateDatabase({
       ...database,
-      products: updatedProducts
+      products: updatedProducts,
+      // Only replaced when a rename actually happened, so an ordinary edit does
+      // not rewrite the whole transaction array.
+      ...(isRename ? { transactions: updatedTransactions } : {})
     });
 
     setEditingProduct(null);
