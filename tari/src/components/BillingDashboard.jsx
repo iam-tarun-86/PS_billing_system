@@ -765,6 +765,29 @@ export default function BillingDashboard({
     const isJump = pendingJumpScrollRef.current === highlightedSearchIndex;
     if (isJump) pendingJumpScrollRef.current = null;
 
+    // Tell the CSS how far down content has to start to clear the sticky header,
+    // so scroll-margin-top can keep the jumped-to row fully visible.
+    //
+    // This is measured as the distance from the top of the scrolling box to the
+    // bottom of the header cell, NOT the header's own height: the two differ by
+    // a few pixels because of the table's borders, and using the height alone
+    // left the row a couple of pixels behind the header. It also changes with
+    // the window - 38px at 1280 wide, 48px at 1536 - so it cannot be a constant.
+    const table = activeSearchRowRef.current.closest('table');
+    const headerCell = table && table.querySelector('thead th');
+    let scrollBox = activeSearchRowRef.current.parentElement;
+    while (scrollBox && scrollBox.scrollHeight <= scrollBox.clientHeight + 2) {
+      scrollBox = scrollBox.parentElement;
+    }
+    if (table && headerCell && scrollBox) {
+      const clearance = Math.round(
+        headerCell.getBoundingClientRect().bottom - scrollBox.getBoundingClientRect().top
+      );
+      if (clearance > 0) {
+        table.style.setProperty('--search-header-height', clearance + 'px');
+      }
+    }
+
     activeSearchRowRef.current.scrollIntoView({
       block: isJump ? 'start' : 'nearest',
       inline: 'nearest'

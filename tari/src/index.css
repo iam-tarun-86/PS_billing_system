@@ -239,6 +239,17 @@ input::placeholder {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+/* The search overlay header is sticky at top: 0, so a row scrolled to the start
+   of the list lands underneath it and is hidden. Push the scroll target down by
+   the header's height plus a little breathing room.
+
+   The height is not fixed: the header measures 38px at 1280px wide and 48px at
+   1536px, so it is fed in from the rendered header as --search-header-height and
+   the value below is only a fallback. */
+.search-overlay-table tbody tr {
+  scroll-margin-top: calc(var(--search-header-height, 48px) + 6px);
+}
+
 .pos-table td {
   padding: 4px 8px;
   border: 1px solid var(--border-color) !important; /* Clear grid borders */
