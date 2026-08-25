@@ -890,9 +890,24 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
       );
     }
 
+    // Renames are also recorded so archived bills can be remapped if they are
+    // ever restored. The live bills are rewritten above, but an archive written
+    // before the rename still holds the old code, and nothing else would say
+    // what it became.
+    const settings = isRename
+      ? {
+          ...database.settings,
+          codeRenames: [
+            ...(database.settings?.codeRenames || []),
+            { from: originalCode, to: newCode, at: new Date().toISOString() }
+          ]
+        }
+      : database.settings;
+
     onUpdateDatabase({
       ...database,
       products: updatedProducts,
+      settings,
       // Only replaced when a rename actually happened, so an ordinary edit does
       // not rewrite the whole transaction array.
       ...(isRename ? { transactions: updatedTransactions } : {})
