@@ -474,15 +474,19 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
   };
 
   // Group list extracted from products
+  // Filter bar: 'All' first, then the real store groups alphabetically. They used
+  // to come out in whatever order the catalogue happened to be in.
   const groups = useMemo(() => {
-    return ['All', ...new Set(database.products.map(p => p.group || 'General'))];
+    const set = new Set(database.products.map(p => p.group || 'General'));
+    return ['All', ...[...set].sort((a, b) => a.localeCompare(b))];
   }, [database.products]);
 
-  // The groups a product can be filed under, for the edit form. 'General' is
-  // always offered because a new product starts there.
+  // The groups a product can be filed under, taken from the catalogue itself so
+  // only the shop's real groups are offered. 'General' is deliberately NOT added
+  // back: it was the placeholder the FoxPro import left behind, and offering it
+  // would let a product drift out of the store's own scheme again.
   const groupOptions = useMemo(() => {
-    const set = new Set(database.products.map(p => p.group || 'General'));
-    set.add('General');
+    const set = new Set(database.products.map(p => p.group).filter(Boolean));
     return [...set].sort((a, b) => a.localeCompare(b));
   }, [database.products]);
   
@@ -682,7 +686,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
       code: '',
       name: '',
       tamilName: '',
-      group: 'General',
+      group: 'Z.OTHERS', // the shop's own catch-all group
       unit: 'piece',
       priceType: 'Fixed',
       billItem: true,
