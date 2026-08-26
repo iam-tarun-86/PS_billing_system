@@ -900,4 +900,155 @@ first REVISES items 3 and 4 of section 14 - read this before acting on those.
    an earlier "printing worked before your changes" was a path that had never
    worked. Reproducing before fixing caught both. Worth doing again.
 
+------------------------------------------------------------------------
+16. SEARCH ALIGNMENT, EDITABLE CODES & REAL PRODUCT GROUPS (AUG 25-26, 2026):
+------------------------------------------------------------------------
+Six changes, all from counter feedback. Nothing here touches pricing, printing,
+saving or bill numbering, and every one of those was re-verified afterwards.
+
+1. A SEARCH JUMP NOW HEADS THE LIST:
+
+   scrollIntoView used block: 'nearest' for every highlight change, which scrolls
+   only far enough to reveal the row. On a code jump that left the match on the
+   LAST visible line with unrelated codes above it - searching M put M.77 under
+   K20-K29 - so none of its own series was in sight.
+
+   A jump now uses block: 'start'. Arrowing afterwards deliberately stays on
+   'nearest': 'start' would re-pin the cursor to the top on every keypress, so
+   the rows above it could never be seen while moving up.
+
+   TELLING THE TWO APART TOOK TWO ATTEMPTS. The scroll effect also runs on the
+   render BEFORE the highlight has moved, so a plain boolean flag was consumed by
+   that stale pass and only the second jump ever landed at the top. The flag now
+   holds the TARGET ROW INDEX and is honoured only by the scroll that actually
+   reaches it. Same pattern in both screens.
+
+2. AND CLEARS THE STICKY HEADER:
+
+   The header is position: sticky, top: 0, so a row scrolled to the start sat
+   underneath it - the jump landed on M.77 but the first readable row was M.78.
+   Rows now carry scroll-margin-top.
+
+   THE OFFSET IS MEASURED, NOT FIXED. It is taken as the distance from the top of
+   the scrolling box to the BOTTOM OF THE HEADER CELL, which is about 8px more
+   than the header's own height because of the table borders - using the height
+   left the row two pixels behind. It also changes with the window: 38px at
+   1280px wide, 48px at 1536px. The component measures it and publishes it as
+   --search-header-height; the stylesheet carries only a fallback.
+
+   TWO MEASUREMENT TRAPS, if this is ever debugged again: `sticky` applies to the
+   TH, not the THEAD, so measuring against the thead returns its unstuck document
+   position and yields nonsense; and the header's rendered height is not the same
+   as the clearance it needs.
+
+3. ITEM CODES ARE EDITABLE, WITH A DUPLICATE GUARD:
+
+   The code was locked on the edit form, so a mistyped code could only be fixed by
+   deleting the product and adding it again - losing its slabs and stock. The form
+   now remembers the code it opened with (`originalCode`) so a rename updates the
+   right row, and that field is stripped before writing.
+
+   On save, a code already used by ANOTHER product - compared against the original
+   code, so re-saving an unchanged one is not a clash with itself - refuses the
+   save, keeps the modal open and puts the cursor back on the code field.
+
+   NOTE ON THE DATA: 211 codes exist in both a plain and a dotted form (M02 and
+   M02.), and 203 codes are a strict prefix of another. Exact-match-first means
+   typing M02 always adds the plain one; the dot has to be typed.
+
+4. A RENAME CASCADES THROUGH THE BILLS:
+
+   Bills store the item code, not a reference to the product, so renaming a code
+   left every bill that used it pointing at something no longer in the catalogue:
+   reprints lost the unit and price type, and deleting such a bill silently failed
+   to put the stock back.
+
+   A rename now rewrites the matching line items in database.transactions and
+   saves them with the products. Matching is case-insensitive on the old code, the
+   new code is written as entered, and the transaction array is only replaced when
+   a rename actually happened - an ordinary price edit leaves it byte-identical.
+   The count of updated lines goes to app.log.
+
+   Verified on the real 1,850-bill history: renaming M47 moved all 197 of its line
+   items, with the bill count and the Rs11,58,415 total unchanged and every line
+   keeping its own name, quantity and rate.
+
+5. RESTORING AN ARCHIVE REMAPS OLD CODES:
+
+   The cascade above covers the live ledger. An archive written BEFORE a rename
+   still holds the old code, and nothing else would say what it became.
+
+   `archive_history.mjs --restore` now resolves each archived code against two
+   sources, strongest first:
+
+     settings.codeRenames   an exact record written by Product Manager at the
+                            moment of each rename. Chains are followed, so
+                            A -> B -> C resolves to C.
+     the product name       for renames made before that log existed. Used ONLY
+                            when exactly one product carries the name - six names
+                            in this catalogue are shared by two products.
+
+   Anything neither can place keeps its original code and is REPORTED with a
+   count, never guessed at. Tested on a copy of the real archive with two renames
+   staged, one recorded and one not: 197 line items resolved through the log, 64
+   through the name, none unresolved.
+
+6. THE SHOP'S REAL PRODUCT GROUPS ARE BACK:
+
+   The August import lost the grouping - products arrived as "General" or as a GST
+   bucket like "05% 15121910" - so the group filter was useless. The real groups
+   were still in the FoxPro data: IM012026.DBF carries each item's IGROUPCODE and
+   IG012026.DBF maps that to a name.
+
+       node tari/scripts/restore_product_groups.mjs --dry-run
+       node tari/scripts/restore_product_groups.mjs
+       node tari/scripts/restore_product_groups.mjs --db=tari/src-tauri/seed_database.json
+
+   All 1,803 products resolve to one of 35 groups with nothing left over, and the
+   counts match the shop's own figures: 121 M.MALIGAI, 120 G1.CASH,MUTTAI, 93
+   W.WASINGSOAP/POWDER, 89 4.POOJA PRODUCTS, down to 1. Both installs under
+   Old_sms hold these tables and agree item for item.
+
+   ONLY the `group` field is written - the script aborts if any other field
+   differs on any product. Names are kept verbatim, including the double space in
+   "01DALL ITEMS   RST".
+
+   Applied to the live database AND the bundled seed, so a fresh install starts
+   grouped too.
+
+   Both dropdowns list the groups alphabetically. "General" is deliberately NO
+   LONGER OFFERED: it was the import's placeholder, and keeping it selectable
+   would let products drift back out of the shop's scheme. A new product starts in
+   Z.OTHERS, the shop's own catch-all.
+
+   ONE BEHAVIOUR CHANGES AS A CONSEQUENCE, and it is an improvement: searching a
+   word that is also part of a group name now surfaces that group BELOW the exact
+   name matches. EGG returns the four egg products first, then the 25 items in
+   5.MILKPROD/EGG. Group matching has always been the lowest search tier (see
+   productSearch.js); it simply never matched anything while every group was
+   called "General". If the extra rows are ever unwanted, dropping that tier is a
+   one-line change.
+
+7. ZERO-REGRESSION PASS AFTER ALL OF THE ABOVE:
+
+   - code queries jump, name queries filter, on both screens
+   - ArrowUp out of a jump walks back into the neighbouring code range
+   - header clearance holds at 7-8px on both screens
+   - Enter on a filled row keeps 0.050 at Rs490.00
+   - duplicate code refused; rename cascades and is recorded
+   - slabs: 50g Rs24.50, 100g Rs49.00, 250g Rs95.00, 500g Rs190, 1kg Rs380
+   - F10 saves one bill, Rs24.50 gross and Rs25.00 net, counter advances
+   - receipt prints the phone at the top, a single total and the round-off
+   - no console errors; lint and build clean
+
+8. A MISTAKE MADE AND REPAIRED, RECORDED SO IT IS NOT REPEATED:
+
+   While syntax-checking archive_history.mjs, `node -e "import(...)"` was used.
+   That RUNS the module rather than parsing it, and the script executed in ARCHIVE
+   mode against the live database, moving one bill (#1, 24/08/2026, Rs380) into a
+   stray archive file. It was merged straight back, the stray file deleted and the
+   bill counter left untouched.
+
+   Use `node --check <file>` to parse without executing.
+
 ========================================================================
