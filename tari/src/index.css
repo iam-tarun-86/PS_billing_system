@@ -247,7 +247,8 @@ input::placeholder {
    1536px, so it is fed in from the rendered header as --search-header-height and
    the value below is only a fallback. */
 .search-overlay-table tbody tr,
-.product-list-table tbody tr {
+.product-list-table tbody tr,
+.billing-table tbody tr {
   scroll-margin-top: calc(var(--search-header-height, 48px) + 6px);
 }
 

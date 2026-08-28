@@ -141,6 +141,8 @@ export default function BillingDashboard({
   const codeRefs = useRef([]);
   const qtyRefs = useRef([]);
   const rateRefs = useRef([]);
+  const activeBillingRowRef = useRef(null);
+  const billingTableContainerRef = useRef(null);
   const searchInputRef = useRef(null);
   const activeSearchRowRef = useRef(null);
   // Holds the row index a query change is aiming at, so the scroll below can tell
@@ -362,6 +364,31 @@ export default function BillingDashboard({
 
     return () => clearTimeout(timer);
   }, [activeRowIndex, activeColumn, showSearchOverlay, isPrintModalOpen, duplicateState.isOpen]);
+
+  // Scroll active row in main billing grid into view with sticky header clearance
+  useEffect(() => {
+    if (showSearchOverlay || !activeBillingRowRef.current) return;
+
+    const table = activeBillingRowRef.current.closest('table');
+    const headerCell = table && table.querySelector('thead th');
+    let scrollBox = activeBillingRowRef.current.parentElement;
+    while (scrollBox && scrollBox.scrollHeight <= scrollBox.clientHeight + 2) {
+      scrollBox = scrollBox.parentElement;
+    }
+    if (table && headerCell && scrollBox) {
+      const clearance = Math.round(
+        headerCell.getBoundingClientRect().bottom - scrollBox.getBoundingClientRect().top
+      );
+      if (clearance > 0) {
+        table.style.setProperty('--search-header-height', clearance + 'px');
+      }
+    }
+
+    activeBillingRowRef.current.scrollIntoView({
+      block: 'nearest',
+      inline: 'nearest'
+    });
+  }, [activeRowIndex, showSearchOverlay, isEditingSavedBill]);
 
   function createEmptyRow() {
     return {
@@ -911,6 +938,11 @@ export default function BillingDashboard({
   const loadTransactionToView = (tx) => {
     setIsEditingSavedBill(false);
     setActiveBottomBtnIndex(2); // focus edit button by default!
+    setActiveRowIndex(0);
+    setActiveColumn('code');
+    if (billingTableContainerRef.current) {
+      billingTableContainerRef.current.scrollTop = 0;
+    }
     const rows = tx.items.map(item => ({
       code: item.code || '',
       name: item.name || '',
@@ -946,21 +978,30 @@ export default function BillingDashboard({
     setIsEditingSavedBill(true);
     setBillItems(prev => {
       const updated = [...prev];
-      // If there are no empty rows, add one so they can edit/add items!
+      // If there are no empty rows, add one at the end so they can append new items
       if (updated.length === 0 || updated[updated.length - 1].code !== '') {
         updated.push(createEmptyRow());
       }
       
+      setActiveRowIndex(0);
+      setActiveColumn('code');
+      if (billingTableContainerRef.current) {
+        billingTableContainerRef.current.scrollTop = 0;
+      }
+      
       setTimeout(() => {
-        const firstEmptyIndex = updated.findIndex(item => item.code === '');
-        const focusIndex = firstEmptyIndex !== -1 ? firstEmptyIndex : 0;
-        setActiveRowIndex(focusIndex);
+        setActiveRowIndex(0);
         setActiveColumn('code');
-        if (codeRefs.current[focusIndex]) {
-          codeRefs.current[focusIndex].focus();
-          codeRefs.current[focusIndex].select();
+        if (codeRefs.current[0]) {
+          codeRefs.current[0].focus();
+          if (typeof codeRefs.current[0].select === 'function') {
+            codeRefs.current[0].select();
+          }
         }
-      }, 100);
+        if (billingTableContainerRef.current) {
+          billingTableContainerRef.current.scrollTop = 0;
+        }
+      }, 50);
       
       return updated;
     });
@@ -1467,8 +1508,8 @@ export default function BillingDashboard({
           {/* Main Billing Grid with BLUE headers */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }} onClick={handleBillingAreaClick}>
             
-            <div className="table-container" style={{ flex: 1 }}>
-              <table className="pos-table">
+            <div ref={billingTableContainerRef} className="table-container" style={{ flex: 1 }}>
+              <table className="pos-table billing-table">
                 <thead>
                   <tr style={{ background: 'linear-gradient(180deg, #15803d 0%, #166534 100%)' }}>
                     <th style={{ width: '60px', color: '#ffffff' }}>எண் / S.No</th>
@@ -1484,7 +1525,7 @@ export default function BillingDashboard({
                 </thead>
                 <tbody>
                   {billItems.map((item, index) => (
-                    <tr key={index} className={activeRowIndex === index ? 'active-row' : ''}>
+                    <tr key={index} ref={activeRowIndex === index ? activeBillingRowRef : null} className={activeRowIndex === index ? 'active-row' : ''}>
                       <td style={{ textAlign: 'center', fontFamily: 'var(--font-mono)' }}>{index + 1}</td>
                       <td>
                         <input 
