@@ -1512,15 +1512,16 @@ export default function BillingDashboard({
               <table className="pos-table billing-table">
                 <thead>
                   <tr style={{ background: 'linear-gradient(180deg, #15803d 0%, #166534 100%)' }}>
-                    <th style={{ width: '60px', color: '#ffffff' }}>எண் / S.No</th>
-                    <th style={{ width: '120px', color: '#ffffff' }}>குறியீடு / Code</th>
-                    <th style={{ color: '#ffffff' }}>பொருள் / Product Item (Eng & Tamil)</th>
-                    <th style={{ width: '100px', textAlign: 'center', color: '#ffffff' }}>Unit / அலகு</th>
-                    <th style={{ width: '120px', textAlign: 'right', color: '#ffffff' }}>அளவு / Qty</th>
-                    <th style={{ width: '120px', textAlign: 'right', color: '#ffffff' }}>M.R.P</th>
-                    <th style={{ width: '120px', textAlign: 'right', color: '#ffffff' }}>விற்பனை விலை / Rate</th>
-                    <th style={{ width: '150px', textAlign: 'right', color: '#ffffff' }}>மொத்தம் / Total</th>
-                    <th style={{ width: '50px' }}></th>
+                    <th style={{ width: '50px', color: '#ffffff' }}>எண் / S.No</th>
+                    <th style={{ width: '100px', color: '#ffffff' }}>குறியீடு / Code</th>
+                    <th style={{ color: '#ffffff' }}>தமிழ் பெயர் / Tamil Name</th>
+                    <th style={{ color: '#ffffff' }}>பொருள் / Product Name (Eng)</th>
+                    <th style={{ width: '80px', textAlign: 'center', color: '#ffffff' }}>Unit / அலகு</th>
+                    <th style={{ width: '100px', textAlign: 'right', color: '#ffffff' }}>அளவு / Qty</th>
+                    <th style={{ width: '100px', textAlign: 'right', color: '#ffffff' }}>M.R.P</th>
+                    <th style={{ width: '110px', textAlign: 'right', color: '#ffffff' }}>விற்பனை விலை / Rate</th>
+                    <th style={{ width: '130px', textAlign: 'right', color: '#ffffff' }}>மொத்தம் / Total</th>
+                    <th style={{ width: '40px' }}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1541,11 +1542,11 @@ export default function BillingDashboard({
                           tabIndex={viewingTxIndex !== null && !isEditingSavedBill ? -1 : undefined}
                         />
                       </td>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontWeight: '700' }}>{item.name || '-'}</span>
-                          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{item.tamilName || ''}</span>
-                        </div>
+                      <td style={{ fontWeight: '600' }}>
+                        {item.tamilName || (item.code ? '-' : '')}
+                      </td>
+                      <td style={{ color: item.name ? 'inherit' : 'var(--text-secondary)' }}>
+                        {item.name || (item.code ? '-' : '')}
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         {item.unit && (

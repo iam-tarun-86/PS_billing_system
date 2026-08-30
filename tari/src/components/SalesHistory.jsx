@@ -826,12 +826,13 @@ export default function SalesHistory({ database, onUpdateDatabase, onBack, onPri
               <table className="pos-table" style={{ width: '100%', marginBottom: '12px' }}>
                 <thead>
                   <tr style={{ background: 'var(--primary)', color: '#ffffff' }}>
-                    <th style={{ width: '50px', color: '#ffffff', padding: '6px' }}>S.No</th>
+                    <th style={{ width: '45px', color: '#ffffff', padding: '6px' }}>S.No</th>
                     <th style={{ width: '80px', color: '#ffffff', padding: '6px' }}>Code</th>
-                    <th style={{ color: '#ffffff', padding: '6px' }}>Product Item</th>
-                    <th style={{ width: '100px', textAlign: 'right', color: '#ffffff', padding: '6px' }}>Qty</th>
-                    <th style={{ width: '100px', textAlign: 'right', color: '#ffffff', padding: '6px' }}>Rate</th>
-                    <th style={{ width: '110px', textAlign: 'right', color: '#ffffff', padding: '6px' }}>Total</th>
+                    <th style={{ color: '#ffffff', padding: '6px' }}>தமிழ் பெயர் / Tamil Name</th>
+                    <th style={{ color: '#ffffff', padding: '6px' }}>பொருள் / Product Name (Eng)</th>
+                    <th style={{ width: '90px', textAlign: 'right', color: '#ffffff', padding: '6px' }}>Qty</th>
+                    <th style={{ width: '90px', textAlign: 'right', color: '#ffffff', padding: '6px' }}>Rate</th>
+                    <th style={{ width: '100px', textAlign: 'right', color: '#ffffff', padding: '6px' }}>Total</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -839,12 +840,8 @@ export default function SalesHistory({ database, onUpdateDatabase, onBack, onPri
                     <tr key={idx} style={{ background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
                       <td style={{ textAlign: 'center', padding: '6px' }}>{idx + 1}</td>
                       <td style={{ fontFamily: 'var(--font-mono)', padding: '6px' }}>{item.code}</td>
-                      <td style={{ padding: '6px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontWeight: 'bold' }}>{item.name}</span>
-                          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{item.tamilName}</span>
-                        </div>
-                      </td>
+                      <td style={{ fontWeight: '600', padding: '6px' }}>{item.tamilName || '-'}</td>
+                      <td style={{ padding: '6px' }}>{item.name || '-'}</td>
                       <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', padding: '6px' }}>
                         {item.priceType === 'Quantity' ? parseFloat(item.qty).toFixed(3) : parseInt(item.qty)} {item.unit === 'kg' ? 'கிலோ' : item.unit === 'piece' ? 'NO' : item.unit}
                       </td>
