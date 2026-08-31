@@ -1109,16 +1109,10 @@ Fix details:
   - Applied `.receipt-total-row`, `.receipt-total-label`, and `.receipt-total-amount`.
   - Adjusted calculation block padding from `20px` to `4px` so the total row spans the full
     width of the 72mm thermal paper.
-------------------------------------------------------------------------
-13. REMOVED RULED DOTTED LINES ON THERMAL RECEIPT (CLEAN SPACING):
-------------------------------------------------------------------------
-The 3 dotted handwriting guide lines previously placed below the total amount
-have been removed in favor of clean whitespace margins (`margin: '10px 0 6px 0'`).
-
-Benefits:
-- Eliminates dot clutter on thermal paper rolls.
-- Reduces thermal print paper consumption per slip.
-- Delivers a clean, sharp aesthetic with prominent big total amount.
+  - Retained the 3 ruled dotted handwriting lines below the total for clerk notes.
+- Verified in automated print media browser test (`test_receipt_print_total.cjs`):
+  - Label rendered at 18px / 900 weight / 0.5px stroke.
+  - Amount rendered at 20px / 900 weight / 0.6px stroke (extra bold, clear burn).
 
 ========================================================================
 

@@ -256,7 +256,15 @@ export default function PrintReceiptModal({ invoice, settings = {}, printLanguag
 
         </div>
 
-        <div style={{ borderTop: '1px dashed #000000', margin: '10px 0 6px 0' }}></div>
+        {/* Ruled space below the total, for items added by hand after the bill is
+            printed and for a corrected total written underneath them. */}
+        <div style={{ marginTop: '8px' }}>
+          <div style={{ height: '24px', borderBottom: '1px dotted #000000' }}></div>
+          <div style={{ height: '24px', borderBottom: '1px dotted #000000' }}></div>
+          <div style={{ height: '24px', borderBottom: '1px dotted #000000' }}></div>
+        </div>
+
+        <div style={{ borderTop: '1px dashed #000000', margin: '6px 0' }}></div>
 
         {/* Details footer */}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
