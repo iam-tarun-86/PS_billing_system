@@ -1070,7 +1070,7 @@ Fix details:
   - Arrowing up back to Row 1 guarantees 0px clipping below the sticky green header.
 
 ------------------------------------------------------------------------
-10. SEPARATE TAMIL AND ENGLISH PRODUCT COLUMNS IN BILLING GRID:
+11. SEPARATE TAMIL AND ENGLISH PRODUCT COLUMNS IN BILLING GRID:
 ------------------------------------------------------------------------
 The search overlay menu and Product Manager have always placed Tamil Name first
 in its own column and English Name second in its own column. The main billing table
@@ -1093,16 +1093,25 @@ Fix details:
   5. Sales History Inspection Modal
 
 ------------------------------------------------------------------------
-11. VERIFICATION & LATEST INSTALLER BUILD:
+12. THERMAL RECEIPT TOTAL AMOUNT ENLARGEMENT (BIG & BOLD):
 ------------------------------------------------------------------------
-- Automated Browser Test Suites:
-  - `test_bill_edit_focus.cjs`: Verified 15-item bill PageUp view, Row 1 focus on edit,
-    ArrowDown to Row 16 empty row, and ArrowUp back to Row 1 with 0px header clipping.
-  - `test_columns_browser.cjs`: Verified separate Tamil Name and English Name columns in
-    New Bill Entry, Saved Bill View, and Search Menu.
-- Production Installer:
-  - Compiled fresh NSIS Windows x64 package: `ps-billing-system_latest_setup.exe` (3.02 MB).
-  - Preserves `%APPDATA%\com.perumalstores.psbilling\database.json` and rolling backups.
+On printed 80mm thermal receipts, the blanket 12px print rule previously forced
+the final total line (`மொத்தம் / Total : ₹795.00`) down to body text size, making
+it small and unnoticeable.
+
+Fix details:
+- In `src/index.css` (@media print):
+  - Added `.print-receipt-area .receipt-total-row, .print-receipt-area .receipt-total-row *`:
+    `font-size: 18px !important; font-weight: 900 !important; -webkit-text-stroke: 0.5px #000000 !important;`
+  - Added `.print-receipt-area .receipt-total-amount`:
+    `font-size: 20px !important; font-weight: 900 !important; letter-spacing: 0.02em !important; -webkit-text-stroke: 0.6px #000000 !important;`
+- In `PrintReceiptModal.jsx`:
+  - Applied `.receipt-total-row`, `.receipt-total-label`, and `.receipt-total-amount`.
+  - Adjusted calculation block padding from `20px` to `4px` so the total row spans the full
+    width of the 72mm thermal paper.
+- Verified in automated print media browser test (`test_receipt_print_total.cjs`):
+  - Label rendered at 18px / 900 weight / 0.5px stroke.
+  - Amount rendered at 20px / 900 weight / 0.6px stroke (extra bold, clear burn).
 
 ========================================================================
 

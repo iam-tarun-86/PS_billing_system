@@ -208,7 +208,7 @@ export default function PrintReceiptModal({ invoice, settings = {}, printLanguag
         <div style={{ borderTop: '1px dashed #000000', margin: '6px 0' }}></div>
 
         {/* Calculations block - Single Total Display */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '11px', paddingLeft: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '11px', paddingLeft: '4px' }}>
           {discount > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>{labelDiscount}</span>
@@ -232,16 +232,19 @@ export default function PrintReceiptModal({ invoice, settings = {}, printLanguag
             </div>
           )}
 
-          <div style={{ 
+          <div className="receipt-total-row" style={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
-            fontWeight: 'bold', 
-            fontSize: '13px', 
+            alignItems: 'baseline',
+            fontWeight: '900', 
+            fontSize: '18px', 
             borderTop: (discount > 0 || charges > 0 || roundOff !== 0) ? '1px solid #000000' : 'none', 
-            paddingTop: (discount > 0 || charges > 0 || roundOff !== 0) ? '4px' : '0px' 
+            paddingTop: (discount > 0 || charges > 0 || roundOff !== 0) ? '4px' : '2px',
+            marginTop: '2px',
+            marginBottom: '2px'
           }}>
-            <span>{isTamil ? 'மொத்தம் / Total :' : 'Total Amount :'}</span>
-            <span style={{ fontFamily: 'var(--font-mono)' }}>₹{net.toFixed(2)}</span>
+            <span className="receipt-total-label">{isTamil ? 'மொத்தம் / Total :' : 'Total Amount :'}</span>
+            <span className="receipt-total-amount" style={{ fontFamily: 'var(--font-mono)', fontSize: '20px', fontWeight: '900' }}>₹{net.toFixed(2)}</span>
           </div>
 
           {paid > 0 && (

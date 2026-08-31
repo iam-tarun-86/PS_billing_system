@@ -504,6 +504,18 @@ input::placeholder {
     letter-spacing: 0.06em !important;
     -webkit-text-stroke: 0.4px #000000 !important; /* extra weight so it survives fading */
   }
+  .print-receipt-area .receipt-total-row,
+  .print-receipt-area .receipt-total-row * {
+    font-size: 18px !important;
+    font-weight: 900 !important;
+    -webkit-text-stroke: 0.5px #000000 !important;
+  }
+  .print-receipt-area .receipt-total-amount {
+    font-size: 20px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.02em !important;
+    -webkit-text-stroke: 0.6px #000000 !important;
+  }
   .print-receipt-host {
     /* On screen this host parks the receipt off-canvas in a clipped 1x1 box. Printing
        must undo all of it: .print-receipt-area below is positioned absolutely, which
