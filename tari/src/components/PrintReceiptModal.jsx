@@ -256,7 +256,10 @@ export default function PrintReceiptModal({ invoice, settings = {}, printLanguag
 
         </div>
 
-        <div style={{ borderTop: '1px dashed #000000', margin: '6px 0 5px 0' }}></div>
+        {/* Clean blank writing space for manual pen notes (without printed dotted lines) */}
+        <div style={{ height: '50px' }}></div>
+
+        <div style={{ borderTop: '1px dashed #000000', margin: '4px 0 5px 0' }}></div>
 
         {/* Details footer */}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
