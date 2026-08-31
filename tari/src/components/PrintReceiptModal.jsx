@@ -256,22 +256,21 @@ export default function PrintReceiptModal({ invoice, settings = {}, printLanguag
 
         </div>
 
-        {/* Ruled space below the total, for items added by hand after the bill is
-            printed and for a corrected total written underneath them. */}
-        <div style={{ marginTop: '8px' }}>
-          <div style={{ height: '24px', borderBottom: '1px dotted #000000' }}></div>
-          <div style={{ height: '24px', borderBottom: '1px dotted #000000' }}></div>
-          <div style={{ height: '24px', borderBottom: '1px dotted #000000' }}></div>
+        {/* Ruled space below the total - compact 16px lines */}
+        <div style={{ marginTop: '4px' }}>
+          <div style={{ height: '16px', borderBottom: '1px dotted #000000' }}></div>
+          <div style={{ height: '16px', borderBottom: '1px dotted #000000' }}></div>
+          <div style={{ height: '16px', borderBottom: '1px dotted #000000' }}></div>
         </div>
 
-        <div style={{ borderTop: '1px dashed #000000', margin: '6px 0' }}></div>
+        <div style={{ borderTop: '1px dashed #000000', margin: '5px 0' }}></div>
 
         {/* Details footer */}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
           <span>ITEMS: {items.length}</span>
         </div>
 
-        <div style={{ textAlign: 'center', fontSize: '10px', fontWeight: 'bold', margin: '6px 0 4px 0' }}>
+        <div style={{ textAlign: 'center', fontSize: '10px', fontWeight: 'bold', margin: '4px 0 3px 0' }}>
           நன்றி! மீண்டும் வருக! / THANK YOU! VISIT AGAIN!
         </div>
 
