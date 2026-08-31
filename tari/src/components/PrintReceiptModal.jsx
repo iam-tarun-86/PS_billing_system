@@ -256,14 +256,7 @@ export default function PrintReceiptModal({ invoice, settings = {}, printLanguag
 
         </div>
 
-        {/* Ruled space below the total - compact 16px lines */}
-        <div style={{ marginTop: '4px' }}>
-          <div style={{ height: '16px', borderBottom: '1px dotted #000000' }}></div>
-          <div style={{ height: '16px', borderBottom: '1px dotted #000000' }}></div>
-          <div style={{ height: '16px', borderBottom: '1px dotted #000000' }}></div>
-        </div>
-
-        <div style={{ borderTop: '1px dashed #000000', margin: '5px 0' }}></div>
+        <div style={{ borderTop: '1px dashed #000000', margin: '6px 0 5px 0' }}></div>
 
         {/* Details footer */}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
