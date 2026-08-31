@@ -1051,4 +1051,58 @@ saving or bill numbering, and every one of those was re-verified afterwards.
 
    Use `node --check <file>` to parse without executing.
 
+------------------------------------------------------------------------
+9. PREVIOUS BILL FOCUS & TOP ROW SCROLL CLEARANCE FIX:
+------------------------------------------------------------------------
+When viewing or clicking "Edit" on a saved bill (e.g. 15-item bill), focus previously
+jumped to the newly appended empty row at the bottom (Row 16 / index 15), scrolling
+the table down and hiding Rows 1, 2, 3 off-screen.
+
+Fix details:
+- In `BillingDashboard.jsx`:
+  - `loadTransactionToView`: Explicitly sets `setActiveRowIndex(0)`, `setActiveColumn('code')`,
+    and resets `billingTableContainerRef.current.scrollTop = 0`.
+  - `handleStartEditSavedBill`: Changed focus target from `firstEmptyIndex` to `0` (Row 1, code column),
+    resetting `scrollTop = 0` so top items remain immediately visible.
+  - Table traversal: Added `activeBillingRowRef` with dynamic `--search-header-height`
+    measurement and added `.billing-table tbody tr` to `src/index.css` under
+    `scroll-margin-top: calc(var(--search-header-height, 48px) + 6px);`.
+  - Arrowing up back to Row 1 guarantees 0px clipping below the sticky green header.
+
+------------------------------------------------------------------------
+10. SEPARATE TAMIL AND ENGLISH PRODUCT COLUMNS IN BILLING GRID:
+------------------------------------------------------------------------
+The search overlay menu and Product Manager have always placed Tamil Name first
+in its own column and English Name second in its own column. The main billing table
+previously combined them into a single column with English on top and small Tamil below.
+
+Fix details:
+- In `BillingDashboard.jsx` (Main Billing Grid for both New Bills and Saved Bills):
+  - Split the combined column into two distinct columns:
+    Col 3: `தமிழ் பெயர் / Tamil Name` (Bold font, Tamil-first)
+    Col 4: `பொருள் / Product Name (Eng)`
+  - Rebalanced column widths: S.No (50px), Code (100px), Tamil Name (flex), English Name (flex),
+    Unit (80px), Qty (100px), M.R.P (100px), Rate (110px), Total (130px), Delete (40px).
+- In `SalesHistory.jsx`:
+  - Aligned invoice inspection modal table to also separate Tamil and English columns.
+- Unified 1:1 column consistency across:
+  1. Entering New Bill
+  2. Viewing Saved Bill (`PageUp` / `PageDown`)
+  3. Product Search Menu (`Enter` on empty code)
+  4. Product Manager Master Shelf
+  5. Sales History Inspection Modal
+
+------------------------------------------------------------------------
+11. VERIFICATION & LATEST INSTALLER BUILD:
+------------------------------------------------------------------------
+- Automated Browser Test Suites:
+  - `test_bill_edit_focus.cjs`: Verified 15-item bill PageUp view, Row 1 focus on edit,
+    ArrowDown to Row 16 empty row, and ArrowUp back to Row 1 with 0px header clipping.
+  - `test_columns_browser.cjs`: Verified separate Tamil Name and English Name columns in
+    New Bill Entry, Saved Bill View, and Search Menu.
+- Production Installer:
+  - Compiled fresh NSIS Windows x64 package: `ps-billing-system_latest_setup.exe` (3.02 MB).
+  - Preserves `%APPDATA%\com.perumalstores.psbilling\database.json` and rolling backups.
+
 ========================================================================
+
