@@ -148,6 +148,72 @@ describe('existing keyboard and billing behavior', () => {
     expect(cells()[2].value).toBe('490.00');
     expect(writeDatabase).not.toHaveBeenCalled();
   });
+
+  it('restores a parked draft with F9 and cancels saved-bill editing with Escape', async () => {
+    await openApp();
+    enterJeera();
+    press('PageUp');
+    press('F9');
+    expect(cells()[1].value).toBe('0.050');
+    press('PageUp');
+    // Read-only bottom buttons start on Edit; Enter must work without the mouse.
+    press('Enter');
+    await waitFor(() => expect(document.activeElement).toBe(cells()[0]));
+    expect(cells()[0].selectionEnd).toBe(3);
+    expect(cells()[0].readOnly).toBe(false);
+    window.confirm.mockReturnValueOnce(false);
+    press('Escape');
+    expect(cells()[0].value).toBe('M47');
+    press('Escape');
+    expect(cells()[0].value).toBe('');
+    expect(writeDatabase).not.toHaveBeenCalled();
+  });
+
+  it('navigates saved-bill print buttons using arrows and Enter without a write', async () => {
+    await openApp();
+    press('PageUp');
+    press('ArrowLeft');
+    press('ArrowLeft');
+    press('Enter');
+    expect(screen.getByTestId('receipt').dataset.language).toBe('tamil');
+    expect(writeDatabase).not.toHaveBeenCalled();
+  });
+
+  it('retains the duplicate-item choice and Alt+D row removal', async () => {
+    await openApp();
+    enterJeera();
+    press('Enter', cells()[2]);
+    change(cells(1)[0], 'M47');
+    press('Enter', cells(1)[0]);
+    // The duplicate dialog defaults to editing the existing quantity.
+    press('Enter');
+    await waitFor(() => expect(document.activeElement).toBe(cells()[1]));
+    expect(cells()[1].value).toBe('0.050');
+    expect(cells(1)[0].value).toBe('');
+    press('d', cells()[1], { altKey: true });
+    expect(cells()[0].value).toBe('');
+    expect(writeDatabase).not.toHaveBeenCalled();
+  });
+});
+
+describe('product editor persistence', () => {
+  it('retains a rejected edit for retry and leaves invoice history unchanged', async () => {
+    const original = fixture();
+    readDatabase.mockResolvedValue(original);
+    await openApp();
+    fireEvent.click(screen.getByRole('button', { name: /Products/ }));
+    const row = screen.getByText('ஹமாம்').closest('tr');
+    fireEvent.click(row);
+    change(screen.getByDisplayValue('ஹமாம்'), 'ஹமாம் சோப்');
+    writeDatabase.mockResolvedValueOnce(false);
+    fireEvent.click(screen.getByRole('button', { name: /சேமி \/ Save/ }));
+    await waitFor(() => expect(window.alert).toHaveBeenCalled());
+    expect(screen.getByDisplayValue('ஹமாம் சோப்')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /சேமி \/ Save/ }));
+    await waitFor(() => expect(screen.queryByDisplayValue('ஹமாம் சோப்')).toBeNull());
+    expect(writeDatabase).toHaveBeenCalledTimes(2);
+    expect(writeDatabase.mock.calls[1][0].transactions).toEqual(original.transactions);
+  });
 });
 
 describe('confirmed persistence', () => {

@@ -1,3 +1,6 @@
+import { createEmptyRow } from '../billing/drafts';
+import { useBillHistory } from '../billing/useBillHistory';
+import { useBillingKeyboard } from '../billing/useBillingKeyboard';
 import { getNextBillNumber as nextBillNumberFor, getTodayDateString, prepareBillSave } from '../billing/transactions';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, Save, Trash2, Moon, Sun, ShoppingCart, User, Key, Database, Archive, Folder, LogOut } from 'lucide-react';
@@ -94,13 +97,6 @@ export default function BillingDashboard({
   // Billing Hold Bins
   const [heldBills, setHeldBills] = useState([]);
 
-  // Viewing past bills
-  const [viewingTxIndex, setViewingTxIndex] = useState(null);
-  const [isEditingSavedBill, setIsEditingSavedBill] = useState(false);
-  const [draftBill, setDraftBill] = useState(null);
-
-  // Saved bill button navigation: 0 = Tamil Print, 1 = English Print, 2 = Edit/Save
-  const [activeBottomBtnIndex, setActiveBottomBtnIndex] = useState(2);
   const bottomBtnRefs = {
     tamilPrint: useRef(null),
     englishPrint: useRef(null),
@@ -133,6 +129,20 @@ export default function BillingDashboard({
   // Blocks a second save while one is in flight (held key, double tap, fast repeat)
   const isSavingRef = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const history = useBillHistory({
+    transactions: database.transactions || [],
+    draft: { billItems, activeRowIndex, activeColumn, customerType, customerName,
+      addressLine1, addressLine2, addressLine3, customerMobile,
+      discount, rent, coolie, advance, rwMode, pricingMode },
+    applyDraft: applyDraftFields,
+    resetDraft: resetDraftFields,
+    refs: { code: codeRefs, qty: qtyRefs, rate: rateRefs, table: billingTableContainerRef }
+  });
+  const { viewingTxIndex, isEditingSavedBill, draftBill, activeBottomBtnIndex,
+    startNewBill: handleClearBill, startEdit: handleStartEditSavedBill,
+    previous: viewPreviousBill, next: viewNextBill, restoreDraft } = history;
+
 
   // Digital clock update
   useEffect(() => {
@@ -170,144 +180,6 @@ export default function BillingDashboard({
     rateRefs.current = rateRefs.current.slice(0, billItems.length);
   }, [billItems]);
 
-  // Auto-focus active bottom button when viewing a saved bill in read-only mode
-  useEffect(() => {
-    if (viewingTxIndex !== null && !isEditingSavedBill) {
-      const btnRef = activeBottomBtnIndex === 0 
-        ? bottomBtnRefs.tamilPrint.current 
-        : activeBottomBtnIndex === 1 
-          ? bottomBtnRefs.englishPrint.current 
-          : bottomBtnRefs.editSave.current;
-      if (btnRef) {
-        btnRef.focus();
-      }
-    }
-  }, [viewingTxIndex, isEditingSavedBill, activeBottomBtnIndex]);
-
-  // Global Keyboard Shortcuts
-  useEffect(() => {
-    const handleGlobalKeyDown = (e) => {
-      if (isSavingRef.current) {
-        e.preventDefault();
-        return;
-      }
-      if (isPrintModalOpen || duplicateState.isOpen) return;
-
-      // A held or auto-repeating settle key must never start a second bill.
-      if (e.repeat && (e.key === 'F10' || e.key === 'F11' || e.key === 'F12')) return;
-
-      // Avoid shortcuts when typing in search overlay query
-      if (showSearchOverlay) {
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          closeSearch();
-        }
-        return;
-      }
-
-      // When viewing a saved bill in read-only mode, capture arrow keys and Enter to navigate and trigger the bottom action buttons
-      if (viewingTxIndex !== null && !isEditingSavedBill) {
-        if (e.key === 'ArrowLeft') {
-          e.preventDefault();
-          setActiveBottomBtnIndex(prev => Math.max(0, prev - 1));
-          return;
-        }
-        if (e.key === 'ArrowRight') {
-          e.preventDefault();
-          setActiveBottomBtnIndex(prev => Math.min(2, prev + 1));
-          return;
-        }
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          if (activeBottomBtnIndex === 0) {
-            onPrintReceipt(database.transactions[viewingTxIndex], 'tamil');
-          } else if (activeBottomBtnIndex === 1) {
-            onPrintReceipt(database.transactions[viewingTxIndex], 'english');
-          } else if (activeBottomBtnIndex === 2) {
-            handleStartEditSavedBill();
-          }
-          return;
-        }
-      }
-
-      // F10: Save Bill (without printing)
-      if (e.key === 'F10') {
-        e.preventDefault();
-        // A saved bill on screen is read-only until Edit is pressed, exactly as F11/F12
-        // already treat it. Without this, PageUp then F10 silently rewrote the bill.
-        if (viewingTxIndex !== null && !isEditingSavedBill) return;
-        handleSettleBill('save');
-      }
-
-      // F11: Settle & Print in Tamil
-      if (e.key === 'F11') {
-        e.preventDefault();
-        if (viewingTxIndex !== null && !isEditingSavedBill) {
-          onPrintReceipt(database.transactions[viewingTxIndex], 'tamil');
-        } else {
-          handleSettleBill('tamil');
-        }
-      }
-
-      // F12: Settle & Print in English
-      if (e.key === 'F12') {
-        e.preventDefault();
-        if (viewingTxIndex !== null && !isEditingSavedBill) {
-          onPrintReceipt(database.transactions[viewingTxIndex], 'english');
-        } else {
-          handleSettleBill('english');
-        }
-      }
-
-      // F9: Clear / restore draft
-      if (e.key === 'F9') {
-        e.preventDefault();
-        if (viewingTxIndex !== null && draftBill) {
-          // In viewing mode with a saved draft — restore it
-          restoreDraft(draftBill);
-        } else {
-          if (confirm('நிச்சயமாக இந்த பில்லை அழிக்க வேண்டுமா? / Clear current bill?')) {
-            setViewingTxIndex(null);
-            setDraftBill(null);
-            handleClearBill();
-          }
-        }
-      }
-
-      // Escape: Exit edit/view mode and start a new fresh bill
-      if (e.key === 'Escape') {
-        if (viewingTxIndex !== null) {
-          e.preventDefault();
-          if (isEditingSavedBill) {
-            if (!confirm('திருத்தங்களை ரத்து செய்துவிட்டு புதிய பில் தொடங்க வேண்டுமா? / Discard edits and start a new bill?')) {
-              return;
-            }
-          }
-          setViewingTxIndex(null);
-          setIsEditingSavedBill(false);
-          setDraftBill(null);
-          handleClearBill();
-        }
-      }
-
-      // PageUp: View previous settled bill
-      if (e.key === 'PageUp') {
-        e.preventDefault();
-        viewPreviousBill();
-      }
-
-      // PageDown: View next settled bill
-      if (e.key === 'PageDown') {
-        e.preventDefault();
-        viewNextBill();
-      }
-      
-    };
-
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [billItems, activeRowIndex, activeColumn, showSearchOverlay, customerName, customerMobile, discount, rent, coolie, advance, viewingTxIndex, draftBill, isPrintModalOpen, activeBottomBtnIndex, isEditingSavedBill, duplicateState.isOpen]);
-
   // Close menus on click outside
   useEffect(() => {
     const handleClickOutside = () => {
@@ -316,36 +188,6 @@ export default function BillingDashboard({
     window.addEventListener('click', handleClickOutside);
     return () => window.removeEventListener('click', handleClickOutside);
   }, []);
-
-  // Focus management based on row/column navigation and modal state
-  // NOTE: billItems is intentionally NOT in this dependency array.
-  // Including it caused .select() to fire on every keystroke (since typing updates billItems),
-  // which selected all text so each new character replaced what was typed before.
-  useEffect(() => {
-    if (isSaving || isPrintModalOpen || duplicateState.isOpen) return;
-
-    if (showSearchOverlay) {
-      if (searchInputRef.current) searchInputRef.current.focus();
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      if (activeRowIndex >= 0) {
-        if (activeColumn === 'code' && codeRefs.current[activeRowIndex]) {
-          codeRefs.current[activeRowIndex].focus();
-          if (codeRefs.current[activeRowIndex].select) codeRefs.current[activeRowIndex].select();
-        } else if (activeColumn === 'qty' && qtyRefs.current[activeRowIndex]) {
-          qtyRefs.current[activeRowIndex].focus();
-          if (qtyRefs.current[activeRowIndex].select) qtyRefs.current[activeRowIndex].select();
-        } else if (activeColumn === 'rate' && rateRefs.current[activeRowIndex]) {
-          rateRefs.current[activeRowIndex].focus();
-          if (rateRefs.current[activeRowIndex].select) rateRefs.current[activeRowIndex].select();
-        }
-      }
-    }, 50);
-
-    return () => clearTimeout(timer);
-  }, [activeRowIndex, activeColumn, showSearchOverlay, isPrintModalOpen, duplicateState.isOpen, isSaving]);
 
   // Scroll active row in main billing grid into view with sticky header clearance
   useEffect(() => {
@@ -371,23 +213,6 @@ export default function BillingDashboard({
       inline: 'nearest'
     });
   }, [activeRowIndex, showSearchOverlay, isEditingSavedBill]);
-
-  function createEmptyRow() {
-    return {
-      code: '',
-      name: '',
-      tamilName: '',
-      qty: '',
-      unit: '',
-      mrp: 0,
-      basePrice: 0,
-      overridePrice: '',
-      totalPrice: 0,
-      priceType: 'Fixed',
-      slabs: []
-    };
-  }
-
 
   // Keyboard listener for duplicate item selection modal
   useEffect(() => {
@@ -859,207 +684,9 @@ export default function BillingDashboard({
     setActiveColumn('code');
   };
 
-  const loadTransactionToView = (tx) => {
-    setIsEditingSavedBill(false);
-    setActiveBottomBtnIndex(2); // focus edit button by default!
-    setActiveRowIndex(0);
-    setActiveColumn('code');
-    if (billingTableContainerRef.current) {
-      billingTableContainerRef.current.scrollTop = 0;
-    }
-    const rows = tx.items.map(item => ({
-      code: item.code || '',
-      name: item.name || '',
-      tamilName: item.tamilName || '',
-      unit: item.unit || 'kg',
-      qty: item.qty || '',
-      mrp: item.mrp || 0,
-      basePrice: item.basePrice || 0,
-      sellingRate: item.sellingRate || item.overridePrice || '0.00',
-      overridePrice: item.overridePrice || '0.00',
-      totalPrice: item.totalPrice || 0,
-      priceType: item.priceType || 'Quantity',
-      slabs: item.slabs || []
-    }));
-    
-    setBillItems(rows);
-    setCustomerSlNo(tx.invoiceNo.toString());
-    setCustomerType('CASH');
-    setCustomerName(tx.customerName || 'CASH');
-    setAddressLine1(tx.customerAddress || '');
-    setAddressLine2('');
-    setAddressLine3('');
-    setCustomerMobile(tx.customerMobile || '');
-    setDiscount(tx.discount ? tx.discount.toString() : '');
-    setRent(tx.rent ? tx.rent.toString() : '');
-    setCoolie(tx.coolie ? tx.coolie.toString() : '');
-    setAdvance(tx.advance ? tx.advance.toString() : '');
-    setRwMode('R');
-    setPricingMode('R');
-  };
-
-  const handleStartEditSavedBill = () => {
-    setIsEditingSavedBill(true);
-    setBillItems(prev => {
-      const updated = [...prev];
-      // If there are no empty rows, add one at the end so they can append new items
-      if (updated.length === 0 || updated[updated.length - 1].code !== '') {
-        updated.push(createEmptyRow());
-      }
-      
-      setActiveRowIndex(0);
-      setActiveColumn('code');
-      if (billingTableContainerRef.current) {
-        billingTableContainerRef.current.scrollTop = 0;
-      }
-      
-      setTimeout(() => {
-        setActiveRowIndex(0);
-        setActiveColumn('code');
-        if (codeRefs.current[0]) {
-          codeRefs.current[0].focus();
-          if (typeof codeRefs.current[0].select === 'function') {
-            codeRefs.current[0].select();
-          }
-        }
-        if (billingTableContainerRef.current) {
-          billingTableContainerRef.current.scrollTop = 0;
-        }
-      }, 50);
-      
-      return updated;
-    });
-  };
-
-  const viewPreviousBill = () => {
-    if (!database.transactions || database.transactions.length === 0) return;
-    
-    let nextIndex;
-    if (viewingTxIndex === null) {
-      // Backup current active screen draft
-      setDraftBill({
-        billItems,
-        activeRowIndex,
-        activeColumn,
-        customerType,
-        customerName,
-        addressLine1,
-        addressLine2,
-        addressLine3,
-        customerMobile,
-        discount,
-        rent,
-        coolie,
-        advance,
-        rwMode,
-        pricingMode
-      });
-      nextIndex = database.transactions.length - 1;
-    } else {
-      if (viewingTxIndex === 0) return; // limit at oldest
-      nextIndex = viewingTxIndex - 1;
-    }
-    
-    setViewingTxIndex(nextIndex);
-    loadTransactionToView(database.transactions[nextIndex]);
-  };
-
-  const viewNextBill = () => {
-    if (viewingTxIndex === null) return;
-    
-    if (viewingTxIndex === database.transactions.length - 1) {
-      // Return to active draft
-      setViewingTxIndex(null);
-      if (draftBill) {
-        setBillItems(draftBill.billItems);
-        setCustomerType(draftBill.customerType);
-        setCustomerName(draftBill.customerName);
-        setAddressLine1(draftBill.addressLine1 || '');
-        setAddressLine2(draftBill.addressLine2 || '');
-        setAddressLine3(draftBill.addressLine3 || '');
-        setCustomerMobile(draftBill.customerMobile);
-        setDiscount(draftBill.discount);
-        setRent(draftBill.rent);
-        setCoolie(draftBill.coolie);
-        setAdvance(draftBill.advance);
-        setRwMode(draftBill.rwMode);
-        setPricingMode(draftBill.pricingMode);
-        const cursor = draftCursor(draftBill);
-        setActiveRowIndex(cursor.row);
-        setActiveColumn(cursor.column);
-        setDraftBill(null);
-        focusBillCell(cursor.row, cursor.column);
-      } else {
-        handleClearBill();
-      }
-    } else {
-      const nextIndex = viewingTxIndex + 1;
-      setViewingTxIndex(nextIndex);
-      loadTransactionToView(database.transactions[nextIndex]);
-    }
-  };
-
-  const handleClearBill = (nextBillNumber = getNextBillNumber()) => {
-    // IMPORTANT: reset history-viewing state so subsequent F10/F11/F12
-    // operate on the new draft, not on the previously viewed saved transaction.
-    setViewingTxIndex(null);
-    setIsEditingSavedBill(false);
-    setDraftBill(null);
-
-    setBillItems([createEmptyRow()]);
-    setCustomerSlNo(nextBillNumber.toString());
-    setCustomerType('CASH');
-    setCustomerName('CASH');
-    setAddressLine1('');
-    setAddressLine2('');
-    setAddressLine3('');
-    setCustomerMobile('');
-    setDiscount('');
-    setRent('');
-    setCoolie('');
-    setAdvance('');
-    setRwMode('R');
-    setPricingMode('R');
-    setActiveRowIndex(0);
-    setActiveColumn('code');
-    setTimeout(() => {
-      if (codeRefs.current[0]) {
-        codeRefs.current[0].focus();
-        if (codeRefs.current[0].select) codeRefs.current[0].select();
-      }
-    }, 50);
-  };
-
-  // Put the cursor back into a specific grid cell. Returning from a past bill
-  // restored every field but left focus on nothing, so the next keystroke went
-  // nowhere and the counter had to reach for the mouse. The 50ms delay matches
-  // handleClearBill: the refs only exist once the restored rows have rendered.
-  const focusBillCell = (rowIndex, column) => {
-    setTimeout(() => {
-      const refs = column === 'qty' ? qtyRefs : column === 'rate' ? rateRefs : codeRefs;
-      const el = refs.current[rowIndex];
-      if (el) {
-        el.focus();
-        if (typeof el.select === 'function') el.select();
-      }
-    }, 50);
-  };
-
-  // Where the cursor was when the draft was parked, clamped in case the row is
-  // no longer there.
-  const draftCursor = (draft) => {
-    const rows = Array.isArray(draft.billItems) ? draft.billItems.length : 0;
-    return {
-      row: Math.min(Math.max(0, draft.activeRowIndex ?? 0), Math.max(0, rows - 1)),
-      column: draft.activeColumn || 'code'
-    };
-  };
-
-  // Helper: restore a saved draft back to the billing screen
-  const restoreDraft = (draft) => {
-    setViewingTxIndex(null);
-    setIsEditingSavedBill(false);
+  function applyDraftFields(draft) {
     setBillItems(draft.billItems);
+    if (draft.customerSlNo !== undefined) setCustomerSlNo(draft.customerSlNo);
     setCustomerType(draft.customerType);
     setCustomerName(draft.customerName);
     setAddressLine1(draft.addressLine1 || '');
@@ -1072,12 +699,19 @@ export default function BillingDashboard({
     setAdvance(draft.advance);
     setRwMode(draft.rwMode);
     setPricingMode(draft.pricingMode);
-    const cursor = draftCursor(draft);
-    setActiveRowIndex(cursor.row);
-    setActiveColumn(cursor.column);
-    setDraftBill(null);
-    focusBillCell(cursor.row, cursor.column);
-  };
+    setActiveRowIndex(draft.activeRowIndex);
+    setActiveColumn(draft.activeColumn);
+  }
+
+  function resetDraftFields(nextBillNumber = getNextBillNumber()) {
+    applyDraftFields({
+      billItems: [createEmptyRow()], customerSlNo: nextBillNumber.toString(),
+      customerType: 'CASH', customerName: 'CASH', customerMobile: '',
+      addressLine1: '', addressLine2: '', addressLine3: '',
+      discount: '', rent: '', coolie: '', advance: '', rwMode: 'R', pricingMode: 'R',
+      activeRowIndex: 0, activeColumn: 'code'
+    });
+  }
 
   // After draft-restore completes, fire the pending save+print action
   useEffect(() => {
@@ -1170,6 +804,23 @@ export default function BillingDashboard({
       }
     }
   };
+
+  useBillingKeyboard({
+    state: { mode: history.mode, row: activeRowIndex, column: activeColumn,
+      bottomButton: activeBottomBtnIndex, hasParkedDraft: !!draftBill,
+      searchOpen: showSearchOverlay, printOpen: isPrintModalOpen,
+      duplicateOpen: duplicateState.isOpen, isSaving },
+    refs: { code: codeRefs, qty: qtyRefs, rate: rateRefs, searchInput: searchInputRef,
+      bottomButtons: bottomBtnRefs, saving: isSavingRef },
+    commands: {
+      settle: handleSettleBill, clear: handleClearBill, closeSearch,
+      edit: handleStartEditSavedBill, previous: viewPreviousBill, next: viewNextBill,
+      moveBottomButton: history.moveBottomButton,
+      restoreParkedDraft: () => restoreDraft(draftBill),
+      printSaved: language => onPrintReceipt(database.transactions[viewingTxIndex], language)
+    }
+  });
+
 
   return (
     <>

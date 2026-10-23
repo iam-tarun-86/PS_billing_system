@@ -699,4 +699,25 @@ The finalized production installer is copied to the workspace root:
 - Product Manager and Sales History still do not await the shared update callback; their completion flows are outside this batch. Do not assume those flows have been refactored.
 - Plan/results: `tari/docs/superpowers/plans/2026-10-23-confirmed-bill-saves.md`.
 
+## Architecture Improvement — Remaining Batches (23 October 2026)
+
+The user approved completing the remaining organization before manual testing. This section supersedes the earlier "deferred" status; old inline BillingDashboard line references in this manual may now be outdated.
+
+### Current module ownership
+- `tari/src/billing/pricing.js`: inclusive slab selection, product-editor slab previews, gross/net totals, charges, advance balance and whole-rupee rounding. The screen consumes totals rather than duplicating the rules.
+- `tari/src/billing/transactions.js`: daily numbering, new/edited invoice snapshots, stock adjustments, delete-by-ID and product-code rename cascades/archive metadata. Functions return a full snapshot; they do not write disk or trigger UI effects.
+- `tari/src/billing/useDatabaseCommit.js`: shared single-flight write confirmation, publish-after-success, failure reporting and pending-write keyboard blocking. App also makes its screen inert while storage is pending.
+- `tari/src/billing/drafts.js`: empty-row shape, copying normalized invoices into editable drafts, and restored cursor bounds.
+- `tari/src/billing/useBillHistory.js`: new/viewing/editing modes, parked drafts, previous/next navigation, edit entry, reset and restoration focus.
+- `tari/src/billing/useBillingKeyboard.js`: global shortcut decisions by mode, saved-bill action-button focus and row/column selection. Draft values must stay out of the input-focus effect's dependencies.
+- BillingDashboard retains screen rendering, local row/search/duplicate-dialog interactions, and wiring between these modules. Its size decreased from 2,184 to 1,673 lines; separation is by responsibility rather than splitting every helper into a file.
+
+### Behavior and safety
+- Product Manager now awaits a confirmed save before closing its editor; a failed edit stays available to retry. Sales History deletion uses the shared invoice/stock snapshot operation and logs completion only on success.
+- Stored historical prices/totals, immutable IDs, code punctuation, rename cascade policy and the existing stock arithmetic are preserved. In particular, stock adjustment still uses the first matching line per product code, as before; aggregating duplicate-code lines is a separate business-rule correction, not silently included in this refactor.
+- Normalized reads (`utils/normalize.js` and `utils/db.js`), Tauri bridge, Rust atomic writes/backups, receipt renderer and print CSS are unchanged.
+- Verification: 45 synthetic-data tests pass (`cd tari; npm test`). Includes pricing, invoice creation/edit/delete, code renames, shared commit failures/concurrency, keyboard navigation, draft restore, duplicate choice and product-editor retry. Lint exits successfully with existing warnings; frontend production build passes.
+- Store JSON and installer hashes remain unchanged. The standalone release app.exe was rebuilt successfully without installer bundling for the user's manual test. Do not deploy/merge/push or replace the store installer until requested.
+- Plan/results: `tari/docs/superpowers/plans/2026-10-23-billing-modules.md`. All work remains on `codex/confirmed-bill-saves`, with separate stage commits.
+
 *End of Master Context Manual. This document is maintained as the single source of truth for AI agents and developers.*
