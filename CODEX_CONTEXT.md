@@ -665,12 +665,25 @@ The finalized production installer is copied to the workspace root:
 - **Executable rebuilt:** Ran `npm run tauri -- build --no-bundle` from `tari/` successfully. Updated `tari/src-tauri/target/release/app.exe` (10,741,248 bytes; timestamp 23 October 2026, 13:40:06 IST) for the user to test on their PC.
 - **Installer status:** NSIS/MSI installers and the root `ps-billing-system_latest_setup.exe` were NOT rebuilt or updated with this fix. Existing installers do not include it. The user explicitly requested that installer updates wait; do not rebuild or replace them unless requested later.
 
-### Backlog / Upcoming Task — Pending Father's PC Database:
-- **Issue:** Legacy Bamini font conversion artifacts in ~250 product names (`tamilName`):
-  - `Ê` $\rightarrow$ `டி` (e.g. M.78, M.80, M.82: `T.T. கட்Ê` should be `T.T. கட்டி`, `மெÊமிக்ஸ்` should be `மெடிமிக்ஸ்`).
-  - `ˆ` $\rightarrow$ `ஜ்` (e.g. `பˆஜிமாவு` $\rightarrow$ `பஜ்ஜிமாவு`).
-  - `¢` $\rightarrow$ `ரி` / `லி` / `பி` (e.g. `சாப்பாட்டு அர்¢சி` $\rightarrow$ `சாப்பாட்டு அரிசி`).
-- **Status:** **DO NOT WORK ON YET.** Awaiting user to bring the live `database.json` from his father's PC (`%APPDATA%\com.perumalstores.psbilling\database.json`) so none of his father's live price edits or past month sales records are lost.
+### Completed Maintenance — 23 October 2026: Legacy Tamil Font Artifact Repair
+- **Audit & Resolution:** Fixed all 243 unmapped legacy Bamini/TSCII font artifacts across 216 products in the live database.
+  - `Ê` $\rightarrow$ `டி` (e.g. M.78, M.80, M.82: `T.T. கட்Ê` $\rightarrow$ `T.T. கட்டி 50gm`, `LG.கட்டி`, `மெடிமிக்ஸ்`).
+  - `Ë` $\rightarrow$ `டீ` (e.g. `கிரீண்டீ100gm`, `டெட்லே டீ`, `டீ டம்ளர்`).
+  - `ˆ` $\rightarrow$ `ஜ்` (e.g. `ராஜ்மா பீன்ஸ்`, `பஜ்ஜிமாவு`).
+  - `¢` $\rightarrow$ Contextual `ி` with pulli removal (e.g. `திப்பிலி`, `அரிசி`, `ஆயில்`, `காப்பி`).
+  - `„¡` $\rightarrow$ `ஷா` (e.g. `பியாமா ஷாம்பு 100ml`).
+  - `„¢` $\rightarrow$ `ஷி` (e.g. `மெஷின்`).
+  - `®` $\rightarrow$ `ஈ` (e.g. `ஈவா ஸ்ப்ரே`, `ஈஸ்ட்`, `ஈசி`).
+  - `‚` $\rightarrow$ `ஸ்ரீ` (e.g. `ஸ்ரீ சக்கரம்`).
+  - `ª` $\rightarrow$ `வு` (e.g. `பியர்ஸ்75g(பிரவுன்)`).
+  - Clarified item: Product 524 `தௌ¢வுநெய்` $\rightarrow$ `தெளிவுநெய்` (Clarified Ghee).
+  - Code preservation: `M.82` (*T.T. கட்டி 15gm*) and `M82` (*பார்லி*) kept completely distinct.
+- **Verification:**
+  - Remaining artifact count: **0**.
+  - All 1,799 products: identical codes, order, prices, slabs, stock.
+  - All 2,570 invoices and settings: 100% untouched.
+  - Corrected database saved at `father_wor_db/database.json` (with backup `database.json.bak` and verification log `tamil_name_corrections_verification.md`).
+
 
 
 ---
