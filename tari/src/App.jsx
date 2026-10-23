@@ -1,3 +1,4 @@
+import { useDatabaseCommit } from './billing/useDatabaseCommit';
 import React, { useState, useEffect } from 'react';
 import { readDatabase, writeDatabase } from './utils/db';
 import LoginScreen from './components/LoginScreen';
@@ -30,16 +31,10 @@ function App() {
     loadData();
   }, []);
 
-  // A save that does not reach disk must never pass silently: the operator has to know
-  // the bill is not stored before the next customer is served.
-  const handleUpdateDatabase = async (newDb) => {
-    try {
-      const saved = await writeDatabase(newDb);
-      if (!saved) throw new Error('Database write did not complete');
-      // Publish stock, invoice and counter changes only once persistence succeeds.
-      setDatabase(newDb);
-      return true;
-    } catch (err) {
+  const { commit: handleUpdateDatabase, isPending } = useDatabaseCommit({
+    write: writeDatabase,
+    onCommitted: setDatabase,
+    onFailure: (err) => {
       console.error('Failed to save database update', err);
       const detail = err?.message || String(err);
       if (isTauri()) {
@@ -57,9 +52,8 @@ function App() {
           'மீண்டும் முயற்சிக்கவும் அல்லது உதவியை அணுகவும். / Try again, or get help before continuing.'
         ].join(String.fromCharCode(10))
       );
-      return false;
     }
-  };
+  });
 
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
@@ -118,7 +112,8 @@ function App() {
   }
 
   return (
-    <div className="app-container">
+    <>
+    <div className="app-container" inert={isPending} aria-busy={isPending}>
       
       {/* Route mapping based on currentPage */}
       {currentPage === 'billing' && (
@@ -169,6 +164,12 @@ function App() {
       )}
 
     </div>
+    {isPending && currentPage !== 'billing' && (
+      <div role="status" style={{ position: 'fixed', bottom: 12, left: '50%', background: '#ffffff', color: '#000000', padding: '10px 18px', border: '2px solid #15803d', zIndex: 2000 }}>
+        சேமிக்கிறது... / Saving...
+      </div>
+    )}
+    </>
   );
 }
 

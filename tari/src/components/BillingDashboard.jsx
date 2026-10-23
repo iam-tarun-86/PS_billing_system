@@ -1,7 +1,7 @@
+import { getNextBillNumber as nextBillNumberFor, getTodayDateString, prepareBillSave } from '../billing/transactions';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, Save, Trash2, Moon, Sun, ShoppingCart, User, Key, Database, Archive, Folder, LogOut } from 'lucide-react';
 import { isTauri, tauriAPI } from '../utils/tauriBridge';
-import { round2 } from '../utils/normalize';
 import { calculateBillTotals, getCalculatedPrice } from '../billing/pricing';
 import { billingUnitLabel, unitLabel } from '../utils/units';
 import { searchProducts } from '../utils/productSearch';
@@ -60,32 +60,7 @@ export default function BillingDashboard({
     };
   };
 
-  // The next number comes from a stored counter, never from how many bills exist today.
-  // Counting rows meant a deleted bill handed its number straight to the next customer,
-  // which is how 1,817 of the 1,850 imported bills ended up sharing a number.
-  const getNextBillNumber = () => {
-    if (!database) return 1;
-    const todayStr = getTodayDateString();
-    const counter = database.settings?.billCounter;
-
-    if (counter && counter.date === todayStr) {
-      return counter.next;
-    }
-
-    // First bill of the day, or a database that predates the counter. Start after the
-    // highest number already printed today so a live number is never reissued.
-    const todayTx = (database.transactions || []).filter(t => t.date === todayStr);
-    if (todayTx.length === 0) return 1;
-    return Math.max(...todayTx.map(t => Number(t.invoiceNo) || 0)) + 1;
-  };
-
-  const getTodayDateString = () => {
-    const d = new Date();
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-  };
+  const getNextBillNumber = () => nextBillNumberFor(database);
 
   // Header clock state
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
@@ -1128,138 +1103,25 @@ export default function BillingDashboard({
     setIsSaving(true);
 
     try {
-      const now = new Date();
-      const dd = String(now.getDate()).padStart(2, '0');
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const yyyy = now.getFullYear();
-      const formattedDate = `${dd}/${mm}/${yyyy}`;
-      const formattedTime = now.toLocaleTimeString('en-US', { hour12: false });
-
-      if (viewingTxIndex !== null) {
-        // EDIT MODE: Update existing transaction in database & adjust stock
-        const originalTx = database.transactions[viewingTxIndex];
-
-        const updatedProducts = database.products.map(p => {
-          let stock = p.currentStock;
-
-          // 1. Revert old stock deduction
-          const oldItem = originalTx.items.find(item => item.code === p.code);
-          if (oldItem) {
-            stock += (parseFloat(oldItem.qty) || 0);
-          }
-
-          // 2. Deduct new stock
-          const newItem = itemsToSave.find(item => item.code === p.code);
-          if (newItem) {
-            stock -= (parseFloat(newItem.qty) || 0);
-          }
-
-          return { ...p, currentStock: stock };
-        });
-
-        const updatedInvoice = {
-          ...originalTx,
-          customerName,
-          customerMobile,
-          customerAddress: `${addressLine1} ${addressLine2} ${addressLine3}`.trim(),
-          items: itemsToSave,
-          grossTotal: round2(totals.grossTotal),
-          discount: round2(discount),
-          rent: round2(rent),
-          coolie: round2(coolie),
-          advance: round2(advance),
-          roundOff: totals.roundOff,
-          netTotal: round2(totals.netTotal)
-        };
-
-        const updatedTransactions = [...database.transactions];
-        updatedTransactions[viewingTxIndex] = updatedInvoice;
-
-        logInfo(`Saving bill edits for Invoice #${updatedInvoice.invoiceNo}. Items: ${updatedInvoice.items.length}, Net Total: ₹${updatedInvoice.netTotal.toFixed(2)}, Customer: ${updatedInvoice.customerName || 'CASH'}`);
-
-        const saved = await onUpdateDatabase({
-          ...database,
-          products: updatedProducts,
-          transactions: updatedTransactions
-        });
-
-        if (saved !== true) return;
-
-        if (action === 'save') {
-          alert('பில் திருத்தம் சேமிக்கப்பட்டது! / Bill edits saved successfully!');
-        } else {
-          onPrintReceipt(updatedInvoice, action);
-        }
-
-        // IMPORTANT: Keep the edited bill on screen (do not clear it)
-        return;
-      }
-
-      // NEW BILL MODE: Save new transaction & deduct stock
-      const nextBillNo = getNextBillNumber();
-      const invoice = {
-        // Immutable identity, separate from the number printed on paper. Delete and edit
-        // match on this; invoiceNo is display only and is not guaranteed unique across days.
-        id: `b_${now.getTime()}_${nextBillNo}`,
-        invoiceNo: nextBillNo,
-        timestamp: now.toISOString(),
-        year: yyyy,
-        month: now.getMonth() + 1,
-        day: now.getDate(),
-        date: formattedDate,
-        time: formattedTime,
-        customerName,
-        customerMobile,
-        customerAddress: `${addressLine1} ${addressLine2} ${addressLine3}`.trim(),
-        items: itemsToSave,
-        grossTotal: round2(totals.grossTotal),
-        discount: round2(discount),
-        rent: round2(rent),
-        coolie: round2(coolie),
-        advance: round2(advance),
-        roundOff: totals.roundOff,
-        netTotal: round2(totals.netTotal),
-        operator: 'PS'
-      };
-
-      const updatedTransactions = [...database.transactions, invoice];
-      const updatedProducts = database.products.map(p => {
-        const soldItem = itemsToSave.find(item => item.code === p.code);
-        if (soldItem) {
-          return {
-            ...p,
-            currentStock: p.currentStock - (parseFloat(soldItem.qty) || 0)
-          };
-        }
-        return p;
+      const change = prepareBillSave({
+        database, billItems,
+        customer: { name: customerName, mobile: customerMobile,
+          address: `${addressLine1} ${addressLine2} ${addressLine3}`.trim() },
+        charges: { discount, rent, coolie, advance },
+        transactionIndex: viewingTxIndex
       });
-
-      logInfo(`Saving new bill: Invoice #${invoice.invoiceNo}. Items: ${invoice.items.length}, Net Total: ₹${invoice.netTotal.toFixed(2)}, Customer: ${invoice.customerName || 'CASH'}`);
-
-      // The counter advances in the same write as the bill, so a number can never be
-      // handed out twice even if the app is closed the instant after saving.
-      const saved = await onUpdateDatabase({
-        ...database,
-        products: updatedProducts,
-        transactions: updatedTransactions,
-        settings: {
-          ...database.settings,
-          billCounter: { date: formattedDate, next: nextBillNo + 1 }
-        }
-      });
-
+      const saved = await onUpdateDatabase(change.database);
       if (saved !== true) return;
-
+      logInfo(`Saved ${change.isEdit ? 'bill edits' : 'new bill'} for Invoice #${change.invoice.invoiceNo}. Items: ${change.invoice.items.length}, Net Total: ₹${change.invoice.netTotal.toFixed(2)}`);
       if (action === 'save') {
-        alert('பில் வெற்றிகரமாக சேமிக்கப்பட்டது! / Bill saved successfully!');
+        alert(change.isEdit
+          ? 'பில் திருத்தம் சேமிக்கப்பட்டது! / Bill edits saved successfully!'
+          : 'பில் வெற்றிகரமாக சேமிக்கப்பட்டது! / Bill saved successfully!');
       } else {
-        onPrintReceipt(invoice, action); // action is 'tamil' or 'english'
+        onPrintReceipt(change.invoice, action);
       }
-
-      // Automatically clear screen and start next new bill
-      // This async handler still closes over the pre-save database. Use the
-      // committed counter rather than resetting the display to its old value.
-      handleClearBill(nextBillNo + 1);
+      // Keep edited bills on screen. New drafts use the just-committed counter.
+      if (!change.isEdit) handleClearBill(change.nextBillNumber);
     } catch (err) {
       // The App callback normally reports failures itself. Keep the draft even if
       // an unexpected rejection escapes it, and never leave the save lock stuck.

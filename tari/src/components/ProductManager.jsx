@@ -1,3 +1,4 @@
+import { prepareProductSave } from '../billing/transactions';
 import { calculateSlabPricePreview } from '../billing/pricing';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Plus, Search, Edit, Trash2, ArrowLeft, Layers, Percent, Box, Save, X, FileSpreadsheet } from 'lucide-react';
@@ -791,7 +792,7 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
   };
 
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingProduct.code || !editingProduct.name) {
       alert('குறியீடு மற்றும் பொருள் பெயர் கட்டாயம்! / Code and Product Name are required!');
       return;
@@ -860,63 +861,12 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
     // originalCode is bookkeeping for the form, not part of the product record.
     const { originalCode: _originalCode, ...productToSave } = sanitizedProduct;
 
-    const updatedProducts = isAddingNew
-      ? [...database.products, productToSave]
-      : database.products.map(p => (p.code === originalCode ? productToSave : p));
-
-    // Bills store the item code, not a reference to the product, so renaming a
-    // code would leave every bill that used it pointing at something that no
-    // longer exists - reprints would lose the unit and price type, and deleting
-    // such a bill would silently fail to put the stock back. Carry the rename
-    // through the saved bills so the two stay in step.
-    const isRename = !isAddingNew && originalCode && originalCode !== newCode;
-    let updatedTransactions = database.transactions;
-    let renamedLines = 0;
-
-    if (isRename) {
-      const matchesOld = (item) =>
-        String((item && item.code) || '').toLowerCase() === String(originalCode).toLowerCase();
-
-      updatedTransactions = (database.transactions || []).map(tx => {
-        if (!Array.isArray(tx.items) || !tx.items.some(matchesOld)) return tx;
-        return {
-          ...tx,
-          items: tx.items.map(item => {
-            if (!matchesOld(item)) return item;
-            renamedLines++;
-            return { ...item, code: newCode };
-          })
-        };
-      });
-
-      logInfo(
-        `Product code renamed ${originalCode} -> ${newCode}. ` +
-        `Updated ${renamedLines} line item(s) across saved bills.`
-      );
+    const change = prepareProductSave({ database, product: productToSave, originalCode, isAddingNew });
+    const saved = await onUpdateDatabase(change.database);
+    if (saved !== true) return;
+    if (change.isRename) {
+      logInfo(`Product code renamed ${originalCode} -> ${newCode}. Updated ${change.renamedLines} line item(s) across saved bills.`);
     }
-
-    // Renames are also recorded so archived bills can be remapped if they are
-    // ever restored. The live bills are rewritten above, but an archive written
-    // before the rename still holds the old code, and nothing else would say
-    // what it became.
-    const settings = isRename
-      ? {
-          ...database.settings,
-          codeRenames: [
-            ...(database.settings?.codeRenames || []),
-            { from: originalCode, to: newCode, at: new Date().toISOString() }
-          ]
-        }
-      : database.settings;
-
-    onUpdateDatabase({
-      ...database,
-      products: updatedProducts,
-      settings,
-      // Only replaced when a rename actually happened, so an ordinary edit does
-      // not rewrite the whole transaction array.
-      ...(isRename ? { transactions: updatedTransactions } : {})
-    });
 
     setEditingProduct(null);
     setIsAddingNew(false);

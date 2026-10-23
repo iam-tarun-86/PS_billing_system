@@ -1,3 +1,4 @@
+import { prepareBillDeletion } from '../billing/transactions';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Search, Calendar, DollarSign, RefreshCw, Printer, FileSpreadsheet, BarChart2, TrendingUp, X } from 'lucide-react';
 import { exportToCSV } from '../utils/csv';
@@ -209,33 +210,15 @@ export default function SalesHistory({ database, onUpdateDatabase, onBack, onPri
   // This used to match on invoiceNo, which is not unique: the 1,850 imported bills share
   // only 138 distinct numbers, so confirming one dialog removed every bill carrying that
   // number - up to 120 at once - while restoring stock for only one of them.
-  const handleDeleteTransaction = (tx) => {
+  const handleDeleteTransaction = async (tx) => {
     const invoiceNo = tx.invoiceNo;
     if (confirm(`நிச்சயமாக இந்த பில்லை நீக்க வேண்டுமா?\nAre you sure you want to delete Bill No ${invoiceNo}?`)) {
       const txToDelete = transactions.find(t => t.id === tx.id);
       if (!txToDelete) return;
 
-      // Restore inventory stocks
-      const updatedProducts = database.products.map(p => {
-        const soldItem = txToDelete.items.find(item => item.code === p.code);
-        if (soldItem) {
-          return {
-            ...p,
-            currentStock: p.currentStock + (parseFloat(soldItem.qty) || 0)
-          };
-        }
-        return p;
-      });
-
-      const updatedTransactions = transactions.filter(t => t.id !== tx.id);
-
-      logInfo(`Deleting bill id ${tx.id} (No #${invoiceNo}, ${txToDelete.date}), netTotal: ₹${(Number(txToDelete.netTotal) || 0).toFixed(2)}. Rows removed: ${transactions.length - updatedTransactions.length}.`);
-
-      onUpdateDatabase({
-        ...database,
-        products: updatedProducts,
-        transactions: updatedTransactions
-      });
+      const change = prepareBillDeletion(database, tx.id);
+      const saved = await onUpdateDatabase(change);
+      if (saved === true) logInfo(`Deleted bill id ${tx.id} (No #${invoiceNo}, ${txToDelete.date}).`);
     }
   };
 
