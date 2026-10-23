@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, Save, Trash2, Moon, Sun, ShoppingCart, User, Key, Database, Archive, Folder, LogOut } from 'lucide-react';
 import { isTauri, tauriAPI } from '../utils/tauriBridge';
 import { round2 } from '../utils/normalize';
+import { calculateBillTotals, getCalculatedPrice } from '../billing/pricing';
 import { billingUnitLabel, unitLabel } from '../utils/units';
 import { searchProducts } from '../utils/productSearch';
 
@@ -412,24 +413,6 @@ export default function BillingDashboard({
     };
   }
 
-  // Calculate matching slab price
-  const getCalculatedPrice = (product, quantity) => {
-    if (product.priceType !== 'Quantity' || !product.slabs || product.slabs.length === 0) {
-      return product.sellingPrice;
-    }
-    
-    // Sort slabs by ascending qty limit
-    const sortedSlabs = [...product.slabs].sort((a, b) => a.qtyLimit - b.qtyLimit);
-    
-    // Find first slab where qty <= limit
-    const matchedSlab = sortedSlabs.find(s => quantity <= s.qtyLimit);
-    
-    if (matchedSlab) {
-      return product.sellingPrice + matchedSlab.offset;
-    }
-    
-    return product.sellingPrice; // Default fallback
-  };
 
   // Keyboard listener for duplicate item selection modal
   useEffect(() => {
@@ -847,47 +830,7 @@ export default function BillingDashboard({
     }
   };
 
-  // Totals calculations
-  const calculateGrossTotal = () => {
-    return billItems.reduce((sum, item) => sum + (parseFloat(item.totalPrice) || 0), 0);
-  };
-
-  const calculateTotalWeight = () => {
-    return billItems.reduce((sum, item) => {
-      if (item.priceType === 'Quantity') {
-        return sum + (parseFloat(item.qty) || 0);
-      }
-      return sum;
-    }, 0);
-  };
-
-  const calculateTotalItemsCount = () => {
-    return billItems.filter(item => item.code !== '').length;
-  };
-
-  // Amount before the shop's rounding.
-  const calculateRawNetTotal = () => {
-    const gross = calculateGrossTotal();
-    const discVal = parseFloat(discount) || 0;
-    const rentVal = parseFloat(rent) || 0;
-    const coolieVal = parseFloat(coolie) || 0;
-
-    return Math.max(0, gross - discVal + rentVal + coolieVal);
-  };
-
-  // The shop bills in whole rupees and always has: all 1,850 imported bills satisfy
-  // netTotal === round(gross - discount + rent + coolie), and 752 of them carry an
-  // explicit roundOff from the old FoxPro system. Matching that keeps paise off the
-  // receipt and off the cash drawer, and stops an edited old bill drifting by 50 paise.
-  const calculateNetTotal = () => Math.round(calculateRawNetTotal());
-
-  const calculateRoundOff = () => round2(calculateNetTotal() - calculateRawNetTotal());
-
-  const calculateCreditBalance = () => {
-    const net = calculateNetTotal();
-    const advVal = parseFloat(advance) || 0;
-    return Math.max(0, net - advVal);
-  };
+  const totals = calculateBillTotals({ items: billItems, discount, rent, coolie, advance });
 
   // HOLD / RESUME BILLS
   const handleHoldBill = () => {
@@ -1220,13 +1163,13 @@ export default function BillingDashboard({
           customerMobile,
           customerAddress: `${addressLine1} ${addressLine2} ${addressLine3}`.trim(),
           items: itemsToSave,
-          grossTotal: round2(calculateGrossTotal()),
+          grossTotal: round2(totals.grossTotal),
           discount: round2(discount),
           rent: round2(rent),
           coolie: round2(coolie),
           advance: round2(advance),
-          roundOff: calculateRoundOff(),
-          netTotal: round2(calculateNetTotal())
+          roundOff: totals.roundOff,
+          netTotal: round2(totals.netTotal)
         };
 
         const updatedTransactions = [...database.transactions];
@@ -1269,13 +1212,13 @@ export default function BillingDashboard({
         customerMobile,
         customerAddress: `${addressLine1} ${addressLine2} ${addressLine3}`.trim(),
         items: itemsToSave,
-        grossTotal: round2(calculateGrossTotal()),
+        grossTotal: round2(totals.grossTotal),
         discount: round2(discount),
         rent: round2(rent),
         coolie: round2(coolie),
         advance: round2(advance),
-        roundOff: calculateRoundOff(),
-        netTotal: round2(calculateNetTotal()),
+        roundOff: totals.roundOff,
+        netTotal: round2(totals.netTotal),
         operator: 'PS'
       };
 
@@ -1854,7 +1797,7 @@ export default function BillingDashboard({
             <div className="summary-box-green" style={{ display: 'flex', alignItems: 'center', borderRadius: '6px', overflow: 'hidden' }}>
               <span className="input-label" style={{ flex: 1, padding: '6px 10px', fontSize: '11px' }}>எண் / Count</span>
               <div style={{ padding: '6px 14px', fontWeight: 'bold', fontFamily: 'var(--font-mono)', minWidth: '70px', textAlign: 'right' }}>
-                {calculateTotalItemsCount()}
+                {totals.itemCount}
               </div>
             </div>
 
@@ -1862,7 +1805,7 @@ export default function BillingDashboard({
             <div className="summary-box-green" style={{ display: 'flex', alignItems: 'center', borderRadius: '6px', overflow: 'hidden' }}>
               <span className="input-label" style={{ flex: 1, padding: '6px 10px', fontSize: '11px' }}>மொத்தம் / Gross</span>
               <div style={{ padding: '6px 14px', fontWeight: 'bold', fontFamily: 'var(--font-mono)', minWidth: '100px', textAlign: 'right' }}>
-                {calculateGrossTotal().toFixed(2)}
+                {totals.grossTotal.toFixed(2)}
               </div>
             </div>
 
@@ -1884,7 +1827,7 @@ export default function BillingDashboard({
               பில் தொகை / BILL TOTAL
             </span>
             <h2 style={{ fontSize: '42px', fontWeight: '900', color: '#1d4ed8', fontFamily: 'var(--font-mono)', margin: 0, lineHeight: 1.1 }}>
-              {calculateNetTotal().toFixed(2)}
+              {totals.netTotal.toFixed(2)}
             </h2>
           </div>
 

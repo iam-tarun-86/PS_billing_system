@@ -1,3 +1,4 @@
+import { calculateSlabPricePreview } from '../billing/pricing';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Plus, Search, Edit, Trash2, ArrowLeft, Layers, Percent, Box, Save, X, FileSpreadsheet } from 'lucide-react';
 import { exportToCSV } from '../utils/csv';
@@ -929,14 +930,6 @@ export default function ProductManager({ database, onUpdateDatabase, onBack, isP
         products: updatedProducts
       });
     }
-  };
-
-  // Helper to calculate live slab price preview
-  const calculateSlabPricePreview = (basePrice, qty, offset) => {
-    const parsedQty = qty === '' ? 0 : parseFloat(qty) || 0;
-    const parsedOffset = offset === '' ? 0 : parseFloat(offset) || 0;
-    const effectiveRate = basePrice + parsedOffset;
-    return (effectiveRate * parsedQty).toFixed(2);
   };
 
   return (
