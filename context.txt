@@ -1114,5 +1114,41 @@ Fix details:
   - Label rendered at 18px / 900 weight / 0.5px stroke.
   - Amount rendered at 20px / 900 weight / 0.6px stroke (extra bold, clear burn).
 
+------------------------------------------------------------------------
+13. REMOVAL OF DOTTED LINES IN FAVOR OF 50PX CLEAN BLANK WRITING SPACE:
+------------------------------------------------------------------------
+Following cashier feedback, printed dotted lines underneath the total amount were
+found to clutter the receipt and waste thermal paper.
+
+Fix details:
+- In `PrintReceiptModal.jsx`:
+  - Removed the 3 ruled dotted lines completely (`<div style={{ height: '16px', borderBottom: '1px dotted #000000' }}>`).
+  - Added a clean, unprinted 50px whitespace buffer (`<div style={{ height: '50px' }}></div>`)
+    directly below the total amount before the dashed separator.
+  - Allows the shopkeeper to write extra items, manual notes, or adjusted totals smoothly
+    with a ballpoint pen without interference from printed dots.
+- In `src/index.css` (@media print):
+  - Tightened `.print-receipt-area` padding to `3mm 3mm 6mm 3mm !important;` to eliminate
+    excess paper feeding and ensure a neat tear-off right after the footer.
+
+------------------------------------------------------------------------
+14. MASTER CODEX & AI CONTEXT MANUAL (CODEX_CONTEXT.md):
+------------------------------------------------------------------------
+Created `CODEX_CONTEXT.md` in root workspace and `tari/` as the single source of truth
+for OpenAI Codex, Claude, Cursor, Antigravity, and developers. It provides:
+1. Executive summary, performance metrics (35MB RAM, <1s startup, 3MB setup).
+2. Complete repository file tree breakdown.
+3. Full TypeScript-equivalent data schemas (Product, LineItem, Transaction, Settings, Slabs).
+4. Rust backend deep dive (`lib.rs`): atomic writes, rolling 7-day backups, permanent monthly backups,
+   corrupt file recovery, 1MB log rotation, silent print spooler.
+5. Tauri IPC bridge (`tauriBridge.js`) and database abstraction (`db.js`) with emergency localStorage copy.
+6. Data normalization engine (`normalize.js`) protecting FoxPro imports from NaN bugs.
+7. Product search engine (`productSearch.js`) with jump mode vs filter mode.
+8. Dynamic weight slab pricing algorithm and decimal unit resolvers (`units.js`).
+9. CSV export with UTF-8 BOM (`\ufeff`) for Microsoft Excel Tamil font rendering.
+10. Complete keyboard shortcuts matrix and 100% mouse-free billing workflow.
+11. Thermal printing specifications (72mm width, anti-dithering, 20px bold total, 50px blank writing space).
+12. Legacy FoxPro SMS3 migration details, byte-level Bamini font decoder tables, and historical bug fix logs.
+
 ========================================================================
 
