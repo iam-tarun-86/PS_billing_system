@@ -352,6 +352,7 @@ export default function BillingDashboard({
       if (activeRowIndex >= 0) {
         if (activeColumn === 'code' && codeRefs.current[activeRowIndex]) {
           codeRefs.current[activeRowIndex].focus();
+          if (codeRefs.current[activeRowIndex].select) codeRefs.current[activeRowIndex].select();
         } else if (activeColumn === 'qty' && qtyRefs.current[activeRowIndex]) {
           qtyRefs.current[activeRowIndex].focus();
           if (qtyRefs.current[activeRowIndex].select) qtyRefs.current[activeRowIndex].select();
@@ -1696,11 +1697,11 @@ export default function BillingDashboard({
                             }}
                             onClick={() => addProductToRow(p, activeRowIndex)}
                           >
-                            <td style={{ fontFamily: 'var(--font-mono)', fontWeight: isHighlighted ? 'bold' : 'normal', color: isHighlighted ? '#ffffff' : undefined }}>{p.code}</td>
-                            <td style={{ fontWeight: '600', color: isHighlighted ? '#ffffff' : undefined }}>{p.tamilName || '-'}</td>
-                            <td style={{ color: isHighlighted ? '#ffffff' : undefined }}>{p.name}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: isHighlighted ? '#ffffff' : '#000000' }}>{p.code}</td>
+                            <td style={{ fontWeight: '700', color: isHighlighted ? '#ffffff' : '#000000' }}>{p.tamilName || '-'}</td>
+                            <td style={{ fontWeight: '700', color: isHighlighted ? '#ffffff' : '#000000' }}>{p.name}</td>
                             <td style={{ textAlign: 'center', color: isHighlighted ? '#ffffff' : undefined }}>{unitLabel(p.unit)}</td>
-                            <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: isHighlighted ? 'bold' : 'normal', color: isHighlighted ? '#ffffff' : undefined }}>₹{p.sellingPrice.toFixed(2)}</td>
+                            <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: '700', color: isHighlighted ? '#ffffff' : '#000000' }}>₹{p.sellingPrice.toFixed(2)}</td>
                           </tr>
                         );
                       })}

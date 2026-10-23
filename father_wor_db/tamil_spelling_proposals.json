@@ -1,0 +1,2778 @@
+{
+  "status": "REVIEW_ONLY_NOT_APPLIED",
+  "sourceSHA256": "11d65ef586d0f10025c53c1a2502dc136f4daa6e467c3ca49c71feaf469d9978",
+  "products": 1799,
+  "invoices": 2570,
+  "candidates": [
+    {
+      "index": 6,
+      "code": "M07",
+      "english": "MOONG",
+      "before": "ப.பயிர்",
+      "proposed": "ப.பயறு",
+      "reasons": [
+        "Spelling; preserve abbreviated product type"
+      ],
+      "notes": [],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 9,
+      "code": "M10",
+      "english": "THADAPAYIRU",
+      "before": "த. பயிர்",
+      "proposed": "த. பயறு",
+      "reasons": [
+        "Spelling; preserve abbreviated product type"
+      ],
+      "notes": [],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 30,
+      "code": "M32",
+      "english": "AVAL",
+      "before": "அவுல்",
+      "proposed": "அவல்",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 45,
+      "code": "R03",
+      "english": "ROAW  RICE",
+      "before": "பச்சஅரிசி",
+      "proposed": "பச்சரிசி",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 92,
+      "code": "R10",
+      "english": "RICE NO.3",
+      "before": "சாப்பட்டு அரிசிNO.3",
+      "proposed": "சாப்பாட்டு அரிசிNO.3",
+      "reasons": [
+        "Missing vowel"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 99,
+      "code": "M87",
+      "english": "G.MOONG(NADU)",
+      "before": "ப.பயிர்(நாடு)",
+      "proposed": "ப.பயறு(நாடு)",
+      "reasons": [
+        "Spelling; preserve abbreviated product type"
+      ],
+      "notes": [],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 107,
+      "code": "R23",
+      "english": "MAHARAJA 25KG",
+      "before": "மஸாராஜா 25கி",
+      "proposed": "மஹாராஜா 25கி",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 168,
+      "code": "W36",
+      "english": "VANISH(JAR)",
+      "before": "வேனிக்ஷஜார்",
+      "proposed": "வேனிஷ்ஜார்",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 232,
+      "code": "B01",
+      "english": "HAMAM 100G",
+      "before": "ஸமாம் 100gm",
+      "proposed": "ஹமாம் 100gm",
+      "reasons": [
+        "Wrong brand letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 233,
+      "code": "B02",
+      "english": "HAMAM 150GM",
+      "before": "ஸமாம் 150gm",
+      "proposed": "ஹமாம் 150gm",
+      "reasons": [
+        "Wrong brand letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 243,
+      "code": "B12",
+      "english": "HAMAM MINI",
+      "before": "ஸமாம் (மினி)",
+      "proposed": "ஹமாம் (மினி)",
+      "reasons": [
+        "Wrong brand letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 262,
+      "code": "K17",
+      "english": "KOLAKADDI MAVU",
+      "before": "கொலக்கட்டைமாவு",
+      "proposed": "கொழுக்கட்டைமாவு",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 346,
+      "code": "B39",
+      "english": "HIMALAYA 75GM",
+      "before": "ஸிமாலயா 75g",
+      "proposed": "ஹிமாலயா 75g",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 352,
+      "code": "B45",
+      "english": "AYUSH SOAP 75G",
+      "before": "ஆயுஸ்சோப் 75g",
+      "proposed": "ஆயுஷ்சோப் 75g",
+      "reasons": [
+        "Wrong SHA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 453,
+      "code": "T39",
+      "english": "TAJMAHAL 100G",
+      "before": "தாஜ்மஸால் 100g",
+      "proposed": "தாஜ்மஹால் 100g",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 454,
+      "code": "T40",
+      "english": "TAJMAHAL 250G",
+      "before": "தாஜ்மஸால் 250g",
+      "proposed": "தாஜ்மஹால் 250g",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 461,
+      "code": "T47",
+      "english": "ASSAM 100G",
+      "before": "அஸ்ஷாம் 100g",
+      "proposed": "அசாம் 100g",
+      "reasons": [
+        "ASSAM transliteration"
+      ],
+      "notes": [],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 462,
+      "code": "T48",
+      "english": "ASSAM 250G",
+      "before": "அஸ்ஷாம் 250g",
+      "proposed": "அசாம் 250g",
+      "reasons": [
+        "ASSAM transliteration"
+      ],
+      "notes": [],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 511,
+      "code": "316",
+      "english": "AYUSH PASTE",
+      "before": "ஆயூஸ்பேஸ்ட்",
+      "proposed": "ஆயுஷ்பேஸ்ட்",
+      "reasons": [
+        "Wrong SHA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 517,
+      "code": "322",
+      "english": "COLGATE HERBAL 100G",
+      "before": "கோல்கேட்ஸெர்பல் 100g",
+      "proposed": "கோல்கேட்ஹெர்பல் 100g",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 518,
+      "code": "323",
+      "english": "COLGATE HERBAL 200G",
+      "before": "கோல்கேட்ஸெர்பல் 200g",
+      "proposed": "கோல்கேட்ஹெர்பல் 200g",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 526,
+      "code": "331",
+      "english": "COL.BURES",
+      "before": "கோல்.பிரஸ்",
+      "proposed": "கோல்.பிரஷ்",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 527,
+      "code": "332",
+      "english": "COLGATE BURES",
+      "before": "கோல்கேட் பிரஸ்",
+      "proposed": "கோல்கேட் பிரஷ்",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 534,
+      "code": "364",
+      "english": "HIMALAYA 100G",
+      "before": "ஸிமாலயாபேஸ்ட் 100g",
+      "proposed": "ஹிமாலயாபேஸ்ட் 100g",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 535,
+      "code": "340",
+      "english": "DOBUR HERBALPASTE 50G",
+      "before": "டாபர்ஸெர்பல்பேஸ்ட் 50g",
+      "proposed": "டாபர்ஹெர்பல்பேஸ்ட் 50g",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 549,
+      "code": "354",
+      "english": "BRUSH",
+      "before": "பிரக்ஷ",
+      "proposed": "பிரஷ்",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 573,
+      "code": "421",
+      "english": "POWERSAMPRANI",
+      "before": "பொடிசாம்ரானி",
+      "proposed": "பொடிசாம்பிராணி",
+      "reasons": [
+        "Missing consonant"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 620,
+      "code": "468",
+      "english": "HOMELITE",
+      "before": "ஸோம்லைட்",
+      "proposed": "ஹோம்லைட்",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 622,
+      "code": "502",
+      "english": "GHEE UTHYAKR. 100G",
+      "before": "உதயகிருக்ஷணா100g",
+      "proposed": "உதயகிருஷ்ணா100g",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 623,
+      "code": "503",
+      "english": "UDHAYAKRIS. 200G",
+      "before": "உதயகிருக்ஷணா200g",
+      "proposed": "உதயகிருஷ்ணா200g",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 624,
+      "code": "504",
+      "english": "UTHAYAKRIS.500G",
+      "before": "உதயகிருக்ஷணா500g",
+      "proposed": "உதயகிருஷ்ணா500g",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 645,
+      "code": "601",
+      "english": "HORLICKS.500(R)",
+      "before": "ஸார்லிக்ஸ் 500(R)",
+      "proposed": "ஹார்லிக்ஸ் 500(R)",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 646,
+      "code": "602",
+      "english": "HORLICKS.500(BOT)",
+      "before": "ஸார்லிக்ஸ் 500g(BOT)",
+      "proposed": "ஹார்லிக்ஸ் 500g(BOT)",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 647,
+      "code": "603",
+      "english": "HORLICKS1KG(R)",
+      "before": "ஸார்லிக்ஸ் 1KG (R)",
+      "proposed": "ஹார்லிக்ஸ் 1KG (R)",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 648,
+      "code": "604",
+      "english": "HOR.CHO.500(R)",
+      "before": "ஸார்.சாக்.500(R)",
+      "proposed": "ஹார்.சாக்.500(R)",
+      "reasons": [
+        "Wrong HA letter; retain abbreviation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 649,
+      "code": "605",
+      "english": "HOR.200GM(PAKET)",
+      "before": "ஸார்.200gm(பாக்கட்)",
+      "proposed": "ஹார்.200gm(பாக்கட்)",
+      "reasons": [
+        "Wrong HA letter; retain abbreviation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 650,
+      "code": "606",
+      "english": "HORLICKS1KG(BOT)",
+      "before": "ஸார்1 KG(BOT)",
+      "proposed": "ஹார்1 KG(BOT)",
+      "reasons": [
+        "Wrong HA letter; retain abbreviation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 651,
+      "code": "607",
+      "english": "HOR.(100GM)PKT",
+      "before": "ஸார்.(100gm)பாக்கட்",
+      "proposed": "ஹார்.(100gm)பாக்கட்",
+      "reasons": [
+        "Wrong HA letter; retain abbreviation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 652,
+      "code": "608",
+      "english": "HOR.JUNIOR.500(R)",
+      "before": "ஸார்.JUNIOR.500 (R)",
+      "proposed": "ஹார்.JUNIOR.500 (R)",
+      "reasons": [
+        "Wrong HA letter; retain abbreviation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 653,
+      "code": "609",
+      "english": "HOR.JUNIOR.500(BOT)",
+      "before": "ஸார்.JUNIOR.500(BOT)",
+      "proposed": "ஹார்.JUNIOR.500(BOT)",
+      "reasons": [
+        "Wrong HA letter; retain abbreviation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 688,
+      "code": "644",
+      "english": "MANNA HEALTHMIX 500",
+      "before": "மன்னாஸெல்த்மிக்ஸ் 500g",
+      "proposed": "மன்னாஹெல்த்மிக்ஸ் 500g",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 689,
+      "code": "645",
+      "english": "MANNA HEALTHMIX200G",
+      "before": "மன்னாஸெல்த்மிக்ஸ் 200g",
+      "proposed": "மன்னாஹெல்த்மிக்ஸ் 200g",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 691,
+      "code": "647",
+      "english": "MCS HEALTHMIX 500G",
+      "before": "MCS ஸெல்த்மிக்ஸ் 500g",
+      "proposed": "MCS ஹெல்த்மிக்ஸ் 500g",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 733,
+      "code": "744",
+      "english": "JJ.HAIR OIL 50ML",
+      "before": "பேபிஸேர்ஆயில் 50ml",
+      "proposed": "பேபிஹேர் ஆயில் 50ml",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 734,
+      "code": "745",
+      "english": "JJ.BABY HAIR OIL 100ML",
+      "before": "JJ.பேபிஸேர்ஆயில் 100ml",
+      "proposed": "JJ.பேபிஹேர் ஆயில் 100ml",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 735,
+      "code": "746",
+      "english": "JJ.BABYLOTION 50ML",
+      "before": "JJ.பேபிலோசன் 50ml",
+      "proposed": "JJ.பேபிலோஷன் 50ml",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 736,
+      "code": "747",
+      "english": "JJ.BABYLOTION 100ML",
+      "before": "JJ.பேபிலோசன் 100ml",
+      "proposed": "JJ.பேபிலோஷன் 100ml",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 737,
+      "code": "748",
+      "english": "JJ.BABY SHAMPOO 50ML",
+      "before": "JJ.பேபி சாம்பு 50ml",
+      "proposed": "JJ.பேபி ஷாம்பு 50ml",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 738,
+      "code": "749",
+      "english": "JJ.BABY SHAMPOO 100ML",
+      "before": "JJ.பேபி சாம்பு 100ml",
+      "proposed": "JJ.பேபி ஷாம்பு 100ml",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 739,
+      "code": "750",
+      "english": "JJ.BABY SHAMPOO 200ML",
+      "before": "JJ.பேபி சாம்பு 200ml",
+      "proposed": "JJ.பேபி ஷாம்பு 200ml",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 743,
+      "code": "754",
+      "english": "BABY BRUSH",
+      "before": "பேபிபிரக்ஷ",
+      "proposed": "பேபிபிரஷ்",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 748,
+      "code": "759",
+      "english": "HAGGIES",
+      "before": "ஸக்கீஸ்",
+      "proposed": "ஹக்கீஸ்",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 783,
+      "code": "H36",
+      "english": "BLACK HENNA",
+      "before": "பிலக்ஸெனா",
+      "proposed": "பிளாக் ஹென்னா",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 815,
+      "code": "923",
+      "english": "HARPIC-(S)",
+      "before": "ஸார்பிக்-(S)",
+      "proposed": "ஹார்பிக்-(S)",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 816,
+      "code": "924",
+      "english": "HAPIC-(B)",
+      "before": "ஸார்பிக்-(B)",
+      "proposed": "ஹார்பிக்-(B)",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 828,
+      "code": "958",
+      "english": "HARPIC(F)MATIC",
+      "before": "ஸார்பிக்(F-MATIC)",
+      "proposed": "ஹார்பிக்(F-MATIC)",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 856,
+      "code": "A12",
+      "english": "PICKLES JAR",
+      "before": "ஊருகாய் ஜார்",
+      "proposed": "ஊறுகாய் ஜார்",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 878,
+      "code": "S16",
+      "english": "GARNIOR SHM100ML",
+      "before": "கார்னியர் சாம்பு 100ml",
+      "proposed": "கார்னியர் ஷாம்பு 100ml",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 884,
+      "code": "S22",
+      "english": "DOVE 100ML",
+      "before": "டவ்சாம்பு 100ml",
+      "proposed": "டவ்ஷாம்பு 100ml",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 885,
+      "code": "S23",
+      "english": "DOVE 200ML",
+      "before": "டவ்சாம்பு 200ml",
+      "proposed": "டவ்ஷாம்பு 200ml",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 887,
+      "code": "S25",
+      "english": "HIMALAYA SHAMPOO 120ML",
+      "before": "ஸிமா.ஷாம்பு  120ml",
+      "proposed": "ஹிமா.ஷாம்பு  120ml",
+      "reasons": [
+        "Wrong HA letter; retain abbreviation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 895,
+      "code": "S33",
+      "english": "SHIKAI POWDER",
+      "before": "பாரதியார்சீவக்காய்தூள்",
+      "proposed": "பாரதியார்சீயக்காய்தூள்",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 923,
+      "code": "W72",
+      "english": "HENKO MAHA BAR",
+      "before": "ஸென்.மஸா.பார்",
+      "proposed": "ஹென்கோ மஹா பார்",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 935,
+      "code": "826",
+      "english": "WISPERMAXI XL",
+      "before": "விஸ்பர்மேக்ஷி (XL)",
+      "proposed": "விஸ்பர்மேக்ஸி (XL)",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 936,
+      "code": "827",
+      "english": "WHISPER MAXI(REG)",
+      "before": "விஸ்பர் மேக்ஷி(Reg)",
+      "proposed": "விஸ்பர் மேக்ஸி(Reg)",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 969,
+      "code": "V21",
+      "english": "NIVYA BRUSH",
+      "before": "நிவியா.சே.பிரஸ்",
+      "proposed": "நிவியா.சே.பிரஷ்",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 982,
+      "code": "C04",
+      "english": "EXO SAFAI",
+      "before": "எக்ஷோ சபாய்",
+      "proposed": "எக்ஸோ சபாய்",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 984,
+      "code": "C06",
+      "english": "EXO STEEL",
+      "before": "எக்ஷோ ஸ்டீல்",
+      "proposed": "எக்ஸோ ஸ்டீல்",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 988,
+      "code": "C10",
+      "english": "EXO BAR (S)",
+      "before": "எக்ஷோ பார் (s)",
+      "proposed": "எக்ஸோ பார் (s)",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 989,
+      "code": "C11",
+      "english": "EXO   ROUND BAR",
+      "before": "எக்ஷோ ரவுன் பார்",
+      "proposed": "எக்ஸோ ரவுன் பார்",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1040,
+      "code": "F06",
+      "english": "AYUSH CREEME25GM",
+      "before": "ஆயூஸ்கிரிம்25gm",
+      "proposed": "ஆயுஷ்கிரிம்25gm",
+      "reasons": [
+        "Wrong SHA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1048,
+      "code": "F14",
+      "english": "PONDS LOTION 100ML",
+      "before": "பான்ஸ் லோசன் 100ml",
+      "proposed": "பான்ஸ் லோஷன் 100ml",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1050,
+      "code": "F16",
+      "english": "VASELINE LOTION 100ML",
+      "before": "வாஸ்லின் லோசன் 100ml",
+      "proposed": "வாஸ்லின் லோஷன் 100ml",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1051,
+      "code": "F17",
+      "english": "VASELINE LOTION 40ML",
+      "before": "வாஸ்லின் லோசன் 40ml",
+      "proposed": "வாஸ்லின் லோஷன் 40ml",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1061,
+      "code": "F27",
+      "english": "AYUSH F/W",
+      "before": "ஆயூஸ் F/W",
+      "proposed": "ஆயுஷ் F/W",
+      "reasons": [
+        "Wrong SHA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1074,
+      "code": "U10",
+      "english": "K.BIRIYANI MIX",
+      "before": "K.பிரியானி மிக்ஸ்",
+      "proposed": "K.பிரியாணி மிக்ஸ்",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1125,
+      "code": "Q19",
+      "english": "HIDE&SEEK",
+      "before": "ஸைட்&சீக்",
+      "proposed": "ஹைட்&சீக்",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1137,
+      "code": "Q31",
+      "english": "VARU.PATTANI",
+      "before": "வறு.பட்டானி",
+      "proposed": "வறு.பட்டாணி",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1145,
+      "code": "Y05",
+      "english": "KADALIURUNDAI",
+      "before": "கடலஉருண்டை",
+      "proposed": "கடலை உருண்டை",
+      "reasons": [
+        "Missing vowel"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1146,
+      "code": "Y06",
+      "english": "BLACK ALLU",
+      "before": "எள்ளூஉருண்ட",
+      "proposed": "எள்ளு உருண்டை",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1163,
+      "code": "Z07",
+      "english": "BERIYANI BOX",
+      "before": "பிரியானி பாக்ஸ்",
+      "proposed": "பிரியாணி பாக்ஸ்",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1169,
+      "code": "Z13",
+      "english": "BATH BRUSH",
+      "before": "பாத் பிரஸ்",
+      "proposed": "பாத் பிரஷ்",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1170,
+      "code": "Z14",
+      "english": "WASH BRUSH",
+      "before": "வாக்ஷ பிரஸ்",
+      "proposed": "வாஷ் பிரஷ்",
+      "reasons": [
+        "Wrong consonant cluster",
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1189,
+      "code": "W75",
+      "english": "HENKOMATIC 1KG",
+      "before": "ஸென்கோ மேட்டிக் 1kg",
+      "proposed": "ஹென்கோ மேட்டிக் 1kg",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1192,
+      "code": "649",
+      "english": "HOR(BOT)200G",
+      "before": "ஸார்(BOT) 200g",
+      "proposed": "ஹார்(BOT) 200g",
+      "reasons": [
+        "Wrong HA letter; retain abbreviation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1199,
+      "code": "650",
+      "english": "HORLICKS 1KG(JAR)",
+      "before": "ஸார்லிக்ஸ் 1kg (JAR)",
+      "proposed": "ஹார்லிக்ஸ் 1kg (JAR)",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1203,
+      "code": "F31",
+      "english": "FAIR&HANDSOME 30ML",
+      "before": "ஃபேர்&ஸேன்சம் 30ml",
+      "proposed": "ஃபேர்&ஹேன்சம் 30ml",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1204,
+      "code": "651",
+      "english": "MOTHER.HOR(R)500G",
+      "before": "மதர் ஸார்லிக்ஸ்(R) 500g",
+      "proposed": "மதர் ஹார்லிக்ஸ்(R) 500g",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1212,
+      "code": "654",
+      "english": "JU.HOR(CHOC)500G",
+      "before": "JU.ஸார்(choc)500g",
+      "proposed": "JU.ஹார்(choc)500g",
+      "reasons": [
+        "Wrong HA letter; retain abbreviation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1214,
+      "code": "655",
+      "english": "HOR(LITE)(BOT)500G",
+      "before": "ஸார்.லைட் (BOT) 500g",
+      "proposed": "ஹார்.லைட் (BOT) 500g",
+      "reasons": [
+        "Wrong HA letter; retain abbreviation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1229,
+      "code": "G112",
+      "english": "HORLICKS 1KG(BOT)",
+      "before": "ஸார்லிக்ஸ் 1kg (BOT)",
+      "proposed": "ஹார்லிக்ஸ் 1kg (BOT)",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1230,
+      "code": "G113",
+      "english": "HORLICKS 1KG(R)",
+      "before": "ஸார்லிக்ஸ் 1kg(R)",
+      "proposed": "ஹார்லிக்ஸ் 1kg(R)",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1231,
+      "code": "G114",
+      "english": "HORLICKS 500G(BOT)",
+      "before": "ஸார்லிக்ஸ் 500g(BOT)",
+      "proposed": "ஹார்லிக்ஸ் 500g(BOT)",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1232,
+      "code": "G115",
+      "english": "HORLICKS 500G(R)",
+      "before": "ஸார்லிக்ஸ் 500g(R)",
+      "proposed": "ஹார்லிக்ஸ் 500g(R)",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1233,
+      "code": "G116",
+      "english": "JU.HOR.500G(BOT)",
+      "before": "JU.ஸார்.500g(BOT)",
+      "proposed": "JU.ஹார்.500g(BOT)",
+      "reasons": [
+        "Wrong HA letter; retain abbreviation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1234,
+      "code": "G117",
+      "english": "JU.HOR.500G(R)",
+      "before": "JU.ஸார்.500g(R)",
+      "proposed": "JU.ஹார்.500g(R)",
+      "reasons": [
+        "Wrong HA letter; retain abbreviation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1243,
+      "code": "G126",
+      "english": "MOT.HOR.500GM(R)",
+      "before": "மதர்.ஸார்.500gm(R)",
+      "proposed": "மதர்.ஹார்.500gm(R)",
+      "reasons": [
+        "Wrong HA letter; retain abbreviation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1271,
+      "code": "G309",
+      "english": "TAJ MAHAL",
+      "before": "தாஜ்மஸால்",
+      "proposed": "தாஜ்மஹால்",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1290,
+      "code": "G325",
+      "english": "KRISHNA RICE",
+      "before": "கிருக்ஷணா அரிசி",
+      "proposed": "கிருஷ்ணா அரிசி",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1294,
+      "code": "G329",
+      "english": "MAHARAJA",
+      "before": "மஸாராஜா",
+      "proposed": "மஹாராஜா",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1310,
+      "code": "G214",
+      "english": "KRISHNA",
+      "before": "கிருக்ஷணா",
+      "proposed": "கிருஷ்ணா",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1314,
+      "code": "G218",
+      "english": "MAHAARAJA",
+      "before": "மஸாராஜா",
+      "proposed": "மஹாராஜா",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1318,
+      "code": "G222",
+      "english": "TAJMAHAL",
+      "before": "தாஜ்மஸால்",
+      "proposed": "தாஜ்மஹால்",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1333,
+      "code": "G227",
+      "english": "JAIHIND",
+      "before": "ஜெய்ஸிந்த்",
+      "proposed": "ஜெய்ஹிந்த்",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1349,
+      "code": "658",
+      "english": "JU.HOR.200G",
+      "before": "JU.ஸார்.200g",
+      "proposed": "JU.ஹார்.200g",
+      "reasons": [
+        "Wrong HA letter; retain abbreviation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1356,
+      "code": "659",
+      "english": "RAMANA HELTH MIX",
+      "before": "ரமணா ஸெல்த் மிக்ஸ்",
+      "proposed": "ரமணா ஹெல்த் மிக்ஸ்",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1368,
+      "code": "G152",
+      "english": "HARPIC(B)",
+      "before": "ஸார்பிக்(B)",
+      "proposed": "ஹார்பிக்(B)",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1369,
+      "code": "G153",
+      "english": "HARPIC(S)",
+      "before": "ஸார்பிக்(S)",
+      "proposed": "ஹார்பிக்(S)",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1370,
+      "code": "G154",
+      "english": "HOR.CHO(R)500G",
+      "before": "ஸார்.சாக் (R) 500g",
+      "proposed": "ஹார்.சாக் (R) 500g",
+      "reasons": [
+        "Wrong HA letter; retain abbreviation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1371,
+      "code": "G155",
+      "english": "HOR.VEN(R)500G",
+      "before": "ஸார்.வெண்(R)500g",
+      "proposed": "ஹார்.வெண்(R)500g",
+      "reasons": [
+        "Wrong HA letter; retain abbreviation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1392,
+      "code": "G171",
+      "english": "TAJMAHAL TEA500",
+      "before": "தாஜ்மஸால் டீ 500",
+      "proposed": "தாஜ்மஹால் டீ 500",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1421,
+      "code": "G346",
+      "english": "KRISNA DELUX",
+      "before": "கிருக்ஷணா டீலக்ஸ்",
+      "proposed": "கிருஷ்ணா டீலக்ஸ்",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1433,
+      "code": "G244",
+      "english": "KRISHNADELUX PONNI",
+      "before": "கிருஸ்னாடீலக்ஸ்பொன்னி",
+      "proposed": "கிருஷ்ணா டீலக்ஸ் பொன்னி",
+      "reasons": [
+        "Wrong consonant cluster",
+        "Wrong consonant cluster; add word separation"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1438,
+      "code": "G193",
+      "english": "TAJMAHAL250G",
+      "before": "தாஜ்மஸால் 250g",
+      "proposed": "தாஜ்மஹால் 250g",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1447,
+      "code": "365",
+      "english": "HIMALYA50GM",
+      "before": "ஸிமாலயா50gm",
+      "proposed": "ஹிமாலயா50gm",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1453,
+      "code": "A06",
+      "english": "SAKTHI PICKLE(G),(GR)",
+      "before": "சக்திஊறுகய்(Ge),(Gr)",
+      "proposed": "சக்திஊறுகாய்(Ge),(Gr)",
+      "reasons": [
+        "Missing vowel"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1458,
+      "code": "156",
+      "english": "KASMIR CHIILY100G",
+      "before": "காக்ஷமீர்சில்லி100g",
+      "proposed": "காஷ்மீர்சில்லி100g",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1467,
+      "code": "841",
+      "english": "VEETHAIRRMV",
+      "before": "வீட்ஸேர்Rmv",
+      "proposed": "வீட்ஹேர்Rmv",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1493,
+      "code": "O002",
+      "english": "T.V.S.GROW.OIL",
+      "before": "டி.வி.க்ஷ. க.எண்.1லிட்",
+      "proposed": "டி.வி.எஸ். க.எண்.1லிட்",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1538,
+      "code": "F00",
+      "english": "PONDS W/B",
+      "before": "பான்க்ஷ w/b",
+      "proposed": "பாண்ட்ஸ் w/b",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1539,
+      "code": "H.01",
+      "english": "INDULEKHA",
+      "before": "இண்டுலெக்ஸ",
+      "proposed": "இந்துலேகா",
+      "reasons": [
+        "Brand transliteration; confirm on pack"
+      ],
+      "notes": [],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1542,
+      "code": "R00.",
+      "english": "HOR.VA.RICE",
+      "before": "குதுர வாலி அரிசி",
+      "proposed": "குதிரைவாலி அரிசி",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1544,
+      "code": "601.",
+      "english": "HORLICKS 6RSPKT",
+      "before": "ஸார்லிக்ஸ் 5ரூபாக்",
+      "proposed": "ஹார்லிக்ஸ் 5ரூபாக்",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [
+        "Tamil price label 5ரூ versus English 6RS. Confirm label; no price field changes."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1545,
+      "code": "601..",
+      "english": "HORLICKS 200KG BOT",
+      "before": "ஸார்லிக்ஸ்200kg bot",
+      "proposed": "ஹார்லிக்ஸ்200kg bot",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [
+        "Both labels say 200kg for Horlicks; likely wrong unit. Confirm pack; do not assume 200g."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1549,
+      "code": "Z37",
+      "english": "LETEENBRUSH",
+      "before": "லெட்டீன்பிரஸ்",
+      "proposed": "லெட்டீன்பிரஷ்",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1557,
+      "code": "A05.",
+      "english": "SAKTHIMANGOPICKLE",
+      "before": "சக்திமாங்காஊறூகாய்",
+      "proposed": "சக்திமாங்காஊறுகாய்",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1568,
+      "code": "924.",
+      "english": "HARPIC(BOT)500ML",
+      "before": "ஸார்பிக்(பாத்)500மில்",
+      "proposed": "ஹார்பிக்(பாத்)500மில்",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1569,
+      "code": "924..",
+      "english": "HARPICK(BOT)200ML",
+      "before": "ஸார்பிக்(பாத்)200மிலி",
+      "proposed": "ஹார்பிக்(பாத்)200மிலி",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1570,
+      "code": "M32.",
+      "english": "REDAVUL",
+      "before": "சிகப்புஅவுல்",
+      "proposed": "சிகப்புஅவல்",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1582,
+      "code": "Z45",
+      "english": "GLOWLES",
+      "before": "கைஉரை",
+      "proposed": "கையுறை",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1583,
+      "code": "M32..",
+      "english": "HARD AVAL",
+      "before": "கெட்டிஅவுல்",
+      "proposed": "கெட்டிஅவல்",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1602,
+      "code": "M21.",
+      "english": "GROWNET",
+      "before": "பச்சநிலகடலை",
+      "proposed": "பச்சை நிலக்கடலை",
+      "reasons": [
+        "Missing letters"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1606,
+      "code": "B39.",
+      "english": "HIMALYA BABY",
+      "before": "ஸிமாலயாபேபி",
+      "proposed": "ஹிமாலயாபேபி",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1607,
+      "code": "425.",
+      "english": "CUPSAMBRANI (BIG)",
+      "before": "கப் சாம்ரானி(big)",
+      "proposed": "கப் சாம்பிராணி(big)",
+      "reasons": [
+        "Missing consonant"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1609,
+      "code": "M85.",
+      "english": "LEMANYELOW",
+      "before": "லெமன்மஞ்சல்",
+      "proposed": "லெமன் மஞ்சள்",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1639,
+      "code": "M41..",
+      "english": "KASHMIRCHILLI",
+      "before": "காஸ்மீர்மிளகாய்",
+      "proposed": "காஷ்மீர்மிளகாய்",
+      "reasons": [
+        "Wrong consonant cluster"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1671,
+      "code": "A09.",
+      "english": "RUCHIPICKLE(GINGER)",
+      "before": "ருசிஊருகாய்(இஞ்சி)",
+      "proposed": "ருசிஊறுகாய்(இஞ்சி)",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1672,
+      "code": "Y18.",
+      "english": "GROWNUTCACK[SMALL]",
+      "before": "கடலைமில்ட்டாய்[small]",
+      "proposed": "கடலைமிட்டாய்[small]",
+      "reasons": [
+        "Extra consonants"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1689,
+      "code": "115",
+      "english": "PEPEERPOWER50GM",
+      "before": "மிளகுதூள்50GM",
+      "proposed": "மிளகுத்தூள்50GM",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1690,
+      "code": "M15.",
+      "english": "WHITE PEAS",
+      "before": "வெ.பட்டானி",
+      "proposed": "வெ.பட்டாணி",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1695,
+      "code": "425..",
+      "english": "CUPSAMBRANI(SMALL)",
+      "before": "கப்சாம்ரானி(small)",
+      "proposed": "கப்சாம்பிராணி(small)",
+      "reasons": [
+        "Missing consonant"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1709,
+      "code": "B02.",
+      "english": "HAMAM MINI",
+      "before": "கமாம் மினி",
+      "proposed": "ஹமாம் மினி",
+      "reasons": [
+        "Wrong brand letter"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1716,
+      "code": "S43.",
+      "english": "MEERA SHAMP(2RS)",
+      "before": "மீராசாம்பு(2ரூ)",
+      "proposed": "மீராஷாம்பு(2ரூ)",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1734,
+      "code": "S44.",
+      "english": "DOVESHAM.2RS",
+      "before": "டவ்சாம்பு 2ரூ",
+      "proposed": "டவ்ஷாம்பு 2ரூ",
+      "reasons": [
+        "Preferred transliteration"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1739,
+      "code": "R02..",
+      "english": "P T RICE",
+      "before": "P Tபச்சஅரிசி",
+      "proposed": "P Tபச்சரிசி",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1744,
+      "code": "Z57",
+      "english": "PANEER",
+      "before": "பண்ணீர்",
+      "proposed": "பன்னீர்",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1758,
+      "code": "418.",
+      "english": "MATCHBOX 10RS",
+      "before": "தீப்பட்டீ 10ரூ",
+      "proposed": "தீப்பெட்டி 10ரூ",
+      "reasons": [
+        "Tamil spelling",
+        "MATCHBOX spelling; retain printed price label"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1759,
+      "code": "418..",
+      "english": "HOMEMATCHBOX",
+      "before": "ஸோம்லைட்தீப்பட்டி",
+      "proposed": "ஹோம்லைட் தீப்பெட்டி",
+      "reasons": [
+        "Wrong HA letter",
+        "Tamil spelling",
+        "HOMEMATCHBOX spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1761,
+      "code": "114.",
+      "english": "PEEPERPOWER250GM",
+      "before": "மிளகுதூள் 250GM",
+      "proposed": "மிளகுத்தூள் 250GM",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1776,
+      "code": "Z68",
+      "english": "SILVER 5*7",
+      "before": "சில்வெர் 5*7",
+      "proposed": "சில்வர் 5*7",
+      "reasons": [
+        "Tamil spelling; retain size label"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1780,
+      "code": "B12.",
+      "english": "CHATRICA SET",
+      "before": "சந்ரிகாசெட்",
+      "proposed": "சந்திரிகாசெட்",
+      "reasons": [
+        "Missing consonant"
+      ],
+      "notes": [
+        "English CHATRICA probably Chandrika; confirm brand on pack."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1781,
+      "code": "121.",
+      "english": "BRIYANIMASAL100GM",
+      "before": "பிரியானிமசால்100GM",
+      "proposed": "பிரியாணிமசால்100GM",
+      "reasons": [
+        "Tamil spelling"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    },
+    {
+      "index": 1785,
+      "code": "Z69",
+      "english": "SILVER 4 6",
+      "before": "சில்வ்ர் 4 6",
+      "proposed": "சில்வர் 4 6",
+      "reasons": [
+        "Tamil spelling; retain size label"
+      ],
+      "notes": [],
+      "confidence": "Likely correction"
+    }
+  ],
+  "manualReview": [
+    {
+      "index": 2,
+      "code": "M03",
+      "english": "SUGAR",
+      "before": "அஸ்கா",
+      "proposed": "அஸ்கா",
+      "reasons": [],
+      "notes": [
+        "அஸ்கா is local sugar terminology; do not globally replace ஸ."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 37,
+      "code": "M39",
+      "english": "DHANIYA",
+      "before": "நாடு மல்லி",
+      "proposed": "நாடு மல்லி",
+      "reasons": [],
+      "notes": [
+        "நாடு மல்லி may be local shorthand; confirm whether நாட்டுமல்லி intended."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 40,
+      "code": "M42.",
+      "english": "SUNDAVATAL",
+      "before": "சுண்டவத்தல்",
+      "proposed": "சுண்டவத்தல்",
+      "reasons": [],
+      "notes": [
+        "சுண்டவத்தல் is abbreviated; consider சுண்டைக்காய் வத்தல் only if owner wants expansion."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 57,
+      "code": "M56",
+      "english": "ANNASI POO",
+      "before": "அன்னாச்சிபூ",
+      "proposed": "அன்னாச்சிபூ",
+      "reasons": [],
+      "notes": [
+        "அன்னாச்சிபூ versus star anise; confirm preferred அன்னாசிப்பூ/அன்னாசிப் பூ spelling."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 58,
+      "code": "M57",
+      "english": "ANNASI POO 50G",
+      "before": "அன்னாச்சிபூ50g",
+      "proposed": "அன்னாச்சிபூ50g",
+      "reasons": [],
+      "notes": [
+        "அன்னாச்சிபூ versus star anise; confirm preferred அன்னாசிப்பூ/அன்னாசிப் பூ spelling."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 100,
+      "code": "R15",
+      "english": "K S 5KG",
+      "before": "K S 5KG",
+      "proposed": "K S 5KG",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 126,
+      "code": "O18",
+      "english": "MR GOLD GRO.",
+      "before": "MR GOLD.GRO",
+      "proposed": "MR GOLD.GRO",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 132,
+      "code": "O26",
+      "english": "CASTOR OIL 150ML",
+      "before": "வி.எண்ணெய் 50ML",
+      "proposed": "வி.எண்ணெய் 50ML",
+      "reasons": [],
+      "notes": [
+        "Tamil says 50ML; English says 150ML. Confirm actual pack size."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 149,
+      "code": "O46",
+      "english": "V.V.D 100PKT",
+      "before": "V.V.D 100pkt",
+      "proposed": "V.V.D 100pkt",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 150,
+      "code": "O47",
+      "english": "V.V.D 100BOT",
+      "before": "V.V.D 100bot",
+      "proposed": "V.V.D 100bot",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 151,
+      "code": "O48",
+      "english": "V.V.D 200BOT",
+      "before": "V.V.D 200bot",
+      "proposed": "V.V.D 200bot",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 152,
+      "code": "O49",
+      "english": "V.V.D 500BOT",
+      "before": "V.V.D 500bot",
+      "proposed": "V.V.D 500bot",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 153,
+      "code": "O50",
+      "english": "V.V.D 500PKT",
+      "before": "V.V.D 500pkt",
+      "proposed": "V.V.D 500pkt",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 156,
+      "code": "O53",
+      "english": "V.V.D 50ML BOT",
+      "before": "V.V.D.50ml bot",
+      "proposed": "V.V.D.50ml bot",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 175,
+      "code": "W13",
+      "english": "FAB LIQED1LIR",
+      "before": "FAB LIQED 1LITER",
+      "proposed": "FAB LIQED 1LITER",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 176,
+      "code": "W14",
+      "english": "E  C  WASH",
+      "before": "E  C  WASH",
+      "proposed": "E  C  WASH",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 326,
+      "code": "B19",
+      "english": "VIVEL 100G BLUE",
+      "before": "விவல் 100g Aloevera",
+      "proposed": "விவல் 100g Aloevera",
+      "reasons": [],
+      "notes": [
+        "Tamil says Aloevera; English says BLUE. Confirm variant."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 360,
+      "code": "B53",
+      "english": "M/S 3IN1",
+      "before": "M/S 3in1",
+      "proposed": "M/S 3in1",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 428,
+      "code": "T11",
+      "english": "KANNAVARITEA250GM",
+      "before": "கண்ணவரைடீ250gm",
+      "proposed": "கண்ணவரைடீ250gm",
+      "reasons": [],
+      "notes": [
+        "கண்ணவரை versus KANNAVARITEA; confirm tea brand."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 435,
+      "code": "T20",
+      "english": "A.V.T 100G",
+      "before": "A.V.T.100g",
+      "proposed": "A.V.T.100g",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 436,
+      "code": "T21",
+      "english": "A.V.T 250G",
+      "before": "A.V.T250g",
+      "proposed": "A.V.T250g",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 437,
+      "code": "T23",
+      "english": "A.V.T500G",
+      "before": "A.V.T 500g",
+      "proposed": "A.V.T 500g",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 438,
+      "code": "T24",
+      "english": "A.V.T 1KG",
+      "before": "A.V.T1KG",
+      "proposed": "A.V.T1KG",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 483,
+      "code": "220",
+      "english": "BAMBINO SEMIA 450GM",
+      "before": "பாமினோசேமியா 500g",
+      "proposed": "பாமினோசேமியா 500g",
+      "reasons": [],
+      "notes": [
+        "Tamil says 500g; English says 450GM. Confirm actual pack size."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 485,
+      "code": "222",
+      "english": "ADAPRADHAMAM",
+      "before": "அடப்பிரதம்",
+      "proposed": "அடப்பிரதம்",
+      "reasons": [],
+      "notes": [
+        "அடப்பிரதம் may mean அடைப்பிரதமன்; confirm exact product name."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 496,
+      "code": "301",
+      "english": "COLGATE 50G",
+      "before": "கோல்கேட் 38g",
+      "proposed": "கோல்கேட் 38g",
+      "reasons": [],
+      "notes": [
+        "Tamil says 38g; English says 50G. Confirm actual pack size."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 503,
+      "code": "308",
+      "english": "PEPSODENT 175G",
+      "before": "பெப்சோடென்ட் 200g",
+      "proposed": "பெப்சோடென்ட் 200g",
+      "reasons": [],
+      "notes": [
+        "Tamil says 200g; English says 175G. Confirm actual pack size."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 827,
+      "code": "935",
+      "english": "EASY BANG(B)",
+      "before": "ஈஷி பேங்க்(B)",
+      "proposed": "ஈஷி பேங்க்(B)",
+      "reasons": [],
+      "notes": [
+        "EASY BANG/BANK brand ambiguous; current ஈஷி may be wrong. Confirm pack."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 857,
+      "code": "A13",
+      "english": "SUNDA VATHAL",
+      "before": "சுண்டவத்தல்",
+      "proposed": "சுண்டவத்தல்",
+      "reasons": [],
+      "notes": [
+        "சுண்டவத்தல் is abbreviated; consider சுண்டைக்காய் வத்தல் only if owner wants expansion."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 863,
+      "code": "S01",
+      "english": "SUNSILK 800ML",
+      "before": "சன்சில்க் 80ml",
+      "proposed": "சன்சில்க் 80ml",
+      "reasons": [],
+      "notes": [
+        "Tamil says 80ml; English says 800ML. Confirm actual pack size."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 876,
+      "code": "S14",
+      "english": "H & S 100ML",
+      "before": "H & S 100ml",
+      "proposed": "H & S 100ml",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 877,
+      "code": "S15",
+      "english": "H & S 200ML",
+      "before": "H & S 200ml",
+      "proposed": "H & S 200ml",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 906,
+      "code": "S44",
+      "english": "DOVE SHM (SAC)",
+      "before": "டவ்ஷாம்பு (Sac)(2",
+      "proposed": "டவ்ஷாம்பு (Sac)(2",
+      "reasons": [],
+      "notes": [
+        "Name ends in (Sac)(2 with missing closing parenthesis; confirm full label."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 910,
+      "code": "802",
+      "english": "DETTOL 100ML",
+      "before": "டெட்டால் 125ml",
+      "proposed": "டெட்டால் 125ml",
+      "reasons": [],
+      "notes": [
+        "Tamil says 125ml; English says 100ML. Confirm actual pack size."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 911,
+      "code": "803",
+      "english": "DETTOL 200ML",
+      "before": "டெட்டால் 250ml",
+      "proposed": "டெட்டால் 250ml",
+      "reasons": [],
+      "notes": [
+        "Tamil says 250ml; English says 200ML. Confirm actual pack size."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1003,
+      "code": "P11",
+      "english": "T.S.R.140G",
+      "before": "T.S.R.140g",
+      "proposed": "T.S.R.140g",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1004,
+      "code": "P12",
+      "english": "T.S.R.300G",
+      "before": "T.S.R.300g",
+      "proposed": "T.S.R.300g",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1036,
+      "code": "F02",
+      "english": "F & L 25G",
+      "before": "F & L 25g",
+      "proposed": "F & L 25g",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1037,
+      "code": "F03",
+      "english": "F & L50G",
+      "before": "F & L 50g",
+      "proposed": "F & L 50g",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1038,
+      "code": "F04",
+      "english": "F&L 80G",
+      "before": "F & L 80g",
+      "proposed": "F & L 80g",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1041,
+      "code": "F07",
+      "english": "F&L(MEN) 25G",
+      "before": "F & L (men) 25G",
+      "proposed": "F & L (men) 25G",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1114,
+      "code": "Q08",
+      "english": "50-50(B)",
+      "before": "50-50(B)",
+      "proposed": "50-50(B)",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1115,
+      "code": "Q09",
+      "english": "50-50(S)",
+      "before": "50-50(S)",
+      "proposed": "50-50(S)",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1135,
+      "code": "Q29",
+      "english": "LAYS",
+      "before": "Lays",
+      "proposed": "Lays",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1176,
+      "code": "Z21",
+      "english": "OLD BALANCE",
+      "before": "பேலன்ஸ்",
+      "proposed": "பேலன்ஸ்",
+      "reasons": [],
+      "notes": [
+        "Old balance accounting entry; not an ordinary product. Keep owner terminology."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1195,
+      "code": "O59",
+      "english": "VVD 1LT(PKT)",
+      "before": "VVD 1lt (PKT)",
+      "proposed": "VVD 1lt (PKT)",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1282,
+      "code": "G320",
+      "english": "S.S.K",
+      "before": "S.S.K",
+      "proposed": "S.S.K",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1330,
+      "code": "G340",
+      "english": "R.R.G",
+      "before": "R.R.G",
+      "proposed": "R.R.G",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1410,
+      "code": "G186",
+      "english": "SASTHA 500LT",
+      "before": "சாஸ்தா ந.எண் 500",
+      "proposed": "சாஸ்தா ந.எண் 500",
+      "reasons": [],
+      "notes": [
+        "English says 500LT; Tamil says 500 without unit. Confirm label."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1415,
+      "code": "G189",
+      "english": "MADHURAM 500LT",
+      "before": "மதுரம் 500lt",
+      "proposed": "மதுரம் 500lt",
+      "reasons": [],
+      "notes": [
+        "Both labels say 500lt for oil; confirm unit."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1425,
+      "code": "G350",
+      "english": "B.R.M",
+      "before": "B.R.M",
+      "proposed": "B.R.M",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1428,
+      "code": "G242",
+      "english": "BRM",
+      "before": "B.R.M",
+      "proposed": "B.R.M",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1431,
+      "code": "G352",
+      "english": "SRIVASAKI",
+      "before": "ஸ்ரீவாசகி",
+      "proposed": "ஸ்ரீவாசகி",
+      "reasons": [],
+      "notes": [
+        "SRIVASAKI versus ஸ்ரீவாசகி; possible ஸ்ரீவாசுகி. Confirm rice brand."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1454,
+      "code": "936",
+      "english": "EASY BANK(S)",
+      "before": "ஈஷிபேங்க்(S)",
+      "proposed": "ஈஷிபேங்க்(S)",
+      "reasons": [],
+      "notes": [
+        "EASY BANG/BANK brand ambiguous; current ஈஷி may be wrong. Confirm pack."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1478,
+      "code": "500",
+      "english": "GRP 500ML",
+      "before": "GRP 500ML",
+      "proposed": "GRP 500ML",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1480,
+      "code": "Z24",
+      "english": "M.R.S",
+      "before": "M.R.S",
+      "proposed": "M.R.S",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1482,
+      "code": "Z27",
+      "english": "GOLDFILTER",
+      "before": "GOLDFILTER",
+      "proposed": "GOLDFILTER",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1483,
+      "code": "Z28",
+      "english": "GOLD KING",
+      "before": "GOLD KING",
+      "proposed": "GOLD KING",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1484,
+      "code": "Z29",
+      "english": "SCISS FILTER",
+      "before": "SCISS FILTER",
+      "proposed": "SCISS FILTER",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1543,
+      "code": "614.",
+      "english": "BOOST 6RSPKT",
+      "before": "பூஸ்ட் 5ரூபாக்",
+      "proposed": "பூஸ்ட் 5ரூபாக்",
+      "reasons": [],
+      "notes": [
+        "Tamil price label 5ரூ versus English 6RS. Confirm label; no price field changes."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1544,
+      "code": "601.",
+      "english": "HORLICKS 6RSPKT",
+      "before": "ஸார்லிக்ஸ் 5ரூபாக்",
+      "proposed": "ஹார்லிக்ஸ் 5ரூபாக்",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [
+        "Tamil price label 5ரூ versus English 6RS. Confirm label; no price field changes."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1545,
+      "code": "601..",
+      "english": "HORLICKS 200KG BOT",
+      "before": "ஸார்லிக்ஸ்200kg bot",
+      "proposed": "ஹார்லிக்ஸ்200kg bot",
+      "reasons": [
+        "Wrong HA letter"
+      ],
+      "notes": [
+        "Both labels say 200kg for Horlicks; likely wrong unit. Confirm pack; do not assume 200g."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1590,
+      "code": "M49..",
+      "english": "surul patti",
+      "before": "surul PATTAI",
+      "proposed": "surul PATTAI",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1619,
+      "code": "W19.",
+      "english": "RIN MATIC 1KG",
+      "before": "rin matic 1kg",
+      "proposed": "rin matic 1kg",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1620,
+      "code": "M47.",
+      "english": "KARUJEERAGAM",
+      "before": "karujeeragam",
+      "proposed": "karujeeragam",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1637,
+      "code": "T11.",
+      "english": "LIVINGSTA 50GM",
+      "before": "லிவிங்ஸ்ட50gm",
+      "proposed": "லிவிங்ஸ்ட50gm",
+      "reasons": [],
+      "notes": [
+        "LIVINGSTA versus லிவிங்ஸ்ட; confirm brand spelling."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1652,
+      "code": "K04.",
+      "english": "AASHIRVAAD500GM",
+      "before": "aashirvaad 500gm",
+      "proposed": "aashirvaad 500gm",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1743,
+      "code": "Z56",
+      "english": "PANIYANWAST",
+      "before": "பணியன்வேஸ்ட்",
+      "proposed": "பணியன்வேஸ்ட்",
+      "reasons": [],
+      "notes": [
+        "PANIYANWAST: confirm பனியன்/பனியன் வேஸ்ட் product meaning."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1748,
+      "code": "Z58",
+      "english": "SPOON",
+      "before": "spoon",
+      "proposed": "spoon",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1756,
+      "code": "T24.",
+      "english": "A V T HOT500GM",
+      "before": "A V T HOT500GM",
+      "proposed": "A V T HOT500GM",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1765,
+      "code": "Z60",
+      "english": "FREE GIFT",
+      "before": "FREE GIFT",
+      "proposed": "FREE GIFT",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1780,
+      "code": "B12.",
+      "english": "CHATRICA SET",
+      "before": "சந்ரிகாசெட்",
+      "proposed": "சந்திரிகாசெட்",
+      "reasons": [
+        "Missing consonant"
+      ],
+      "notes": [
+        "English CHATRICA probably Chandrika; confirm brand on pack."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1795,
+      "code": "Y21",
+      "english": "B......",
+      "before": "B.......",
+      "proposed": "B.......",
+      "reasons": [],
+      "notes": [
+        "Placeholder B.......; owner must supply real item name.",
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1796,
+      "code": "Y22",
+      "english": "Y...",
+      "before": "Y...",
+      "proposed": "Y...",
+      "reasons": [],
+      "notes": [
+        "Placeholder Y...; owner must supply real item name.",
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1797,
+      "code": "Y23",
+      "english": "Y..",
+      "before": "Y..",
+      "proposed": "Y..",
+      "reasons": [],
+      "notes": [
+        "Placeholder Y..; owner must supply real item name.",
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    },
+    {
+      "index": 1798,
+      "code": "Z74",
+      "english": "SAAYAM",
+      "before": "sayam",
+      "proposed": "sayam",
+      "reasons": [],
+      "notes": [
+        "English/ASCII-only Tamil name. May be intentional brand abbreviation; owner to confirm whether Tamil transcription is wanted."
+      ],
+      "confidence": "Owner review"
+    }
+  ]
+}
