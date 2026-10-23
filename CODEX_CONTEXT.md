@@ -651,5 +651,27 @@ npm run build
 The finalized production installer is copied to the workspace root:
 `c:\Users\tarun\Downloads\COLLEGE\projects\ps\ps-billing-system_latest_setup.exe` (3.03 MB).
 
+### Latest Handoff — 23 October 2026: Code Field Selection Fix
+
+- **Operator feedback:** After a month of real store usage, returning to an existing item's Code field required repeated Backspace presses before entering a replacement. Qty and Rate already selected their complete values on navigation.
+- **Approved scope:** Make Code select its complete existing value when navigating back to it, for both the current bill and saved-bill editing. Saved bills remain read-only until editing is enabled. Keep all other behavior unchanged.
+- **Implementation:** Added one line in the existing row/column focus-management effect in `tari/src/components/BillingDashboard.jsx`, immediately after the Code input's `.focus()`:
+  ```javascript
+  if (codeRefs.current[activeRowIndex].select) codeRefs.current[activeRowIndex].select();
+  ```
+  This mirrors Qty and Rate selection in the shared billing grid. Typing replaces the selected code; Enter still confirms the product as before. No pricing, quantity, save, printing, or database logic was changed.
+- **Important regression constraint:** Do not add `billItems` to this effect's dependencies. Selection must not repeat on each keystroke, which would overwrite characters while typing a replacement code.
+- **Validation:** `npm run lint` completed with existing warnings; `npm run build:frontend` passed; `git diff --check` passed. Interactive verification by the user is pending; no automated UI test was run.
+- **Executable rebuilt:** Ran `npm run tauri -- build --no-bundle` from `tari/` successfully. Updated `tari/src-tauri/target/release/app.exe` (10,741,248 bytes; timestamp 23 October 2026, 13:40:06 IST) for the user to test on their PC.
+- **Installer status:** NSIS/MSI installers and the root `ps-billing-system_latest_setup.exe` were NOT rebuilt or updated with this fix. Existing installers do not include it. The user explicitly requested that installer updates wait; do not rebuild or replace them unless requested later.
+
+### Backlog / Upcoming Task — Pending Father's PC Database:
+- **Issue:** Legacy Bamini font conversion artifacts in ~250 product names (`tamilName`):
+  - `Ê` $\rightarrow$ `டி` (e.g. M.78, M.80, M.82: `T.T. கட்Ê` should be `T.T. கட்டி`, `மெÊமிக்ஸ்` should be `மெடிமிக்ஸ்`).
+  - `ˆ` $\rightarrow$ `ஜ்` (e.g. `பˆஜிமாவு` $\rightarrow$ `பஜ்ஜிமாவு`).
+  - `¢` $\rightarrow$ `ரி` / `லி` / `பி` (e.g. `சாப்பாட்டு அர்¢சி` $\rightarrow$ `சாப்பாட்டு அரிசி`).
+- **Status:** **DO NOT WORK ON YET.** Awaiting user to bring the live `database.json` from his father's PC (`%APPDATA%\com.perumalstores.psbilling\database.json`) so none of his father's live price edits or past month sales records are lost.
+
+
 ---
 *End of Master Context Manual. This document is maintained as the single source of truth for AI agents and developers.*
