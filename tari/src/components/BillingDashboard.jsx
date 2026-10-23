@@ -156,6 +156,7 @@ export default function BillingDashboard({
   const pendingPrintRef = useRef(null);
   // Blocks a second save while one is in flight (held key, double tap, fast repeat)
   const isSavingRef = useRef(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Digital clock update
   useEffect(() => {
@@ -210,6 +211,10 @@ export default function BillingDashboard({
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
+      if (isSavingRef.current) {
+        e.preventDefault();
+        return;
+      }
       if (isPrintModalOpen || duplicateState.isOpen) return;
 
       // A held or auto-repeating settle key must never start a second bill.
@@ -341,7 +346,7 @@ export default function BillingDashboard({
   // Including it caused .select() to fire on every keystroke (since typing updates billItems),
   // which selected all text so each new character replaced what was typed before.
   useEffect(() => {
-    if (isPrintModalOpen || duplicateState.isOpen) return;
+    if (isSaving || isPrintModalOpen || duplicateState.isOpen) return;
 
     if (showSearchOverlay) {
       if (searchInputRef.current) searchInputRef.current.focus();
@@ -364,7 +369,7 @@ export default function BillingDashboard({
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [activeRowIndex, activeColumn, showSearchOverlay, isPrintModalOpen, duplicateState.isOpen]);
+  }, [activeRowIndex, activeColumn, showSearchOverlay, isPrintModalOpen, duplicateState.isOpen, isSaving]);
 
   // Scroll active row in main billing grid into view with sticky header clearance
   useEffect(() => {
@@ -1076,7 +1081,7 @@ export default function BillingDashboard({
     }
   };
 
-  const handleClearBill = () => {
+  const handleClearBill = (nextBillNumber = getNextBillNumber()) => {
     // IMPORTANT: reset history-viewing state so subsequent F10/F11/F12
     // operate on the new draft, not on the previously viewed saved transaction.
     setViewingTxIndex(null);
@@ -1084,7 +1089,7 @@ export default function BillingDashboard({
     setDraftBill(null);
 
     setBillItems([createEmptyRow()]);
-    setCustomerSlNo(getNextBillNumber().toString());
+    setCustomerSlNo(nextBillNumber.toString());
     setCustomerType('CASH');
     setCustomerName('CASH');
     setAddressLine1('');
@@ -1166,7 +1171,7 @@ export default function BillingDashboard({
     }
   }, [viewingTxIndex, draftBill]);
 
-  const handleSettleBill = (action = 'save') => {
+  const handleSettleBill = async (action = 'save') => {
     // One save at a time. Without this a fast double-press could commit two bills.
     if (isSavingRef.current) return;
 
@@ -1177,39 +1182,89 @@ export default function BillingDashboard({
     }
 
     isSavingRef.current = true;
-    const releaseSaveLock = () => setTimeout(() => { isSavingRef.current = false; }, 500);
+    setIsSaving(true);
 
-    const now = new Date();
-    const dd = String(now.getDate()).padStart(2, '0');
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const yyyy = now.getFullYear();
-    const formattedDate = `${dd}/${mm}/${yyyy}`;
-    const formattedTime = now.toLocaleTimeString('en-US', { hour12: false });
+    try {
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, '0');
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yyyy = now.getFullYear();
+      const formattedDate = `${dd}/${mm}/${yyyy}`;
+      const formattedTime = now.toLocaleTimeString('en-US', { hour12: false });
 
-    if (viewingTxIndex !== null) {
-      // EDIT MODE: Update existing transaction in database & adjust stock
-      const originalTx = database.transactions[viewingTxIndex];
-      
-      const updatedProducts = database.products.map(p => {
-        let stock = p.currentStock;
-        
-        // 1. Revert old stock deduction
-        const oldItem = originalTx.items.find(item => item.code === p.code);
-        if (oldItem) {
-          stock += (parseFloat(oldItem.qty) || 0);
+      if (viewingTxIndex !== null) {
+        // EDIT MODE: Update existing transaction in database & adjust stock
+        const originalTx = database.transactions[viewingTxIndex];
+
+        const updatedProducts = database.products.map(p => {
+          let stock = p.currentStock;
+
+          // 1. Revert old stock deduction
+          const oldItem = originalTx.items.find(item => item.code === p.code);
+          if (oldItem) {
+            stock += (parseFloat(oldItem.qty) || 0);
+          }
+
+          // 2. Deduct new stock
+          const newItem = itemsToSave.find(item => item.code === p.code);
+          if (newItem) {
+            stock -= (parseFloat(newItem.qty) || 0);
+          }
+
+          return { ...p, currentStock: stock };
+        });
+
+        const updatedInvoice = {
+          ...originalTx,
+          customerName,
+          customerMobile,
+          customerAddress: `${addressLine1} ${addressLine2} ${addressLine3}`.trim(),
+          items: itemsToSave,
+          grossTotal: round2(calculateGrossTotal()),
+          discount: round2(discount),
+          rent: round2(rent),
+          coolie: round2(coolie),
+          advance: round2(advance),
+          roundOff: calculateRoundOff(),
+          netTotal: round2(calculateNetTotal())
+        };
+
+        const updatedTransactions = [...database.transactions];
+        updatedTransactions[viewingTxIndex] = updatedInvoice;
+
+        logInfo(`Saving bill edits for Invoice #${updatedInvoice.invoiceNo}. Items: ${updatedInvoice.items.length}, Net Total: ₹${updatedInvoice.netTotal.toFixed(2)}, Customer: ${updatedInvoice.customerName || 'CASH'}`);
+
+        const saved = await onUpdateDatabase({
+          ...database,
+          products: updatedProducts,
+          transactions: updatedTransactions
+        });
+
+        if (saved !== true) return;
+
+        if (action === 'save') {
+          alert('பில் திருத்தம் சேமிக்கப்பட்டது! / Bill edits saved successfully!');
+        } else {
+          onPrintReceipt(updatedInvoice, action);
         }
-        
-        // 2. Deduct new stock
-        const newItem = itemsToSave.find(item => item.code === p.code);
-        if (newItem) {
-          stock -= (parseFloat(newItem.qty) || 0);
-        }
-        
-        return { ...p, currentStock: stock };
-      });
 
-      const updatedInvoice = {
-        ...originalTx,
+        // IMPORTANT: Keep the edited bill on screen (do not clear it)
+        return;
+      }
+
+      // NEW BILL MODE: Save new transaction & deduct stock
+      const nextBillNo = getNextBillNumber();
+      const invoice = {
+        // Immutable identity, separate from the number printed on paper. Delete and edit
+        // match on this; invoiceNo is display only and is not guaranteed unique across days.
+        id: `b_${now.getTime()}_${nextBillNo}`,
+        invoiceNo: nextBillNo,
+        timestamp: now.toISOString(),
+        year: yyyy,
+        month: now.getMonth() + 1,
+        day: now.getDate(),
+        date: formattedDate,
+        time: formattedTime,
         customerName,
         customerMobile,
         customerAddress: `${addressLine1} ${addressLine2} ${addressLine3}`.trim(),
@@ -1220,95 +1275,64 @@ export default function BillingDashboard({
         coolie: round2(coolie),
         advance: round2(advance),
         roundOff: calculateRoundOff(),
-        netTotal: round2(calculateNetTotal())
+        netTotal: round2(calculateNetTotal()),
+        operator: 'PS'
       };
 
-      const updatedTransactions = [...database.transactions];
-      updatedTransactions[viewingTxIndex] = updatedInvoice;
-
-      logInfo(`Saving bill edits for Invoice #${updatedInvoice.invoiceNo}. Items: ${updatedInvoice.items.length}, Net Total: ₹${updatedInvoice.netTotal.toFixed(2)}, Customer: ${updatedInvoice.customerName || 'CASH'}`);
-
-      onUpdateDatabase({
-        ...database,
-        products: updatedProducts,
-        transactions: updatedTransactions
+      const updatedTransactions = [...database.transactions, invoice];
+      const updatedProducts = database.products.map(p => {
+        const soldItem = itemsToSave.find(item => item.code === p.code);
+        if (soldItem) {
+          return {
+            ...p,
+            currentStock: p.currentStock - (parseFloat(soldItem.qty) || 0)
+          };
+        }
+        return p;
       });
 
-      releaseSaveLock();
+      logInfo(`Saving new bill: Invoice #${invoice.invoiceNo}. Items: ${invoice.items.length}, Net Total: ₹${invoice.netTotal.toFixed(2)}, Customer: ${invoice.customerName || 'CASH'}`);
+
+      // The counter advances in the same write as the bill, so a number can never be
+      // handed out twice even if the app is closed the instant after saving.
+      const saved = await onUpdateDatabase({
+        ...database,
+        products: updatedProducts,
+        transactions: updatedTransactions,
+        settings: {
+          ...database.settings,
+          billCounter: { date: formattedDate, next: nextBillNo + 1 }
+        }
+      });
+
+      if (saved !== true) return;
 
       if (action === 'save') {
-        alert('பில் திருத்தம் சேமிக்கப்பட்டது! / Bill edits saved successfully!');
+        alert('பில் வெற்றிகரமாக சேமிக்கப்பட்டது! / Bill saved successfully!');
       } else {
-        onPrintReceipt(updatedInvoice, action);
+        onPrintReceipt(invoice, action); // action is 'tamil' or 'english'
       }
-      
-      // IMPORTANT: Keep the edited bill on screen (do not clear it)
-      return;
+
+      // Automatically clear screen and start next new bill
+      // This async handler still closes over the pre-save database. Use the
+      // committed counter rather than resetting the display to its old value.
+      handleClearBill(nextBillNo + 1);
+    } catch (err) {
+      // The App callback normally reports failures itself. Keep the draft even if
+      // an unexpected rejection escapes it, and never leave the save lock stuck.
+      logError(`Bill save did not complete: ${err?.message || String(err)}`);
+      alert('சேமிப்பு தோல்வி! மீண்டும் முயற்சிக்கவும். / SAVE FAILED - please retry this bill.');
+    } finally {
+      isSavingRef.current = false;
+      setIsSaving(false);
     }
+  };
 
-    // NEW BILL MODE: Save new transaction & deduct stock
-    const nextBillNo = getNextBillNumber();
-    const invoice = {
-      // Immutable identity, separate from the number printed on paper. Delete and edit
-      // match on this; invoiceNo is display only and is not guaranteed unique across days.
-      id: `b_${now.getTime()}_${nextBillNo}`,
-      invoiceNo: nextBillNo,
-      timestamp: now.toISOString(),
-      year: yyyy,
-      month: now.getMonth() + 1,
-      day: now.getDate(),
-      date: formattedDate,
-      time: formattedTime,
-      customerName,
-      customerMobile,
-      customerAddress: `${addressLine1} ${addressLine2} ${addressLine3}`.trim(),
-      items: itemsToSave,
-      grossTotal: round2(calculateGrossTotal()),
-      discount: round2(discount),
-      rent: round2(rent),
-      coolie: round2(coolie),
-      advance: round2(advance),
-      roundOff: calculateRoundOff(),
-      netTotal: round2(calculateNetTotal()),
-      operator: 'PS'
-    };
-
-    const updatedTransactions = [...database.transactions, invoice];
-    const updatedProducts = database.products.map(p => {
-      const soldItem = itemsToSave.find(item => item.code === p.code);
-      if (soldItem) {
-        return {
-          ...p,
-          currentStock: p.currentStock - (parseFloat(soldItem.qty) || 0)
-        };
-      }
-      return p;
-    });
-
-    logInfo(`Saving new bill: Invoice #${invoice.invoiceNo}. Items: ${invoice.items.length}, Net Total: ₹${invoice.netTotal.toFixed(2)}, Customer: ${invoice.customerName || 'CASH'}`);
-
-    // The counter advances in the same write as the bill, so a number can never be
-    // handed out twice even if the app is closed the instant after saving.
-    onUpdateDatabase({
-      ...database,
-      products: updatedProducts,
-      transactions: updatedTransactions,
-      settings: {
-        ...database.settings,
-        billCounter: { date: formattedDate, next: nextBillNo + 1 }
-      }
-    });
-
-    releaseSaveLock();
-
-    if (action === 'save') {
-      alert('பில் வெற்றிகரமாக சேமிக்கப்பட்டது! / Bill saved successfully!');
-    } else {
-      onPrintReceipt(invoice, action); // action is 'tamil' or 'english'
+  const blockWhileSaving = (e) => {
+    if (isSavingRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
     }
-
-    // Automatically clear screen and start next new bill
-    handleClearBill();
   };
 
   const toggleTheme = () => {
@@ -1343,7 +1367,10 @@ export default function BillingDashboard({
   };
 
   return (
-    <div className="billing-dashboard-screen screen-fade" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <>
+    <div className="billing-dashboard-screen screen-fade" inert={isSaving} aria-busy={isSaving}
+      onKeyDownCapture={blockWhileSaving} onClickCapture={blockWhileSaving}
+      style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       
 
 
@@ -2179,5 +2206,11 @@ export default function BillingDashboard({
       )}
 
     </div>
+    {isSaving && (
+      <div role="status" style={{ position: 'fixed', bottom: '12px', left: '50%', transform: 'translateX(-50%)', padding: '10px 18px', background: '#ffffff', color: '#000000', border: '2px solid #15803d', borderRadius: '6px', zIndex: 2000 }}>
+        சேமிக்கிறது... / Saving...
+      </div>
+    )}
+    </>
   );
 }

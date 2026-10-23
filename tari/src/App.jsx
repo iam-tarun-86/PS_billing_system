@@ -33,10 +33,12 @@ function App() {
   // A save that does not reach disk must never pass silently: the operator has to know
   // the bill is not stored before the next customer is served.
   const handleUpdateDatabase = async (newDb) => {
-    setDatabase(newDb);
     try {
       const saved = await writeDatabase(newDb);
       if (!saved) throw new Error('Database write did not complete');
+      // Publish stock, invoice and counter changes only once persistence succeeds.
+      setDatabase(newDb);
+      return true;
     } catch (err) {
       console.error('Failed to save database update', err);
       const detail = err?.message || String(err);
@@ -55,6 +57,7 @@ function App() {
           'மீண்டும் முயற்சிக்கவும் அல்லது உதவியை அணுகவும். / Try again, or get help before continuing.'
         ].join(String.fromCharCode(10))
       );
+      return false;
     }
   };
 

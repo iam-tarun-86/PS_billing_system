@@ -687,4 +687,16 @@ The finalized production installer is copied to the workspace root:
 
 
 ---
+## Architecture Improvement — Batch 1: Confirmed Billing Saves (23 October 2026)
+
+- Branch: `codex/confirmed-bill-saves`. User approved beginning with baseline checks and save confirmation; larger pricing/stock/keyboard reorganization is deferred.
+- `App.handleUpdateDatabase(newDb)` now returns `true` after successful persistence and publishes the new database state only then. On failure it retains the previous database state, shows the existing bilingual alert, and returns `false`.
+- Billing awaits that result for both new and edited bills. Only confirmed saves show success, print or clear the new-bill draft. Failed saves retain the draft/edit for retry without advancing persisted stock, invoices or the counter.
+- The in-flight lock now lasts until completion rather than 500 ms. Billing is inert during the write, global shortcuts and captured clicks/keys are blocked, and an external bilingual Saving status is shown. Focus is restored when editing becomes available again.
+- Async reset explicitly uses the committed next bill number to avoid displaying the old number through a stale closure.
+- Verification: `cd tari; npm test` runs 19 synthetic-data checks, including keyboard selection/Enter, search, slab thresholds/rounding, historical reprint/draft restoration, delayed saves, failure/retry, saved-bill edits, stock and counter behavior. Frontend build passes; existing lint warnings remain.
+- No live JSON, seed data, Rust atomic-write logic, thermal receipt layout, installer or app.exe changed in this batch. Tests use mocked persistence and printing; native Windows/printer verification remains necessary before release.
+- Product Manager and Sales History still do not await the shared update callback; their completion flows are outside this batch. Do not assume those flows have been refactored.
+- Plan/results: `tari/docs/superpowers/plans/2026-10-23-confirmed-bill-saves.md`.
+
 *End of Master Context Manual. This document is maintained as the single source of truth for AI agents and developers.*
