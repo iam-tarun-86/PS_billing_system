@@ -387,6 +387,59 @@ describe('confirmed persistence', () => {
     expect(cells()[1].value).toBe('0.250');
   });
 
+  it('returns a saved edit to read-only action buttons, then Escape starts a new bill', async () => {
+    await openApp();
+    press('PageUp');
+    press('Enter');
+    change(cells()[1], '0.250');
+    press('F10');
+    const edit = await screen.findByRole('button', { name: /திருத்து \/ Edit/ });
+    await waitFor(() => expect(document.activeElement).toBe(edit));
+    // Delayed input-focus effects must not take focus back from the actions.
+    await act(() => new Promise(resolve => setTimeout(resolve, 80)));
+    expect(document.activeElement).toBe(edit);
+    expect(cells()[0].readOnly).toBe(true);
+    expect(cells()[1].value).toBe('0.250');
+    expect(document.querySelector('.billing-table tbody tr.active-row')).toBeNull();
+    expect(writeDatabase).toHaveBeenCalledTimes(1);
+    press('F10');
+    expect(writeDatabase).toHaveBeenCalledTimes(1);
+    press('Escape');
+    expect(cells()[0].value).toBe('');
+    expect(cells()[0].readOnly).toBe(false);
+    await waitFor(() => expect(document.activeElement).toBe(cells()[0]));
+    expect(writeDatabase.mock.calls[0][0].transactions[0]).toMatchObject({ id: 'old-bill', netTotal: 95 });
+    expect(window.confirm).not.toHaveBeenCalled();
+  });
+
+  it('can re-enter editing from the action buttons after saving', async () => {
+    await openApp();
+    press('PageUp');
+    press('Enter');
+    change(cells()[1], '0.250');
+    press('F10');
+    const edit = await screen.findByRole('button', { name: /திருத்து \/ Edit/ });
+    await waitFor(() => expect(document.activeElement).toBe(edit));
+    press('Enter');
+    expect(cells()[0].readOnly).toBe(false);
+    await waitFor(() => expect(document.activeElement).toBe(cells()[0]));
+    expect(cells()[1].value).toBe('0.250');
+    expect(writeDatabase).toHaveBeenCalledTimes(1);
+  });
+
+  it('prints the newly saved edit without writing it a second time', async () => {
+    await openApp();
+    press('PageUp');
+    press('Enter');
+    change(cells()[1], '0.250');
+    press('F10');
+    await screen.findByRole('button', { name: /திருத்து \/ Edit/ });
+    press('F12');
+    expect(screen.getByTestId('receipt').textContent).toBe('95');
+    expect(writeDatabase).toHaveBeenCalledTimes(1);
+    expect(cells()[0].readOnly).toBe(true);
+  });
+
   it('waits for an edited bill to reach storage before printing, then keeps it on screen', async () => {
     const pending = deferred();
     writeDatabase.mockReturnValue(pending.promise);

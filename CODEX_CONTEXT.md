@@ -739,4 +739,12 @@ User approved correcting the three saving gaps found in the follow-up audit, and
 - Verification: 60 synthetic-data tests pass, including all three save/print keys in new/edit modes, aggregate stock create/edit/delete, blank-code exclusion, unchanged fractional stock, and product replacement default quantity. Lint exits successfully with existing warnings. The standalone release app.exe is rebuilt without installer bundling for manual testing.
 - Live database and installer hashes remain unchanged; historical invoices are changed only through an explicitly confirmed edit. No live data migration, installer rebuild, merge or push was performed.
 
+## After Saving an Edited Bill — 29 October 2026
+
+- User requested that successful edited-bill saves leave the bill visible but read-only, return focus to Tamil Print / English Print / Edit, and let Escape start a fresh bill.
+- `useBillHistory.finishEdit(invoice)` loads the committed items, clears the active row, exits editing and selects Edit. It runs only after a confirmed save, for save-only and save-and-print actions. Failures retain the editable draft for retry.
+- `useBillingKeyboard` never focuses billing inputs in read-only viewing mode. Its action-button focus also waits until saving/printing is finished, preventing delayed cell-focus effects from stealing focus back.
+- Escape in that read-only state starts a new blank bill without a discard confirmation. The edited invoice remains saved in history. Reprinting does not trigger another write; Enter on Edit reopens editing normally.
+- Verification: 63 synthetic-data tests pass; lint exits successfully with existing warnings. The standalone release app.exe is rebuilt for manual testing. Database, installer and receipt layout remain unchanged.
+
 *End of Master Context Manual. This document is maintained as the single source of truth for AI agents and developers.*

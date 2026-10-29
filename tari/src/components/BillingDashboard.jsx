@@ -765,6 +765,7 @@ export default function BillingDashboard({
       });
       const saved = await onUpdateDatabase(change.database);
       if (saved !== true) return;
+      if (change.isEdit) history.finishEdit(change.invoice);
       logInfo(`Saved ${change.isEdit ? 'bill edits' : 'new bill'} for Invoice #${change.invoice.invoiceNo}. Items: ${change.invoice.items.length}, Net Total: ₹${change.invoice.netTotal.toFixed(2)}`);
       if (action === 'save') {
         alert(change.isEdit

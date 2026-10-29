@@ -45,15 +45,15 @@ export const useBillingKeyboard = ({ state, refs, commands }) => {
   const { code, qty, rate, searchInput, bottomButtons } = refs;
   const { row, column, searchOpen, printOpen, duplicateOpen, isSaving, mode, bottomButton } = state;
   useEffect(() => {
-    if (mode !== 'viewing' || isSaving) return;
+    if (mode !== 'viewing' || isSaving || printOpen) return;
     const button = bottomButton === 0 ? bottomButtons.tamilPrint
       : bottomButton === 1 ? bottomButtons.englishPrint : bottomButtons.editSave;
     button.current?.focus();
-  }, [mode, bottomButton, bottomButtons.tamilPrint, bottomButtons.englishPrint, bottomButtons.editSave, isSaving]);
+  }, [mode, bottomButton, bottomButtons.tamilPrint, bottomButtons.englishPrint, bottomButtons.editSave, isSaving, printOpen]);
 
   // Deliberately exclude draft values: reselecting per keystroke overwrites typing.
   useEffect(() => {
-    if (isSaving || printOpen || duplicateOpen) return;
+    if (mode === 'viewing' || isSaving || printOpen || duplicateOpen) return;
     if (searchOpen) { searchInput.current?.focus(); return; }
     const timer = setTimeout(() => {
       if (row < 0) return;
@@ -62,5 +62,5 @@ export const useBillingKeyboard = ({ state, refs, commands }) => {
       if (input) { input.focus(); input.select?.(); }
     }, 50);
     return () => clearTimeout(timer);
-  }, [row, column, searchOpen, printOpen, duplicateOpen, isSaving, code, qty, rate, searchInput]);
+  }, [mode, row, column, searchOpen, printOpen, duplicateOpen, isSaving, code, qty, rate, searchInput]);
 };

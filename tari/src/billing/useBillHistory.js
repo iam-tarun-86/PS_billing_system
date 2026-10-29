@@ -70,10 +70,17 @@ export const useBillHistory = ({ transactions, draft, applyDraft, resetDraft, re
     scrollToTop();
     focusCell(0, 'code');
   };
+  const finishEdit = invoice => {
+    clearTimeout(focusTimer.current);
+    setIsEditingSavedBill(false);
+    setActiveBottomBtnIndex(2);
+    // Show only the committed items, with no active/focused billing row.
+    applyDraft({ ...transactionToDraft(invoice), activeRowIndex: -1 });
+  };
   return {
     viewingTxIndex, isEditingSavedBill, draftBill, activeBottomBtnIndex,
     mode: viewingTxIndex === null ? 'new' : isEditingSavedBill ? 'editing' : 'viewing',
-    startNewBill, restoreDraft, previous, next, startEdit,
+    startNewBill, restoreDraft, previous, next, startEdit, finishEdit,
     moveBottomButton: direction => setActiveBottomBtnIndex(index => Math.min(2, Math.max(0, index + direction)))
   };
 };
