@@ -1,4 +1,5 @@
 import { round2 } from '../utils/normalize';
+import { getBillItems } from './drafts';
 
 /** Product editor preview uses the selected slab's explicit offset. */
 export const calculateSlabPricePreview = (basePrice, qty, offset) => {
@@ -19,7 +20,8 @@ export const getCalculatedPrice = (product, quantity) => {
 
 /** Preserve stored line totals (including overridden rates), then round the bill to rupees. */
 export const calculateBillTotals = ({ items, discount, rent, coolie, advance }) => {
-  const grossTotal = items.reduce((sum, item) => sum + (parseFloat(item.totalPrice) || 0), 0);
+  const billItems = getBillItems(items);
+  const grossTotal = billItems.reduce((sum, item) => sum + (parseFloat(item.totalPrice) || 0), 0);
   const rawNetTotal = Math.max(0, grossTotal - (parseFloat(discount) || 0)
     + (parseFloat(rent) || 0) + (parseFloat(coolie) || 0));
   const netTotal = Math.round(rawNetTotal);
@@ -29,8 +31,8 @@ export const calculateBillTotals = ({ items, discount, rent, coolie, advance }) 
     netTotal,
     roundOff: round2(netTotal - rawNetTotal),
     creditBalance: Math.max(0, netTotal - (parseFloat(advance) || 0)),
-    itemCount: items.filter(item => item.code !== '').length,
-    totalWeight: items.reduce((sum, item) => item.priceType === 'Quantity'
+    itemCount: billItems.length,
+    totalWeight: billItems.reduce((sum, item) => item.priceType === 'Quantity'
       ? sum + (parseFloat(item.qty) || 0) : sum, 0)
   };
 };

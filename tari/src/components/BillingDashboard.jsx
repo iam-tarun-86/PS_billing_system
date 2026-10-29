@@ -1,4 +1,4 @@
-import { createEmptyRow, isProductLoaded, markProductLoaded } from '../billing/drafts';
+import { createEmptyRow, getBillItems, isProductLoaded, markProductLoaded } from '../billing/drafts';
 import { useBillHistory } from '../billing/useBillHistory';
 import { useBillingKeyboard } from '../billing/useBillingKeyboard';
 import { getNextBillNumber as nextBillNumberFor, getTodayDateString, prepareBillSave } from '../billing/transactions';
@@ -297,7 +297,7 @@ export default function BillingDashboard({
   // Add Item to Bill row - actual execution
   const executeAddProductToRow = (product, rowIndex) => {
     const updated = [...billItems];
-    const defaultQty = product.priceType === 'Quantity' ? 1.000 : 1;
+    const defaultQty = 1; // A newly selected product always starts at one of its unit.
     const price = getCalculatedPrice(product, defaultQty);
 
     updated[rowIndex] = markProductLoaded({
@@ -354,6 +354,11 @@ export default function BillingDashboard({
     const row = updated[rowIndex];
 
     if (column === 'code') {
+      if (!value.trim()) {
+        updated[rowIndex] = createEmptyRow();
+        setBillItems(updated);
+        return;
+      }
       // Always store code in uppercase
       row.code = value.toUpperCase();
       // NOTE: Do NOT auto-fill on every keypress — user must press Enter to confirm.
@@ -727,7 +732,21 @@ export default function BillingDashboard({
     // One save at a time. Without this a fast double-press could commit two bills.
     if (isSavingRef.current) return;
 
-    const itemsToSave = billItems.filter(item => item.code !== '');
+    const unconfirmedRow = billItems.findIndex(item =>
+      String(item.code || '').trim() !== '' && !isProductLoaded(item, item.code));
+    if (unconfirmedRow !== -1) {
+      setActiveRowIndex(unconfirmedRow);
+      setActiveColumn('code');
+      alert('பொருள் குறியீட்டை Enter அழுத்தி உறுதி செய்யவும். / Press Enter to confirm the product code before saving.');
+      // Also works if the unconfirmed code cell was already active.
+      setTimeout(() => {
+        const input = codeRefs.current[unconfirmedRow];
+        if (input) { input.focus(); input.select?.(); }
+      }, 50);
+      return;
+    }
+
+    const itemsToSave = getBillItems(billItems);
     if (itemsToSave.length === 0) {
       alert('பில்லில் பொருட்கள் இல்லை! / No items in the bill!');
       return;

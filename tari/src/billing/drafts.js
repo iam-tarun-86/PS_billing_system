@@ -2,6 +2,9 @@
 // the loaded identity separately, without adding fields to stored invoice items.
 const loadedProductCodes = new WeakMap();
 
+/** Cleared code rows are placeholders, never billable lines. */
+export const getBillItems = rows => rows.filter(row => String(row.code || '').trim() !== '');
+
 export const markProductLoaded = row => {
   loadedProductCodes.set(row, String(row.code).toLowerCase());
   return row;

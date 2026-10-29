@@ -1,5 +1,6 @@
 import { round2 } from '../utils/normalize';
 import { calculateBillTotals } from './pricing';
+import { getBillItems } from './drafts';
 
 export const getTodayDateString = (now = new Date()) =>
   `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
@@ -14,23 +15,30 @@ export const getNextBillNumber = (database, now = new Date()) => {
   return today.length ? Math.max(...today.map(tx => Number(tx.invoiceNo) || 0)) + 1 : 1;
 };
 
-// Preserve the current first-matching-row stock policy during this structural
-// refactor. Aggregating repeated item codes is a separate business-rule change.
-const adjustStock = (products, oldItems, newItems) => products.map(product => {
-  const oldItem = oldItems.find(item => item.code === product.code);
-  const newItem = newItems.find(item => item.code === product.code);
-  if (!oldItems.length && !newItem) return product;
-  let stock = product.currentStock;
-  if (oldItem) stock += parseFloat(oldItem.qty) || 0;
-  if (newItem) stock -= parseFloat(newItem.qty) || 0;
-  return { ...product, currentStock: stock };
-});
+const quantitiesByCode = items => {
+  const quantities = new Map();
+  for (const item of getBillItems(items)) {
+    quantities.set(item.code, (quantities.get(item.code) || 0) + (parseFloat(item.qty) || 0));
+  }
+  return quantities;
+};
+
+// Restore every old line, then deduct every new line, including repeated codes.
+const adjustStock = (products, oldItems, newItems) => {
+  const oldQuantities = quantitiesByCode(oldItems);
+  const newQuantities = quantitiesByCode(newItems);
+  return products.map(product => {
+    if (!oldQuantities.has(product.code) && !newQuantities.has(product.code)) return product;
+    const difference = (oldQuantities.get(product.code) || 0) - (newQuantities.get(product.code) || 0);
+    return { ...product, currentStock: Number(product.currentStock) + difference };
+  });
+};
 
 /** Build one complete snapshot; persistence and UI effects belong to the caller. */
 export const prepareBillSave = ({ database, billItems, customer, charges, transactionIndex = null, now = new Date() }) => {
-  const items = billItems.filter(item => item.code !== '');
+  const items = getBillItems(billItems);
   if (!items.length) throw new Error('Cannot save an empty bill');
-  const totals = calculateBillTotals({ items: billItems, ...charges });
+  const totals = calculateBillTotals({ items, ...charges });
   const fields = {
     customerName: customer.name,
     customerMobile: customer.mobile,

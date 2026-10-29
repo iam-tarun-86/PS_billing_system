@@ -255,6 +255,54 @@ describe('product editor persistence', () => {
 });
 
 describe('confirmed persistence', () => {
+  it.each(['new', 'saved edit'].flatMap(mode => ['F10', 'F11', 'F12'].map(key => [key, mode])))(
+    'blocks %s for an overwritten code in a %s bill until Enter confirms it', async (key, mode) => {
+    await openApp();
+    if (mode === 'saved edit') {
+      press('PageUp');
+      press('Enter');
+    } else enterJeera();
+    change(cells()[0], 'B01');
+    press(key);
+    expect(writeDatabase).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('receipt')).toBeNull();
+    expect(window.alert.mock.calls.flat().join(' ')).toContain('Enter');
+    await waitFor(() => expect(document.activeElement).toBe(cells()[0]));
+    press('Enter', cells()[0]);
+    expect(cells()[1].value).toBe('1');
+    press('F10');
+    await waitFor(() => expect(writeDatabase).toHaveBeenCalledTimes(1));
+    expect(writeDatabase.mock.calls[0][0].transactions[mode === 'new' ? 1 : 0]).toMatchObject({ netTotal: 39 });
+  });
+
+  it('removes a cleared product from the displayed and saved edited-bill total', async () => {
+    await openApp();
+    press('PageUp');
+    press('Enter');
+    change(cells()[0], '');
+    change(cells(1)[0], 'B01');
+    press('Enter', cells(1)[0]);
+    expect(grid().textContent).not.toContain('JEERA');
+    expect(cells()[2].value).toBe('');
+    press('F10');
+    await waitFor(() => expect(writeDatabase).toHaveBeenCalledTimes(1));
+    expect(writeDatabase.mock.calls[0][0].transactions[0]).toMatchObject({ grossTotal: 39, netTotal: 39 });
+    expect(writeDatabase.mock.calls[0][0].transactions[0].items).toHaveLength(1);
+  });
+
+  it('resets a replacement weighed product to one kg instead of retaining the old piece quantity', async () => {
+    await openApp();
+    change(cells()[0], 'B01');
+    press('Enter', cells()[0]);
+    change(cells()[1], '5');
+    change(cells()[0], 'M47');
+    press('Enter', cells()[0]);
+    expect(Number(cells()[1].value)).toBe(1);
+    expect(cells()[2].value).toBe('380.00');
+    press('F10');
+    await waitFor(() => expect(writeDatabase).toHaveBeenCalledTimes(1));
+    expect(writeDatabase.mock.calls[0][0].transactions[1].items[0]).toMatchObject({ code: 'M47', qty: 1, unit: 'kg', totalPrice: 380 });
+  });
   it.each([['F11', 'tamil'], ['F12', 'english']])('waits before %s printing or clearing', async (key, language) => {
     const pending = deferred();
     writeDatabase.mockReturnValue(pending.promise);

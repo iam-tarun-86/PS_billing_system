@@ -20,6 +20,37 @@ const request = db => ({ database: db, now, billItems: [
 ], customer: { name: 'CASH', mobile: '', address: '' }, charges: { discount: '', rent: '', coolie: '', advance: '' } });
 
 describe('transaction module', () => {
+  it('sums every repeated-code row for new saves, edits and deletions', () => {
+    const db = fixture();
+    db.transactions[0].items = [
+      { code: 'M.82', qty: 2, totalPrice: 20 },
+      { code: 'M.82', qty: 3, totalPrice: 30 }
+    ];
+    const rows = [{ code: 'M.82', qty: 2, totalPrice: 20 }, { code: 'M.82', qty: 4, totalPrice: 40 }];
+    const edit = prepareBillSave({ ...request(db), transactionIndex: 0, billItems: rows });
+    expect(edit.database.products[0].currentStock).toBe(9); // 10 + (2+3) - (2+4)
+    expect(edit.invoice.items).toHaveLength(2);
+    const added = prepareBillSave({ ...request(db), billItems: rows });
+    expect(added.database.products[0].currentStock).toBe(4);
+    expect(prepareBillDeletion(db, 'a').products[0].currentStock).toBe(15);
+    const unchanged = prepareBillSave({ ...request(db), transactionIndex: 0, billItems: db.transactions[0].items });
+    expect(unchanged.database.products[0].currentStock).toBe(10);
+  });
+  it('excludes cleared-code amounts from saved totals and stock', () => {
+    const db = fixture();
+    const change = prepareBillSave({ ...request(db), transactionIndex: 0,
+      billItems: [{ code: 'M82', qty: 1, totalPrice: 50 }, { code: '', qty: 10, totalPrice: 999 }] });
+    expect(change.invoice.items).toHaveLength(1);
+    expect(change.invoice).toMatchObject({ grossTotal: 50, netTotal: 50 });
+    expect(change.database.products.map(p => p.currentStock)).toEqual([10.5, 19]);
+  });
+  it('does not drift fractional stock when an unchanged bill is saved again', () => {
+    const db = fixture();
+    db.products[0].currentStock = 0.1;
+    db.transactions[0].items[0].qty = 0.2;
+    const saved = prepareBillSave({ ...request(db), transactionIndex: 0, billItems: db.transactions[0].items });
+    expect(saved.database.products[0].currentStock).toBe(0.1);
+  });
   it('builds an immutable invoice/stock/counter snapshot without mutating input', () => {
     const db = fixture(), before = structuredClone(db);
     const change = prepareBillSave(request(db));

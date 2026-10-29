@@ -728,4 +728,15 @@ The user approved completing the remaining organization before manual testing. T
 - Different code + Enter reloads the complete product through the existing add/duplicate path. Retyping the same code or pressing Enter on it preserves fractional quantity and custom rates. Tracking is in memory only: no additional invoice fields, schema or persistent data changes.
 - Verification: 49 synthetic-data checks pass, including new/saved bill replacement, saved names/rates/totals and stock reversal, same-code retyping, and absence of serialized tracking metadata. Existing lint warnings remain. Standalone app.exe is rebuilt without installer bundling for manual testing; the installer and live data remain unchanged.
 
+## Saved-Bill Safety Corrections — 29 October 2026
+
+User approved correcting the three saving gaps found in the follow-up audit, and clarified that a different confirmed product must always start at quantity 1, regardless of unit.
+
+- Stock updates now sum **all** rows for each exact product code when creating, editing or deleting invoices. The previous first-match-only policy documented above is superseded. Edits apply the difference between aggregate old/new quantities; unchanged edits do not introduce floating-point stock drift. Existing stored stock is not retroactively repaired or migrated.
+- `getBillItems` in `billing/drafts.js` defines billable rows by nonblank code. Both displayed totals and saved snapshots use this same eligibility rule, so cleared-code rows cannot contribute ghost amounts. Clearing the Code input also resets that row's old product details.
+- F10/F11/F12 reject any nonblank row whose typed code differs from its confirmed loaded product (including partial/unknown new codes). The bilingual message asks for Enter and returns focus to the first unconfirmed Code field. No write or print occurs until confirmation succeeds. Same-code retyping still preserves the existing quantity and custom rate.
+- Selecting a different product uses default quantity **1** for every unit (`kg`, `litre`, `piece`, `nos`, packet, etc.), then loads that product's rate, names and other details. This applies to current bills and saved-bill editing.
+- Verification: 60 synthetic-data tests pass, including all three save/print keys in new/edit modes, aggregate stock create/edit/delete, blank-code exclusion, unchanged fractional stock, and product replacement default quantity. Lint exits successfully with existing warnings. The standalone release app.exe is rebuilt without installer bundling for manual testing.
+- Live database and installer hashes remain unchanged; historical invoices are changed only through an explicitly confirmed edit. No live data migration, installer rebuild, merge or push was performed.
+
 *End of Master Context Manual. This document is maintained as the single source of truth for AI agents and developers.*
