@@ -1,4 +1,4 @@
-import { createEmptyRow } from '../billing/drafts';
+import { createEmptyRow, isProductLoaded, markProductLoaded } from '../billing/drafts';
 import { useBillHistory } from '../billing/useBillHistory';
 import { useBillingKeyboard } from '../billing/useBillingKeyboard';
 import { getNextBillNumber as nextBillNumberFor, getTodayDateString, prepareBillSave } from '../billing/transactions';
@@ -300,7 +300,7 @@ export default function BillingDashboard({
     const defaultQty = product.priceType === 'Quantity' ? 1.000 : 1;
     const price = getCalculatedPrice(product, defaultQty);
 
-    updated[rowIndex] = {
+    updated[rowIndex] = markProductLoaded({
       code: product.code,
       name: product.name,
       tamilName: product.tamilName,
@@ -312,7 +312,7 @@ export default function BillingDashboard({
       totalPrice: price * defaultQty,
       priceType: product.priceType,
       slabs: product.slabs || []
-    };
+    });
 
     setBillItems(updated);
     
@@ -456,7 +456,7 @@ export default function BillingDashboard({
             const alreadyLoaded =
               current &&
               current.name &&
-              String(current.code).toLowerCase() === String(match.code).toLowerCase();
+              isProductLoaded(current, match.code);
 
             if (alreadyLoaded) {
               setActiveColumn('qty');

@@ -720,4 +720,12 @@ The user approved completing the remaining organization before manual testing. T
 - Store JSON and installer hashes remain unchanged. The standalone release app.exe was rebuilt successfully without installer bundling for the user's manual test. Do not deploy/merge/push or replace the store installer until requested.
 - Plan/results: `tari/docs/superpowers/plans/2026-10-23-billing-modules.md`. All work remains on `codex/confirmed-bill-saves`, with separate stage commits.
 
+## Code Replacement Correction — 29 October 2026
+
+- Report: overwriting an existing Code value and pressing Enter changed the code text but retained the old item's names, unit, price and total. This affected current bills and saved-bill editing.
+- Cause: the `alreadyLoaded` check compared the typed code with the matched product. Since typing had already overwritten the row's code, it incorrectly treated a different product as already loaded.
+- Fix: `billing/drafts.js` records the last actually loaded product code in a WeakMap keyed by the editable row object. Both product selection and conversion of a saved invoice into draft rows register that identity. Enter compares against this identity rather than editable text.
+- Different code + Enter reloads the complete product through the existing add/duplicate path. Retyping the same code or pressing Enter on it preserves fractional quantity and custom rates. Tracking is in memory only: no additional invoice fields, schema or persistent data changes.
+- Verification: 49 synthetic-data checks pass, including new/saved bill replacement, saved names/rates/totals and stock reversal, same-code retyping, and absence of serialized tracking metadata. Existing lint warnings remain. Standalone app.exe is rebuilt without installer bundling for manual testing; the installer and live data remain unchanged.
+
 *End of Master Context Manual. This document is maintained as the single source of truth for AI agents and developers.*

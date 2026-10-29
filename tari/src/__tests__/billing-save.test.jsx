@@ -68,6 +68,44 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe('existing keyboard and billing behavior', () => {
+  it.each(['new', 'saved edit'])('replaces an existing product after code overwrite and Enter in a %s bill', async mode => {
+    await openApp();
+    if (mode === 'saved edit') {
+      press('PageUp');
+      press('Enter');
+    } else {
+      enterJeera();
+    }
+    const code = cells()[0];
+    fireEvent.focus(code);
+    change(code, 'B01');
+    press('Enter', code);
+    expect(grid().querySelector('tbody tr').textContent).toContain('HAMAM');
+    expect(grid().querySelector('tbody tr').textContent).not.toContain('JEERA');
+    expect(cells()[1].value).toBe('1');
+    expect(cells()[2].value).toBe('39.00');
+    press('F10');
+    await waitFor(() => expect(writeDatabase).toHaveBeenCalledTimes(1));
+    const saved = writeDatabase.mock.calls[0][0];
+    const invoice = mode === 'new' ? saved.transactions[1] : saved.transactions[0];
+    expect(invoice.items[0]).toMatchObject({ code: 'B01', name: 'HAMAM', tamilName: 'ஹமாம்',
+      unit: 'piece', qty: 1, basePrice: 39, overridePrice: '39.00', totalPrice: 39 });
+    expect(invoice.netTotal).toBe(39);
+    expect(saved.products[0].currentStock).toBe(mode === 'new' ? 10 : 10.5);
+    expect(saved.products[1].currentStock).toBe(19);
+  });
+
+  it('preserves quantity and custom rate when the same code is retyped character by character', async () => {
+    await openApp();
+    enterJeera();
+    change(cells()[2], '500');
+    fireEvent.focus(cells()[0]);
+    for (const value of ['M', 'M4', 'M47']) change(cells()[0], value);
+    press('Enter', cells()[0]);
+    expect(cells()[1].value).toBe('0.050');
+    expect(cells()[2].value).toBe('500');
+  });
+
   it('keeps fractional slab prices, Enter traversal, overrides and code selection', async () => {
     await openApp();
     enterJeera();

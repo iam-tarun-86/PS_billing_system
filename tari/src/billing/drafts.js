@@ -1,3 +1,15 @@
+// The editable Code text can change before Enter confirms a new product. Keep
+// the loaded identity separately, without adding fields to stored invoice items.
+const loadedProductCodes = new WeakMap();
+
+export const markProductLoaded = row => {
+  loadedProductCodes.set(row, String(row.code).toLowerCase());
+  return row;
+};
+
+export const isProductLoaded = (row, code) =>
+  !!row && loadedProductCodes.get(row) === String(code).toLowerCase();
+
 /** Canonical editable row shape, separate from persisted invoice normalization. */
 export const createEmptyRow = () => ({
   code: '', name: '', tamilName: '', qty: '', unit: '', mrp: 0,
@@ -11,7 +23,7 @@ export const draftCursor = draft => ({
 
 /** Map normalized saved items into editable copies; never edit a stored invoice in place. */
 export const transactionToDraft = tx => ({
-  billItems: tx.items.map(item => ({
+  billItems: tx.items.map(item => markProductLoaded({
     code: item.code || '', name: item.name || '', tamilName: item.tamilName || '',
     unit: item.unit || 'kg', qty: item.qty || '', mrp: item.mrp || 0,
     basePrice: item.basePrice || 0, sellingRate: item.sellingRate || item.overridePrice || '0.00',
